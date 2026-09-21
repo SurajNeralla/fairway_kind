@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import {
   Trophy, Eye, CheckCircle2, XCircle, Banknote, Shield, RefreshCw,
@@ -88,7 +88,7 @@ export default function AdminWinnersPage() {
   // Expanded proof previews
   const [expandedProofId, setExpandedProofId] = useState<string | null>(null);
 
-  const fetchWinners = async () => {
+  const fetchWinners = useCallback(async () => {
     setIsLoading(true);
     try {
       const res = await fetch('/api/winners');
@@ -103,11 +103,11 @@ export default function AdminWinnersPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [showToast]);
 
   useEffect(() => {
     fetchWinners();
-  }, []);
+  }, [fetchWinners]);
 
   const handleReview = async () => {
     if (!reviewModal) return;

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, Suspense } from 'react';
+import React, { useEffect, useState, useCallback, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { Heart, ShieldCheck, CreditCard, RefreshCw, AlertTriangle, ArrowRight, ExternalLink, ArrowLeft } from 'lucide-react';
@@ -27,7 +27,7 @@ function SubscriptionManager() {
 
   const supabase = createClient();
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setIsLoading(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -61,7 +61,7 @@ function SubscriptionManager() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [supabase, selectedCharityId]);
 
   useEffect(() => {
     fetchData();
@@ -69,7 +69,7 @@ function SubscriptionManager() {
     if (statusQuery === 'success' || statusQuery === 'simulated_success') {
       showToast('Subscription Active!', 'Thank you for supporting FairwayKind.', 'success');
     }
-  }, [statusQuery]);
+  }, [fetchData, statusQuery, showToast]);
 
   const handleUpdateCharitySettings = async () => {
     setIsProcessing(true);
