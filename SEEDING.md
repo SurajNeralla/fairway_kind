@@ -30,6 +30,6 @@ WHERE email = 'your-email@example.com';
 
 ---
 
-## 3. Recommended Test Accounts
-- **Subscriber Test Account**: `subscriber@digitalheroes.com` / `Password123!` (Role: `user`)
-- **Admin Test Account**: `admin@digitalheroes.com` / `Password123!` (Role: `admin`)
+## 3. Verified Test Accounts
+- **Subscriber Test Account**: `subscriber@fairwaykind.com` / `Password123!` (Role: `user`, Active subscription, 5 rolling scores)
+- **Admin Test Account**: `admin@fairwaykind.com` / `Password123!` (Role: `admin`, Full access to Draw studio, Winners, Charities)
