@@ -12,21 +12,21 @@ export interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {
 export const Badge: React.FC<BadgeProps> = ({
   children,
   className,
-  variant = 'cyan',
+  variant = 'emerald',
   size = 'md',
   ...props
 }) => {
-  const baseStyles = 'inline-flex items-center font-medium rounded-full tracking-wide uppercase';
+  const baseStyles = 'inline-flex items-center font-semibold rounded-full tracking-wide uppercase';
 
   const variants = {
-    cyan: 'bg-cyan-950/60 text-cyan-400 border border-cyan-500/30',
-    emerald: 'bg-emerald-950/60 text-emerald-400 border border-emerald-500/30',
-    gold: 'bg-amber-950/60 text-amber-400 border border-amber-500/30',
-    amber: 'bg-amber-950/60 text-amber-400 border border-amber-500/30',
-    rose: 'bg-rose-950/60 text-rose-400 border border-rose-500/30',
-    violet: 'bg-violet-950/60 text-violet-400 border border-violet-500/30',
-    neutral: 'bg-slate-800 text-slate-300 border border-slate-700',
-    slate: 'bg-slate-800 text-slate-300 border border-slate-700',
+    cyan: 'bg-primary-fixed/40 text-primary border border-primary-fixed-dim',
+    emerald: 'bg-primary-fixed/40 text-primary border border-primary-fixed-dim',
+    gold: 'bg-secondary-fixed/40 text-on-secondary-fixed border border-secondary-fixed-dim',
+    amber: 'bg-secondary-fixed/40 text-on-secondary-fixed border border-secondary-fixed-dim',
+    rose: 'bg-error-container text-on-error-container border border-error/30',
+    violet: 'bg-surface-container-highest text-primary border border-outline-variant/40',
+    neutral: 'bg-surface-container text-on-surface-variant border border-outline-variant/40',
+    slate: 'bg-surface-container text-on-surface-variant border border-outline-variant/40',
   };
 
   const sizes = {

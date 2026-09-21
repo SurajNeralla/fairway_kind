@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import { Check, ArrowRight, Lock } from 'lucide-react';
+import { Check, ArrowRight, Lock, Heart, ShieldCheck } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
@@ -41,7 +41,7 @@ export default function SubscribePage() {
 
       if (data.url) {
         if (data.simulated) {
-          showToast('Dev Simulation Active', 'Subscription updated successfully for testing.', 'success');
+          showToast('Simulation Active', 'Subscription updated successfully for testing.', 'success');
         }
         window.location.href = data.url;
       } else {
@@ -55,133 +55,149 @@ export default function SubscribePage() {
   };
 
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-12">
-      {/* Header */}
-      <div className="text-center space-y-3 max-w-2xl mx-auto">
-        <Badge variant="cyan">Membership Plans</Badge>
-        <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
-          Select Your Digital Heroes Plan
-        </h1>
-        <p className="text-sm text-slate-400">
-          Gain full entry into monthly prize pools ($25k+) while funding your preferred charity.
-        </p>
-      </div>
-
-      {/* Plan Toggle */}
-      <div className="flex justify-center">
-        <div className="inline-flex p-1.5 rounded-2xl bg-slate-900 border border-slate-800">
-          <button
-            onClick={() => setBillingCycle('monthly')}
-            className={`px-6 py-2 rounded-xl text-xs font-semibold transition-all ${
-              billingCycle === 'monthly' ? 'bg-[#00F0FF] text-[#090D16]' : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            Monthly ($29/mo)
-          </button>
-          <button
-            onClick={() => setBillingCycle('yearly')}
-            className={`px-6 py-2 rounded-xl text-xs font-semibold transition-all ${
-              billingCycle === 'yearly' ? 'bg-[#00F0FF] text-[#090D16]' : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            Yearly ($290/yr — Save 17%)
-          </button>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
-        {/* Plan Feature Summary */}
-        <Card variant="glass" className="md:col-span-7 space-y-6">
-          <div className="flex items-center justify-between pb-4 border-b border-slate-800">
-            <div>
-              <h3 className="text-lg font-bold text-white capitalize">{billingCycle} Membership</h3>
-              <p className="text-xs text-slate-400">Full platform access & monthly draw tickets</p>
-            </div>
-            <div className="text-right">
-              <span className="text-3xl font-extrabold text-white">${price}</span>
-              <span className="text-xs text-slate-400">/{billingCycle === 'monthly' ? 'mo' : 'yr'}</span>
-            </div>
+    <div className="bg-background text-on-surface antialiased py-12 md:py-20">
+      <div className="max-w-5xl mx-auto px-6 md:px-12 space-y-12">
+        {/* Header */}
+        <div className="text-center space-y-3 max-w-2xl mx-auto">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-surface-container border border-outline-variant/50 text-tertiary font-label-sm text-label-sm uppercase tracking-wider">
+            <span className="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
+            Transparent Membership
           </div>
-
-          <div className="space-y-3 text-xs text-slate-300">
-            <div className="flex items-center gap-3">
-              <Check className="w-4 h-4 text-emerald-400 shrink-0" />
-              <span>Log up to 5 Stableford golf scores (1–45 range)</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <Check className="w-4 h-4 text-emerald-400 shrink-0" />
-              <span>Full entry into 5-match (40%), 4-match (35%), 3-match (25%) prize pools</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <Check className="w-4 h-4 text-emerald-400 shrink-0" />
-              <span>Unclaimed 5-match jackpot rolls over to next month</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <Check className="w-4 h-4 text-emerald-400 shrink-0" />
-              <span>Instant winner proof submission and ACH bank payout workflow</span>
-            </div>
-          </div>
-        </Card>
-
-        {/* Charity Customizer */}
-        <Card variant="glow" className="md:col-span-5 space-y-6">
-          <div className="space-y-1">
-            <Badge variant="emerald">Charity Customizer</Badge>
-            <h3 className="text-base font-bold text-white">Select Cause & Contribution</h3>
-          </div>
-
-          <Select
-            label="Target Non-Profit Charity"
-            value={selectedCharity}
-            onChange={(e) => setSelectedCharity(e.target.value)}
-            options={[
-              { value: 'c1000000-0000-0000-0000-000000000001', label: 'Youth on Course Foundation' },
-              { value: 'c2000000-0000-0000-0000-000000000002', label: 'Clean Oceans & Coastal Wetlands' },
-              { value: 'c3000000-0000-0000-0000-000000000003', label: 'St. Jude Children’s Hospital' },
-              { value: 'c4000000-0000-0000-0000-000000000004', label: 'Veterans Golf Alliance' },
-            ]}
-          />
-
-          <div className="space-y-2">
-            <div className="flex justify-between text-xs">
-              <span className="text-slate-300 font-medium">Voluntary Contribution %</span>
-              <span className="text-emerald-400 font-bold">{charityPercent}%</span>
-            </div>
-            <input
-              type="range"
-              min={10}
-              max={100}
-              step={5}
-              value={charityPercent}
-              onChange={(e) => setCharityPercent(Number(e.target.value))}
-              className="w-full accent-emerald-400 cursor-pointer"
-            />
-            <div className="flex justify-between text-[10px] text-slate-500">
-              <span>Min 10% Required</span>
-              <span>100% Maximum</span>
-            </div>
-          </div>
-
-          <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 text-xs flex items-center justify-between">
-            <span className="text-slate-400">Grant to Charity ({billingCycle}):</span>
-            <span className="text-emerald-400 font-bold text-sm">${charityAmount}</span>
-          </div>
-
-          <Button
-            variant="charity"
-            className="w-full"
-            isLoading={isLoading}
-            onClick={handleCheckout}
-            rightIcon={<ArrowRight className="w-4 h-4" />}
-          >
-            Proceed to Stripe Payment
-          </Button>
-
-          <p className="text-[10px] text-center text-slate-500 flex items-center justify-center gap-1">
-            <Lock className="w-3 h-3 text-cyan-400" />
-            PCI-compliant payment architecture via Stripe.
+          <h1 className="font-headline-lg md:font-display text-headline-lg md:text-display text-on-background tracking-tight font-semibold">
+            Select Your Fairway<span className="text-primary">Kind</span> Plan
+          </h1>
+          <p className="font-body-lg text-body-lg text-on-surface-variant">
+            Gain full entry into monthly skill-based draws ($25k+) while funding your preferred verified charity.
           </p>
-        </Card>
+        </div>
+
+        {/* Plan Toggle */}
+        <div className="flex justify-center">
+          <div className="inline-flex p-1.5 rounded-full bg-surface-container border border-outline-variant/40">
+            <button
+              onClick={() => setBillingCycle('monthly')}
+              className={`px-6 py-2.5 rounded-full text-xs font-semibold transition-all ${
+                billingCycle === 'monthly'
+                  ? 'bg-primary text-on-primary shadow-sm'
+                  : 'text-on-surface-variant hover:text-on-surface'
+              }`}
+            >
+              Monthly ($29/mo)
+            </button>
+            <button
+              onClick={() => setBillingCycle('yearly')}
+              className={`px-6 py-2.5 rounded-full text-xs font-semibold transition-all ${
+                billingCycle === 'yearly'
+                  ? 'bg-primary text-on-primary shadow-sm'
+                  : 'text-on-surface-variant hover:text-on-surface'
+              }`}
+            >
+              Yearly ($290/yr — Save 17%)
+            </button>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
+          {/* Plan Feature Summary */}
+          <div className="md:col-span-7 bg-surface-container-lowest border border-outline-variant/40 rounded-3xl p-8 custom-card-shadow space-y-6">
+            <div className="flex items-center justify-between pb-5 border-b border-surface-container">
+              <div>
+                <h3 className="font-headline-sm text-headline-sm text-on-surface font-semibold capitalize">{billingCycle} Membership</h3>
+                <p className="font-body-sm text-body-sm text-on-surface-variant">Full platform access & monthly draw entries</p>
+              </div>
+              <div className="text-right">
+                <span className="font-headline-lg text-headline-lg font-bold text-primary">${price}</span>
+                <span className="font-body-sm text-body-sm text-on-surface-variant">/{billingCycle === 'monthly' ? 'mo' : 'yr'}</span>
+              </div>
+            </div>
+
+            <div className="space-y-3.5 text-body-sm text-on-surface">
+              <div className="flex items-center gap-3">
+                <Check className="w-4 h-4 text-primary shrink-0" />
+                <span>Log official Stableford golf scores (1–45 point range)</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <Check className="w-4 h-4 text-primary shrink-0" />
+                <span>Full entry into 5-match (40%), 4-match (35%), 3-match (25%) prize pools</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <Check className="w-4 h-4 text-primary shrink-0" />
+                <span>Unclaimed 5-match pool automatically rolls over to next month</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <Check className="w-4 h-4 text-primary shrink-0" />
+                <span>Peer marker attestation and direct ACH prize payout workflow</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <Check className="w-4 h-4 text-primary shrink-0" />
+                <span>Direct 501(c)(3) tax receipts provided for every philanthropic contribution</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Charity Customizer */}
+          <div className="md:col-span-5 bg-surface-container-lowest border border-outline-variant/40 rounded-3xl p-8 custom-floating-shadow space-y-6">
+            <div className="space-y-1">
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary-fixed/30 text-primary font-label-sm text-label-sm font-semibold">
+                <Heart className="w-3.5 h-3.5" />
+                Charity Customizer
+              </div>
+              <h3 className="font-headline-sm text-headline-sm font-semibold text-on-surface">Select Cause & Contribution</h3>
+            </div>
+
+            <Select
+              label="Target Non-Profit Charity"
+              value={selectedCharity}
+              onChange={(e) => setSelectedCharity(e.target.value)}
+              options={[
+                { value: 'c1000000-0000-0000-0000-000000000001', label: 'Youth on Course Foundation' },
+                { value: 'c2000000-0000-0000-0000-000000000002', label: 'Clean Oceans & Coastal Wetlands' },
+                { value: 'c3000000-0000-0000-0000-000000000003', label: 'St. Jude Children’s Research Hospital' },
+                { value: 'c4000000-0000-0000-0000-000000000004', label: 'PGA REACH Military Rehabilitation' },
+              ]}
+            />
+
+            <div className="space-y-2">
+              <div className="flex justify-between text-body-sm font-body-sm">
+                <span className="text-on-surface font-medium">Voluntary Contribution %</span>
+                <span className="text-primary font-bold">{charityPercent}%</span>
+              </div>
+              <input
+                type="range"
+                min={10}
+                max={100}
+                step={5}
+                value={charityPercent}
+                onChange={(e) => setCharityPercent(Number(e.target.value))}
+                className="w-full accent-primary cursor-pointer h-2 bg-surface-variant rounded-lg"
+              />
+              <div className="flex justify-between text-xs text-on-surface-variant">
+                <span>Min 10% Required</span>
+                <span>100% Maximum</span>
+              </div>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-surface-container-low border border-outline-variant/30 text-body-sm flex items-center justify-between">
+              <span className="text-on-surface-variant">Monthly Grant to Charity:</span>
+              <span className="text-primary font-bold text-base">${charityAmount}</span>
+            </div>
+
+            <Button
+              variant="primary"
+              className="w-full h-12 rounded-full font-semibold"
+              isLoading={isLoading}
+              onClick={handleCheckout}
+              rightIcon={<ArrowRight className="w-4 h-4" />}
+            >
+              Start 14-Day Free Trial
+            </Button>
+
+            <p className="text-xs text-center text-on-surface-variant flex items-center justify-center gap-1.5">
+              <Lock className="w-3.5 h-3.5 text-primary" />
+              256-bit SSL encrypted • Instant online cancellation
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   );

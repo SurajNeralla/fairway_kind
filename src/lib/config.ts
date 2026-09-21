@@ -1,6 +1,6 @@
 export const APP_CONFIG = {
-  name: 'Digital Heroes',
-  description: 'Golf Performance, Monthly Prize Draws & Charity Platform',
+  name: 'FairwayKind',
+  description: 'Feel, Not Fairway — Modern Performance & Philanthropy',
   url: process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
   supabase: {
     url: process.env.NEXT_PUBLIC_SUPABASE_URL || '',

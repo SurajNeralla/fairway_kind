@@ -24,7 +24,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
     return (
       <div className="w-full space-y-1.5">
         {label && (
-          <label htmlFor={selectId} className="block text-xs font-medium text-slate-300 tracking-wide uppercase">
+          <label htmlFor={selectId} className="block font-label-md text-label-md text-on-surface font-semibold">
             {label}
           </label>
         )}
@@ -34,25 +34,25 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
             id={selectId}
             className={twMerge(
               clsx(
-                "w-full appearance-none rounded-xl glass-input text-sm px-4 py-2.5 pr-10 text-slate-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed",
-                error && "border-rose-500 focus:border-rose-500 focus:ring-rose-500/30",
+                "w-full h-11 appearance-none rounded-xl bg-surface border border-outline-variant/60 px-3.5 pr-10 text-body-sm text-on-surface cursor-pointer focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed transition-colors",
+                error && "border-error focus:border-error focus:ring-error/30",
                 className
               )
             )}
             {...props}
           >
             {options.map((opt) => (
-              <option key={opt.value} value={opt.value} className="bg-slate-900 text-slate-100">
+              <option key={opt.value} value={opt.value} className="bg-surface-container-lowest text-on-surface">
                 {opt.label}
               </option>
             ))}
           </select>
-          <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+          <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-on-surface-variant pointer-events-none" />
         </div>
         {error ? (
-          <p className="text-xs text-rose-400 font-medium">{error}</p>
+          <p className="text-xs text-error font-medium">{error}</p>
         ) : helperText ? (
-          <p className="text-xs text-slate-400">{helperText}</p>
+          <p className="text-xs text-on-surface-variant">{helperText}</p>
         ) : null}
       </div>
     );

@@ -99,7 +99,7 @@ export async function POST(request: Request) {
     const { data: newDraw, error: drawErr } = await supabase
       .from('draws')
       .insert({
-        title: `Digital Heroes Monthly Draw — ${periodMonth}/${periodYear}`,
+        title: `FairwayKind Monthly Draw — ${periodMonth}/${periodYear}`,
         period_month: periodMonth,
         period_year: periodYear,
         draw_date: new Date().toISOString(),

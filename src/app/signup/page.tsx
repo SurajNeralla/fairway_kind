@@ -75,18 +75,18 @@ export default function SignupPage() {
 
   return (
     <div className="min-h-[75vh] flex items-center justify-center px-4 py-12">
-      <Card variant="glass" className="w-full max-w-md space-y-6">
+      <Card variant="solid" className="w-full max-w-md space-y-6 bg-surface-container-lowest border border-outline-variant/40 shadow-md">
         <div className="text-center space-y-2">
-          <div className="inline-flex p-3 rounded-2xl bg-emerald-950/60 border border-emerald-500/30 text-emerald-400 mb-2">
+          <div className="inline-flex p-3 rounded-2xl bg-primary-fixed/30 text-primary mb-2">
             <Target className="w-6 h-6" />
           </div>
-          <h1 className="text-2xl font-bold text-white">Join Digital Heroes</h1>
-          <p className="text-xs text-slate-400">Play golf, enter monthly draws, and support verified charities.</p>
+          <h1 className="text-2xl font-bold text-on-surface font-headline-md">Join FairwayKind</h1>
+          <p className="text-sm text-on-surface-variant">Play golf, enter monthly draws, and support verified charities.</p>
         </div>
 
         {errorMessage && (
-          <div className="p-3.5 rounded-xl bg-rose-950/70 border border-rose-500/40 text-xs text-rose-300 flex items-start gap-2.5">
-            <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+          <div className="p-3.5 rounded-xl bg-error-container text-xs text-on-error-container flex items-start gap-2.5 border border-error/30">
+            <AlertCircle className="w-4 h-4 text-error shrink-0 mt-0.5" />
             <span>{errorMessage}</span>
           </div>
         )}
@@ -97,7 +97,7 @@ export default function SignupPage() {
             placeholder="David Miller"
             value={fullName}
             onChange={(e) => setFullName(e.target.value)}
-            leftIcon={<User className="w-4 h-4 text-slate-400" />}
+            leftIcon={<User className="w-4 h-4 text-on-surface-variant" />}
             required
           />
 
@@ -107,7 +107,7 @@ export default function SignupPage() {
             placeholder="golfer@example.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            leftIcon={<Mail className="w-4 h-4 text-slate-400" />}
+            leftIcon={<Mail className="w-4 h-4 text-on-surface-variant" />}
             required
           />
 
@@ -117,7 +117,7 @@ export default function SignupPage() {
             placeholder="•••••••• (min 6 chars)"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            leftIcon={<Lock className="w-4 h-4 text-slate-400" />}
+            leftIcon={<Lock className="w-4 h-4 text-on-surface-variant" />}
             required
           />
 
@@ -133,8 +133,8 @@ export default function SignupPage() {
 
           <Button
             type="submit"
-            variant="charity"
-            className="w-full"
+            variant="primary"
+            className="w-full h-12 rounded-full font-semibold"
             isLoading={isLoading}
             rightIcon={<ArrowRight className="w-4 h-4" />}
           >
@@ -142,9 +142,9 @@ export default function SignupPage() {
           </Button>
         </form>
 
-        <div className="text-center text-xs text-slate-400 pt-2 border-t border-slate-800">
+        <div className="text-center text-xs text-on-surface-variant pt-3 border-t border-outline-variant/30">
           <span>Already have an account? </span>
-          <Link href="/login" className="text-emerald-400 font-semibold hover:underline">
+          <Link href="/login" className="text-primary font-semibold hover:underline">
             Sign In
           </Link>
         </div>

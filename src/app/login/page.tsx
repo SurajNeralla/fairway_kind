@@ -66,18 +66,18 @@ function LoginForm() {
   };
 
   return (
-    <Card variant="glass" className="w-full max-w-md space-y-6">
+    <Card variant="solid" className="w-full max-w-md space-y-6 bg-surface-container-lowest border border-outline-variant/40 shadow-md">
       <div className="text-center space-y-2">
-        <div className="inline-flex p-3 rounded-2xl bg-cyan-950/60 border border-cyan-500/30 text-[#00F0FF] mb-2">
+        <div className="inline-flex p-3 rounded-2xl bg-primary-fixed/30 text-primary mb-2">
           <Shield className="w-6 h-6" />
         </div>
-        <h1 className="text-2xl font-bold text-white">Sign In to Digital Heroes</h1>
-        <p className="text-xs text-slate-400">Access your golf scores, charity impact, and draw participation.</p>
+        <h1 className="text-2xl font-bold text-on-surface font-headline-md">Sign In to FairwayKind</h1>
+        <p className="text-sm text-on-surface-variant">Access your golf scores, charity impact, and draw participation.</p>
       </div>
 
       {errorMessage && (
-        <div className="p-3.5 rounded-xl bg-rose-950/70 border border-rose-500/40 text-xs text-rose-300 flex items-start gap-2.5">
-          <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+        <div className="p-3.5 rounded-xl bg-error-container text-xs text-on-error-container flex items-start gap-2.5 border border-error/30">
+          <AlertCircle className="w-4 h-4 text-error shrink-0 mt-0.5" />
           <span>{errorMessage}</span>
         </div>
       )}
@@ -89,7 +89,7 @@ function LoginForm() {
           placeholder="golfer@example.com"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          leftIcon={<Mail className="w-4 h-4 text-slate-400" />}
+          leftIcon={<Mail className="w-4 h-4 text-on-surface-variant" />}
           required
         />
 
@@ -100,11 +100,11 @@ function LoginForm() {
             placeholder="••••••••"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            leftIcon={<Lock className="w-4 h-4 text-slate-400" />}
+            leftIcon={<Lock className="w-4 h-4 text-on-surface-variant" />}
             required
           />
           <div className="flex justify-end">
-            <Link href="/forgot-password" className="text-[11px] text-cyan-400 hover:underline">
+            <Link href="/forgot-password" className="text-xs text-primary font-medium hover:underline">
               Forgot password?
             </Link>
           </div>
@@ -113,7 +113,7 @@ function LoginForm() {
         <Button
           type="submit"
           variant="primary"
-          className="w-full"
+          className="w-full h-12 rounded-full font-semibold"
           isLoading={isLoading}
           rightIcon={<ArrowRight className="w-4 h-4" />}
         >
@@ -121,9 +121,9 @@ function LoginForm() {
         </Button>
       </form>
 
-      <div className="text-center text-xs text-slate-400 pt-2 border-t border-slate-800">
+      <div className="text-center text-xs text-on-surface-variant pt-3 border-t border-outline-variant/30">
         <span>Don&apos;t have an account? </span>
-        <Link href="/signup" className="text-[#00F0FF] font-semibold hover:underline">
+        <Link href="/signup" className="text-primary font-semibold hover:underline">
           Create Account
         </Link>
       </div>

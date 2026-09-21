@@ -190,7 +190,7 @@ export default function SubscriberDashboard() {
                 className="w-full bg-primary-container text-on-primary py-2.5 px-4 rounded-xl font-label-lg text-label-lg flex items-center justify-center gap-2 hover:bg-primary transition-all duration-150 active:scale-[0.98] shadow-sm font-semibold"
               >
                 <span className="material-symbols-outlined text-lg leading-none">add</span>
-                <span>+ Add Score</span>
+                <span>Add Score</span>
               </button>
             </div>
 
@@ -324,13 +324,13 @@ export default function SubscriberDashboard() {
               </span>
             </div>
 
-            {/* + Add Score Trigger */}
+            {/* Add Score Trigger */}
             <button
               onClick={() => setModalOpen(true)}
               className="bg-primary-container hover:bg-primary text-on-primary font-label-lg text-label-lg px-4 py-2 rounded-full flex items-center gap-2 transition-all duration-150 active:scale-[0.98] shadow-sm font-semibold"
             >
               <span className="material-symbols-outlined text-lg leading-none">add_circle</span>
-              <span>+ Add Score</span>
+              <span>Add Score</span>
             </button>
           </div>
         </header>
@@ -378,9 +378,9 @@ export default function SubscriberDashboard() {
                   {charityPercent}% fee + voluntary rounds match
                 </p>
               </div>
-              <div className="mt-4 pt-3 border-t border-surface-container flex items-center justify-between text-body-sm text-on-surface-variant">
-                <span>Beneficiary</span>
-                <span className="font-semibold text-on-surface">St. Jude Children&apos;s</span>
+              <div className="mt-4 pt-3 border-t border-surface-container flex items-center justify-between gap-2 text-body-sm text-on-surface-variant">
+                <span className="shrink-0">Beneficiary</span>
+                <span className="font-semibold text-on-surface truncate text-right">St. Jude</span>
               </div>
             </div>
 

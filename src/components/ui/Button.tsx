@@ -29,16 +29,16 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     },
     ref
   ) => {
-    const baseStyles = 'inline-flex items-center justify-center font-medium rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#090D16] disabled:opacity-50 disabled:cursor-not-allowed select-none';
+    const baseStyles = 'inline-flex items-center justify-center font-medium rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed select-none active:scale-[0.98]';
 
     const variants = {
-      primary: 'bg-[#00F0FF] text-[#090D16] font-semibold hover:bg-[#00D8E6] hover:shadow-cyan-glow focus:ring-[#00F0FF]',
-      secondary: 'bg-slate-800 text-slate-100 border border-slate-700/80 hover:bg-slate-700 hover:border-slate-600 focus:ring-slate-500',
-      outline: 'bg-transparent text-slate-200 border border-slate-700 hover:border-[#00F0FF] hover:text-[#00F0FF] focus:ring-[#00F0FF]',
-      charity: 'bg-[#10B981] text-slate-950 font-semibold hover:bg-[#059669] hover:shadow-emerald-glow focus:ring-[#10B981]',
-      gold: 'bg-amber-500 text-slate-950 font-semibold hover:bg-amber-400 hover:shadow-gold-glow focus:ring-amber-400',
-      danger: 'bg-rose-600 text-white hover:bg-rose-500 focus:ring-rose-500',
-      ghost: 'bg-transparent text-slate-300 hover:text-white hover:bg-slate-800/60 focus:ring-slate-400',
+      primary: 'bg-primary hover:bg-primary-container text-on-primary font-semibold shadow-sm',
+      secondary: 'bg-surface-container-high hover:bg-surface-variant text-on-surface border border-outline-variant/50 font-medium',
+      outline: 'bg-transparent text-primary border border-outline-variant/60 hover:bg-surface-container font-medium',
+      charity: 'bg-primary-container hover:bg-primary text-on-primary font-semibold shadow-sm',
+      gold: 'bg-secondary hover:bg-secondary/90 text-on-secondary font-semibold shadow-sm',
+      danger: 'bg-error hover:bg-error/90 text-on-error font-semibold',
+      ghost: 'bg-transparent text-on-surface-variant hover:text-on-surface hover:bg-surface-container',
     };
 
     const sizes = {
@@ -58,10 +58,12 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         {isLoading ? (
           <Loader2 className="w-4 h-4 animate-spin text-current" />
         ) : (
-          leftIcon && <span className="inline-flex shrink-0">{leftIcon}</span>
+          <>
+            {leftIcon && <span className="shrink-0">{leftIcon}</span>}
+            {children}
+            {rightIcon && <span className="shrink-0">{rightIcon}</span>}
+          </>
         )}
-        <span>{children}</span>
-        {!isLoading && rightIcon && <span className="inline-flex shrink-0">{rightIcon}</span>}
       </button>
     );
   }

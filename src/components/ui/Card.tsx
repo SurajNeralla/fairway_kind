@@ -16,13 +16,13 @@ export const Card: React.FC<CardProps> = ({
   hoverEffect = false,
   ...props
 }) => {
-  const baseStyles = 'rounded-2xl p-6 border transition-all duration-300';
+  const baseStyles = 'rounded-3xl p-6 md:p-8 border transition-all duration-300';
 
   const variants = {
-    glass: 'bg-slate-900/60 backdrop-blur-xl border-slate-800 text-slate-100',
-    solid: 'bg-slate-900 border-slate-800 text-slate-100',
-    gradient: 'bg-gradient-to-br from-slate-900/90 via-slate-900/60 to-slate-950 border-slate-800 text-slate-100',
-    glow: 'bg-slate-900/70 border-cyan-500/30 shadow-cyan-glow text-slate-100',
+    glass: 'bg-surface-container-lowest border-outline-variant/40 text-on-surface custom-card-shadow',
+    solid: 'bg-surface-container-lowest border-outline-variant/40 text-on-surface custom-card-shadow',
+    gradient: 'bg-gradient-to-br from-surface-container-lowest to-[#FAF7EE] border-outline-variant/40 text-on-surface custom-card-shadow',
+    glow: 'bg-surface-container-lowest border-primary/30 custom-floating-shadow text-on-surface',
   };
 
   return (
@@ -31,7 +31,7 @@ export const Card: React.FC<CardProps> = ({
         clsx(
           baseStyles,
           variants[variant],
-          hoverEffect && 'hover:border-cyan-500/40 hover:-translate-y-1 hover:shadow-xl',
+          hoverEffect && 'hover:border-primary/40 hover:-translate-y-1 hover:shadow-lg',
           className
         )
       )}
