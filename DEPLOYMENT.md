@@ -18,7 +18,7 @@ Configure the following environment variables in your Vercel Project Settings (*
 | `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | Production, Preview, Dev | Stripe Publishable API Key | `pk_test_...` or `pk_live_...` |
 | `STRIPE_SECRET_KEY` | Production, Preview, Dev | Stripe Secret API Key (Server-Only) | `sk_test_...` or `sk_live_...` |
 | `STRIPE_WEBHOOK_SECRET` | Production, Preview, Dev | Stripe Webhook Signing Secret | `whsec_...` |
-| `NEXT_PUBLIC_APP_URL` | Production | Canonical Application Domain | `https://your-app.vercel.app` |
+| `NEXT_PUBLIC_APP_URL` | Production | Canonical Application Domain | `https://fairway-kind-app.vercel.app` |
 
 > [!IMPORTANT]
 > Never commit `.env` or `.env.local` to Git. All secret keys (`SUPABASE_SERVICE_ROLE_KEY`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`) must only be entered via Vercel Project Settings or local `.env.local`.
