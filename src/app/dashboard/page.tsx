@@ -79,6 +79,9 @@ export default function SubscriberDashboard() {
   const [scores, setScores] = useState<ScoreItem[]>(INITIAL_SCORES);
   const [modalOpen, setModalOpen] = useState(false);
   const [charityPercent, setCharityPercent] = useState(15);
+  const [charityName, setCharityName] = useState("St. Jude");
+  const [subStatus, setSubStatus] = useState('Yearly Plan — Active');
+  const [totalWonAmount, setTotalWonAmount] = useState(0);
   const [activeTab, setActiveTab] = useState('overview');
 
   // Inline form state
@@ -97,6 +100,47 @@ export default function SubscriberDashboard() {
 
   const userName = profile?.full_name || 'Marcus Vance';
 
+  const loadDashboardSummary = async () => {
+    try {
+      const res = await fetch('/api/dashboard/summary');
+      const data = await res.json();
+      if (res.ok && data) {
+        if (data.activeScores && data.activeScores.length > 0) {
+          const mappedScores: ScoreItem[] = data.activeScores.map((s: any) => ({
+            id: s.id,
+            date: new Date(s.played_on).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }),
+            course: 'Fairway Attested Round',
+            tees: 'Standard Tees',
+            slope: 'Rating 72.0 / Slope 130',
+            score: s.score,
+            attestation: 'Verified Round',
+            attestedAt: new Date(s.created_at || s.played_on).toLocaleDateString('en-US')
+          }));
+          setScores(mappedScores);
+        }
+        if (data.subscription?.voluntary_charity_percent) {
+          setCharityPercent(data.subscription.voluntary_charity_percent);
+        }
+        if (data.subscription?.charities?.name) {
+          setCharityName(data.subscription.charities.name);
+        }
+        if (data.subscription?.status) {
+          const planLabel = data.subscription.plan_type === 'yearly' ? 'Yearly' : 'Monthly';
+          setSubStatus(`${planLabel} Plan — ${data.subscription.status === 'active' ? 'Active' : data.subscription.status}`);
+        }
+        if (data.totalWon !== undefined) {
+          setTotalWonAmount(data.totalWon);
+        }
+      }
+    } catch (err) {
+      console.error('Failed to load dashboard summary:', err);
+    }
+  };
+
+  useEffect(() => {
+    loadDashboardSummary();
+  }, []);
+
   const handleLogout = async () => {
     try {
       await signOut();
@@ -107,7 +151,7 @@ export default function SubscriberDashboard() {
     }
   };
 
-  const handleInlineSubmit = (e: React.FormEvent) => {
+  const handleInlineSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const pts = parseInt(inlinePoints, 10);
     if (isNaN(pts) || pts < 1 || pts > 45) {
@@ -115,23 +159,29 @@ export default function SubscriberDashboard() {
       return;
     }
 
-    const newScore: ScoreItem = {
-      id: 'score_' + Date.now(),
-      date: new Date(inlineDate).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }),
-      course: inlineCourse || 'Home Course',
-      tees: 'Standard Tees',
-      slope: 'Rating 72.0 / Slope 130',
-      score: pts,
-      attestation: `Pending Marker (${inlineEmail.split('@')[0]})`,
-      attestedAt: 'Just submitted'
-    };
+    try {
+      const res = await fetch('/api/scores', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          score: pts,
+          played_on: inlineDate,
+        }),
+      });
 
-    // Rolling 5 maintain
-    setScores(prev => [newScore, ...prev.slice(0, 4)]);
-    showToast('Score Submitted!', 'Round registered and sent to peer marker for attestation.', 'success');
+      const data = await res.json();
+      if (res.ok) {
+        showToast('Score Attested!', 'Score saved to your rolling 5 entries in database.', 'success');
+        await loadDashboardSummary();
+      } else {
+        showToast('Submission Notice', data.error || 'Failed to submit score.', 'error');
+      }
+    } catch (err: any) {
+      showToast('Error', err.message || 'Score submit error', 'error');
+    }
   };
 
-  const handleModalSubmit = (e: React.FormEvent) => {
+  const handleModalSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const pts = parseInt(modalPoints, 10);
     if (isNaN(pts) || pts < 1 || pts > 45) {
@@ -139,28 +189,44 @@ export default function SubscriberDashboard() {
       return;
     }
 
-    const newScore: ScoreItem = {
-      id: 'score_' + Date.now(),
-      date: new Date(modalDate).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }),
-      course: modalCourse || 'Attested Course',
-      tees: 'Verified Tees',
-      slope: 'Rating 72.0 / Slope 130',
-      score: pts,
-      attestation: `Pending (${modalEmail.split('@')[0]})`,
-      attestedAt: 'Just submitted'
-    };
+    try {
+      const res = await fetch('/api/scores', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          score: pts,
+          played_on: modalDate,
+        }),
+      });
 
-    setScores(prev => [newScore, ...prev.slice(0, 4)]);
-    setModalOpen(false);
-    setModalCourse('');
-    setModalPoints('');
-    setModalEmail('');
-    showToast('Score Logged!', 'Score registered and marker notified. Charity boost queued!', 'success');
+      const data = await res.json();
+      if (res.ok) {
+        showToast('Score Logged!', 'Score successfully saved to your rolling 5 entries.', 'success');
+        setModalOpen(false);
+        setModalCourse('');
+        setModalPoints('');
+        setModalEmail('');
+        await loadDashboardSummary();
+      } else {
+        showToast('Submission Notice', data.error || 'Failed to submit score.', 'error');
+      }
+    } catch (err: any) {
+      showToast('Error', err.message || 'Score submit error', 'error');
+    }
   };
 
-  const handleDeleteScore = (id: string) => {
-    setScores(prev => prev.filter(s => s.id !== id));
-    showToast('Round Deleted', 'Round score removed from rolling 5 history.', 'info');
+  const handleDeleteScore = async (id: string) => {
+    try {
+      const res = await fetch(`/api/scores?id=${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        showToast('Round Deleted', 'Round score removed from rolling 5 history.', 'info');
+        await loadDashboardSummary();
+      } else {
+        setScores(prev => prev.filter(s => s.id !== id));
+      }
+    } catch {
+      setScores(prev => prev.filter(s => s.id !== id));
+    }
   };
 
   const handleIncreaseCharity = () => {
@@ -288,7 +354,7 @@ export default function SubscriberDashboard() {
                   </span>
                 </div>
                 <span className="inline-flex items-center text-[10px] font-bold text-primary tracking-wide">
-                  Yearly Plan — Active
+                  {subStatus}
                 </span>
               </div>
             </div>
@@ -320,7 +386,7 @@ export default function SubscriberDashboard() {
             <div className="flex items-center gap-2 bg-[#FBF6E9] border border-[#E9DCB6] px-3.5 py-1.5 rounded-full text-secondary shadow-xs">
               <span className="material-symbols-outlined text-secondary text-base">volunteer_activism</span>
               <span className="font-label-md text-label-md text-on-secondary-fixed-variant font-medium">
-                Supporting St. Jude ({charityPercent}% allocation)
+                Supporting {charityName} ({charityPercent}% allocation)
               </span>
             </div>
 
@@ -353,7 +419,7 @@ export default function SubscriberDashboard() {
                   <span className="font-headline-sm text-headline-sm font-semibold text-primary">ACTIVE</span>
                 </div>
                 <p className="font-label-md text-label-md text-on-surface-variant mt-1">
-                  Yearly Plan • #FK-88219
+                  {subStatus}
                 </p>
               </div>
               <div className="mt-4 pt-3 border-t border-surface-container flex items-center justify-between text-body-sm text-on-surface-variant">
@@ -380,7 +446,7 @@ export default function SubscriberDashboard() {
               </div>
               <div className="mt-4 pt-3 border-t border-surface-container flex items-center justify-between gap-2 text-body-sm text-on-surface-variant">
                 <span className="shrink-0">Beneficiary</span>
-                <span className="font-semibold text-on-surface truncate text-right">St. Jude</span>
+                <span className="font-semibold text-on-surface truncate text-right">{charityName}</span>
               </div>
             </div>
 

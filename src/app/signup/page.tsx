@@ -7,7 +7,6 @@ import { User, Mail, Lock, ArrowRight, Target, AlertCircle } from 'lucide-react'
 import { Card } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
-import { Select } from '@/components/ui/Select';
 import { createClient } from '@/lib/supabase/client';
 import { useToast } from '@/components/ui/Toast';
 
@@ -17,7 +16,6 @@ export default function SignupPage() {
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [roleOption, setRoleOption] = useState<'user' | 'admin'>('user');
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
@@ -45,7 +43,7 @@ export default function SignupPage() {
         options: {
           data: {
             full_name: fullName,
-            role: roleOption,
+            role: 'user',
           },
         },
       });
@@ -59,11 +57,11 @@ export default function SignupPage() {
           id: data.user.id,
           email: email,
           full_name: fullName,
-          role: roleOption,
+          role: 'user',
         });
 
-        showToast('Account Created!', 'Welcome to Digital Heroes.', 'success');
-        router.push(roleOption === 'admin' ? '/admin' : '/dashboard');
+        showToast('Account Created!', 'Welcome to FairwayKind.', 'success');
+        router.push('/dashboard');
         router.refresh();
       }
     } catch (err: any) {
@@ -119,16 +117,6 @@ export default function SignupPage() {
             onChange={(e) => setPassword(e.target.value)}
             leftIcon={<Lock className="w-4 h-4 text-on-surface-variant" />}
             required
-          />
-
-          <Select
-            label="Account Role Type"
-            value={roleOption}
-            onChange={(e) => setRoleOption(e.target.value as 'user' | 'admin')}
-            options={[
-              { value: 'user', label: 'Golfer Subscriber (User)' },
-              { value: 'admin', label: 'Platform Administrator (Admin)' },
-            ]}
           />
 
           <Button

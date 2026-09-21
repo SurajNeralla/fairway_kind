@@ -7,13 +7,6 @@ import { FairwayKindLogo } from '@/components/ui/Logo';
 import { useAuth } from '@/lib/auth/auth-context';
 import { useToast } from '@/components/ui/Toast';
 
-const SAMPLE_VECTORS = [
-  ['-1', 'E', '+1', '-2', 'E'],
-  ['E', '-1', '-1', '+1', '-1'],
-  ['-2', '+1', 'E', '-1', '+2'],
-  ['+1', 'E', '-2', '-1', 'E']
-];
-
 export default function AdminDashboardPage() {
   const router = useRouter();
   const { user, profile, signOut } = useAuth();
@@ -22,38 +15,90 @@ export default function AdminDashboardPage() {
   const [activeTab, setActiveTab] = useState('draw-management');
   const [mode, setMode] = useState<'algo' | 'seed'>('algo');
   const [isSimulating, setIsSimulating] = useState(false);
-  const [simIndex, setSimIndex] = useState(0);
-  const [vector, setVector] = useState<string[]>(['-1', 'E', '+1', '-2', 'E']);
-  const [simW5, setSimW5] = useState('1 Golfer');
-  const [simW4, setSimW4] = useState('7 Golfers');
-  const [simW3, setSimW3] = useState('42 Golfers');
+  const [isPublishing, setIsPublishing] = useState(false);
+  const [winningNumbers, setWinningNumbers] = useState<number[]>([12, 19, 27, 34, 41]);
+  const [simTier5, setSimTier5] = useState({ pool: 13700, count: 1, perWinner: 13700 });
+  const [simTier4, setSimTier4] = useState({ pool: 11987.5, count: 7, perWinner: 1712.5 });
+  const [simTier3, setSimTier3] = useState({ pool: 8562.5, count: 42, perWinner: 203.87 });
+  const [simTotalPool, setSimTotalPool] = useState(34250);
+  const [simRollover, setSimRollover] = useState(0);
 
   // Audit drawer state
   const [drawerOpen, setDrawerOpen] = useState(true);
   const [activeProofStatus, setActiveProofStatus] = useState<'pending' | 'approved' | 'rejected'>('pending');
 
-  const handleRunSimulation = () => {
+  const handleRunSimulation = async () => {
     setIsSimulating(true);
-    setTimeout(() => {
-      const nextIdx = (simIndex + 1) % SAMPLE_VECTORS.length;
-      setSimIndex(nextIdx);
-      setVector(SAMPLE_VECTORS[nextIdx]);
-
-      const w5 = nextIdx === 1 ? '2 Golfers' : (nextIdx === 2 ? '0 Golfers (Rollover)' : '1 Golfer');
-      const w4 = `${5 + nextIdx * 2} Golfers`;
-      const w3 = `${38 + nextIdx * 4} Golfers`;
-
-      setSimW5(w5);
-      setSimW4(w4);
-      setSimW3(w3);
+    try {
+      const res = await fetch('/api/draws/simulate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          periodMonth: 9,
+          periodYear: 2026,
+          mode: mode === 'algo' ? 'algorithmic' : 'random',
+          seed: `sim-seed-${Date.now()}`
+        })
+      });
+      const data = await res.json();
+      if (res.ok && data.simulation) {
+        setWinningNumbers(data.simulation.winningNumbers);
+        setSimTier5({
+          pool: data.simulation.tier5.totalTierPool,
+          count: data.simulation.tier5.winnerCount,
+          perWinner: data.simulation.tier5.prizePerWinner
+        });
+        setSimTier4({
+          pool: data.simulation.tier4.totalTierPool,
+          count: data.simulation.tier4.winnerCount,
+          perWinner: data.simulation.tier4.prizePerWinner
+        });
+        setSimTier3({
+          pool: data.simulation.tier3.totalTierPool,
+          count: data.simulation.tier3.winnerCount,
+          perWinner: data.simulation.tier3.prizePerWinner
+        });
+        setSimTotalPool(data.simulation.totalPrizePool);
+        setSimRollover(data.simulation.nextRollover);
+        showToast(
+          'Simulation Completed',
+          `Numbers: [${data.simulation.winningNumbers.join(', ')}] • T5: ${data.simulation.tier5.winnerCount}, T4: ${data.simulation.tier4.winnerCount}, T3: ${data.simulation.tier3.winnerCount}`,
+          'success'
+        );
+      } else {
+        showToast('Simulation Notice', data.error || 'Failed to simulate draw.', 'info');
+      }
+    } catch (err: any) {
+      showToast('Error', err.message || 'Simulation network error', 'error');
+    } finally {
       setIsSimulating(false);
-
-      showToast('Simulation Completed', 'Deterministic match completed across 24,812 active subscriber scorecards.', 'success');
-    }, 600);
+    }
   };
 
-  const handlePublishResults = () => {
-    showToast('Draw #DK-102 Published', 'Official results certified and winner notification records generated.', 'success');
+  const handlePublishResults = async () => {
+    setIsPublishing(true);
+    try {
+      const res = await fetch('/api/draws/publish', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          periodMonth: 9,
+          periodYear: 2026,
+          mode: mode === 'algo' ? 'algorithmic' : 'random',
+          seed: `publish-seed-${Date.now()}`
+        })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        showToast('Draw Published!', `Official draw published. Winning numbers: [${data.draw?.winning_numbers?.join(', ')}].`, 'success');
+      } else {
+        showToast('Publication Notice', data.error || 'Draw already published or error occurred.', 'info');
+      }
+    } catch (err: any) {
+      showToast('Error', err.message || 'Publishing network error', 'error');
+    } finally {
+      setIsPublishing(false);
+    }
   };
 
   const handleApproveProof = () => {
@@ -158,22 +203,20 @@ export default function AdminDashboardPage() {
             </button>
 
             <Link
-              href="/charities"
+              href="/admin/charities"
               className="text-on-surface-variant hover:text-on-surface hover:bg-surface-container rounded-xl px-3 py-2 flex items-center gap-3 transition-colors text-body-sm font-body-sm"
             >
               <span className="material-symbols-outlined text-[20px]">volunteer_activism</span>
               Charities
             </Link>
 
-            <button
-              onClick={() => setActiveTab('winners')}
-              className={`w-full text-left rounded-xl px-3 py-2 flex items-center gap-3 transition-colors text-body-sm font-body-sm ${
-                activeTab === 'winners' ? 'bg-surface-container text-primary font-semibold' : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container'
-              }`}
+            <Link
+              href="/admin/winners"
+              className="text-on-surface-variant hover:text-on-surface hover:bg-surface-container rounded-xl px-3 py-2 flex items-center gap-3 transition-colors text-body-sm font-body-sm"
             >
               <span className="material-symbols-outlined text-[20px]">emoji_events</span>
               Winners &amp; Payouts
-            </button>
+            </Link>
 
             <button
               onClick={() => setActiveTab('reports')}
@@ -410,10 +453,13 @@ export default function AdminDashboardPage() {
 
                 <button
                   onClick={handlePublishResults}
-                  className="px-5 py-2.5 rounded-xl bg-secondary text-on-secondary font-label-lg text-label-lg font-semibold hover:bg-on-secondary-container transition-all flex items-center gap-2 active:scale-[0.98] shadow-sm"
+                  disabled={isPublishing}
+                  className="px-5 py-2.5 rounded-xl bg-secondary text-on-secondary font-label-lg text-label-lg font-semibold hover:bg-on-secondary-container transition-all flex items-center gap-2 active:scale-[0.98] shadow-sm disabled:opacity-50"
                 >
-                  <span className="material-symbols-outlined text-[18px]">publish</span>
-                  Publish Official Results
+                  <span className={`material-symbols-outlined text-[18px] ${isPublishing ? 'animate-spin' : ''}`}>
+                    {isPublishing ? 'refresh' : 'publish'}
+                  </span>
+                  {isPublishing ? 'Publishing...' : 'Publish Official Results'}
                 </button>
               </div>
             </div>
@@ -427,23 +473,25 @@ export default function AdminDashboardPage() {
                     <span className="font-label-sm text-label-sm uppercase font-bold tracking-wider text-secondary">
                       Grand Skill Tier
                     </span>
-                    <span className="font-label-md text-label-md text-on-surface-variant font-medium">40% Allocation</span>
+                    <span className="font-label-md text-label-md text-on-surface-variant font-medium">40% Allocation + Rollover</span>
                   </div>
                   <h3 className="font-headline-sm text-headline-sm font-semibold text-primary mt-1">
-                    5-Hole Precision Match
+                    5-Number Exact Match
                   </h3>
                   <p className="font-body-sm text-body-sm text-on-surface-variant mt-1">
-                    Exact net strokes matching the official course par-differential vector.
+                    Exact 5-number match against the monthly drawn numbers (1–45).
                   </p>
                 </div>
                 <div className="pt-6 mt-4 border-t border-outline-variant/20 flex items-baseline justify-between">
                   <div>
                     <span className="font-label-sm text-label-sm text-on-surface-variant font-medium">Prize Pool</span>
-                    <p className="font-headline-sm text-headline-sm font-bold text-on-surface">$13,700.00</p>
+                    <p className="font-headline-sm text-headline-sm font-bold text-on-surface">${simTier5.pool.toLocaleString()}</p>
                   </div>
                   <div className="text-right">
                     <span className="font-label-sm text-label-sm text-on-surface-variant font-medium">Sim Winners</span>
-                    <p className="font-headline-sm text-headline-sm font-bold text-primary">{simW5}</p>
+                    <p className="font-headline-sm text-headline-sm font-bold text-primary">
+                      {simTier5.count === 0 ? '0 (Rollover)' : `${simTier5.count} Golfer${simTier5.count > 1 ? 's' : ''}`}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -458,20 +506,20 @@ export default function AdminDashboardPage() {
                     <span className="font-label-md text-label-md text-on-surface-variant font-medium">35% Allocation</span>
                   </div>
                   <h3 className="font-headline-sm text-headline-sm font-semibold text-primary mt-1">
-                    4-Hole Precision Match
+                    4-Number Exact Match
                   </h3>
                   <p className="font-body-sm text-body-sm text-on-surface-variant mt-1">
-                    4-hole exact differential accuracy across back-nine scoring records.
+                    4-number match across active subscriber scorecard entries.
                   </p>
                 </div>
                 <div className="pt-6 mt-4 border-t border-outline-variant/20 flex items-baseline justify-between">
                   <div>
                     <span className="font-label-sm text-label-sm text-on-surface-variant font-medium">Prize Pool</span>
-                    <p className="font-headline-sm text-headline-sm font-bold text-on-surface">$11,987.50</p>
+                    <p className="font-headline-sm text-headline-sm font-bold text-on-surface">${simTier4.pool.toLocaleString()}</p>
                   </div>
                   <div className="text-right">
                     <span className="font-label-sm text-label-sm text-on-surface-variant font-medium">Sim Winners</span>
-                    <p className="font-headline-sm text-headline-sm font-bold text-primary">{simW4}</p>
+                    <p className="font-headline-sm text-headline-sm font-bold text-primary">{simTier4.count} Golfers</p>
                   </div>
                 </div>
               </div>
@@ -486,20 +534,20 @@ export default function AdminDashboardPage() {
                     <span className="font-label-md text-label-md text-on-surface-variant font-medium">25% Allocation</span>
                   </div>
                   <h3 className="font-headline-sm text-headline-sm font-semibold text-primary mt-1">
-                    3-Hole Precision Match
+                    3-Number Exact Match
                   </h3>
                   <p className="font-body-sm text-body-sm text-on-surface-variant mt-1">
-                    3-hole match distribution shared equally among verified subscriber entrants.
+                    3-number match pool shared equally among verified subscriber entrants.
                   </p>
                 </div>
                 <div className="pt-6 mt-4 border-t border-outline-variant/20 flex items-baseline justify-between">
                   <div>
                     <span className="font-label-sm text-label-sm text-on-surface-variant font-medium">Prize Pool</span>
-                    <p className="font-headline-sm text-headline-sm font-bold text-on-surface">$8,562.50</p>
+                    <p className="font-headline-sm text-headline-sm font-bold text-on-surface">${simTier3.pool.toLocaleString()}</p>
                   </div>
                   <div className="text-right">
                     <span className="font-label-sm text-label-sm text-on-surface-variant font-medium">Sim Winners</span>
-                    <p className="font-headline-sm text-headline-sm font-bold text-primary">{simW3}</p>
+                    <p className="font-headline-sm text-headline-sm font-bold text-primary">{simTier3.count} Golfers</p>
                   </div>
                 </div>
               </div>
@@ -511,10 +559,10 @@ export default function AdminDashboardPage() {
                 <div className="flex flex-col sm:flex-row sm:items-center gap-4 w-full lg:w-auto">
                   <div>
                     <span className="font-label-sm text-label-sm uppercase font-bold text-on-surface-variant">
-                      Simulated Winning Vector (Par Diffs):
+                      Simulated Winning Numbers (1–45):
                     </span>
                     <div className="flex items-center gap-2 mt-1.5">
-                      {vector.map((val, i) => (
+                      {winningNumbers.map((val, i) => (
                         <span
                           key={i}
                           className="w-10 h-10 rounded-xl bg-primary text-on-primary flex items-center justify-center font-headline-sm font-bold shadow-xs transition-all duration-300"
@@ -530,15 +578,15 @@ export default function AdminDashboardPage() {
                       Total Projected Payout
                     </span>
                     <p className="font-headline-sm text-headline-sm font-bold text-on-surface mt-1">
-                      $34,250.00 <span className="font-body-sm text-body-sm font-normal text-on-surface-variant">(100% of pool)</span>
+                      ${simTotalPool.toLocaleString()} <span className="font-body-sm text-body-sm font-normal text-on-surface-variant">(100% of pool)</span>
                     </p>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-4 w-full lg:w-auto justify-end">
                   <div className="text-right">
-                    <span className="font-label-sm text-label-sm uppercase font-bold text-on-surface-variant">Rollover to #DK-103</span>
-                    <p className="font-label-lg text-label-lg font-bold text-primary">$0.00 (Zero Deficit)</p>
+                    <span className="font-label-sm text-label-sm uppercase font-bold text-on-surface-variant">Rollover</span>
+                    <p className="font-label-lg text-label-lg font-bold text-primary">${simRollover.toLocaleString()}</p>
                   </div>
                   <div className="h-9 px-3 rounded-lg bg-surface-container-lowest border border-outline-variant/40 flex items-center gap-2 text-primary font-label-md text-label-md font-semibold">
                     <span className="material-symbols-outlined text-[18px] text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>

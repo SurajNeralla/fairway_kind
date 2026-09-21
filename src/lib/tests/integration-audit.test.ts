@@ -18,7 +18,7 @@ import { Winner, GolfScore } from '@/lib/types';
 
 export function runFullEngineeringAudit() {
   console.log('================================================================');
-  console.log('   DIGITAL HEROES — FULL PHASE 11 ENGINEERING AUDIT SUITE      ');
+  console.log('   FAIRWAYKIND — FULL PHASE 11 ENGINEERING AUDIT SUITE         ');
   console.log('================================================================\n');
 
   let passed = 0;

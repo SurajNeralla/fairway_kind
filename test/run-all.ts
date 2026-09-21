@@ -9,7 +9,7 @@ const testSuites = [
 ];
 
 console.log('================================================================');
-console.log('       DIGITAL HEROES — COMPLETE TEST SUITE RUNNER              ');
+console.log('       FAIRWAYKIND — COMPLETE TEST SUITE RUNNER                 ');
 console.log('================================================================\n');
 
 let totalPassedSuites = 0;

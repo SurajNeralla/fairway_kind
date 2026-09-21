@@ -12,6 +12,11 @@ const supabaseAdmin = createClient(
 );
 
 export async function POST(request: Request) {
+  if (!process.env.SUPABASE_SERVICE_ROLE_KEY && process.env.NODE_ENV === 'production') {
+    console.error('SUPABASE_SERVICE_ROLE_KEY is required for webhook processing in production.');
+    return NextResponse.json({ error: 'Server configuration error: missing service role key' }, { status: 500 });
+  }
+
   const body = await request.text();
   const signature = headers().get('stripe-signature') || '';
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
