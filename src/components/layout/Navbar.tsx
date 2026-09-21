@@ -3,9 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Target, User, Shield, Menu, X, ArrowRight, LogOut, KeyRound } from 'lucide-react';
-import { Button } from '@/components/ui/Button';
-import { Badge } from '@/components/ui/Badge';
+import { FairwayKindLogo } from '@/components/ui/Logo';
 import { useAuth } from '@/lib/auth/auth-context';
 import { useToast } from '@/components/ui/Toast';
 
@@ -16,11 +14,10 @@ export const Navbar: React.FC = () => {
   const { showToast } = useToast();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const navLinks = [
-    { href: '/', label: 'Home' },
-    { href: '/charities', label: 'Charities' },
-    { href: '/how-it-works', label: 'How It Works' },
-  ];
+  // If on dashboard or admin, hide standard public header
+  if (pathname.startsWith('/dashboard') || pathname.startsWith('/admin')) {
+    return null;
+  }
 
   const handleLogout = async () => {
     try {
@@ -33,183 +30,170 @@ export const Navbar: React.FC = () => {
   };
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-slate-800/80 bg-[#090D16]/80 backdrop-blur-xl transition-all">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
-        {/* Brand Logo */}
-        <Link href="/" className="flex items-center gap-3 group">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#00F0FF] to-emerald-500 p-0.5 shadow-cyan-glow group-hover:scale-105 transition-transform">
-            <div className="w-full h-full bg-[#090D16] rounded-[10px] flex items-center justify-center">
-              <Target className="w-5 h-5 text-[#00F0FF]" />
-            </div>
-          </div>
-          <div className="flex flex-col">
-            <span className="text-lg font-extrabold tracking-tight text-white flex items-center gap-1">
-              DIGITAL <span className="text-[#00F0FF]">HEROES</span>
-            </span>
-            <span className="text-[9px] font-semibold text-emerald-400 tracking-widest uppercase">
-              Play • Win • Give Back
-            </span>
-          </div>
+    <header className="bg-surface dark:bg-inverse-surface text-primary dark:text-inverse-primary border-b border-outline-variant/40 dark:border-outline/20 shadow-sm dark:shadow-none docked full-width top-0 sticky z-40">
+      <div className="max-w-7xl mx-auto px-6 md:px-12 flex items-center justify-between h-20">
+        {/* Brand & Logo */}
+        <Link 
+          href="/" 
+          className="flex items-center gap-3 active:scale-[0.98] transition-transform duration-150 group"
+        >
+          <FairwayKindLogo className="h-10 w-auto" />
+          <span className="sr-only">FairwayKind</span>
         </Link>
 
-        {/* Desktop Nav Links */}
-        <nav className="hidden md:flex items-center gap-1 bg-slate-900/60 p-1.5 rounded-full border border-slate-800/80 backdrop-blur-md" aria-label="Main Navigation">
-          {navLinks.map((link) => {
-            const isActive = pathname === link.href;
-            return (
-              <Link
-                key={link.href}
-                href={link.href}
-                aria-current={isActive ? 'page' : undefined}
-                className={`relative px-4 py-2 text-xs font-semibold rounded-full transition-all duration-200 ${
-                  isActive
-                    ? 'text-white bg-slate-800/90 shadow-sm border border-slate-700/60'
-                    : 'text-slate-400 hover:text-white hover:bg-slate-800/40'
-                }`}
-              >
-                {link.label}
-                {isActive && (
-                  <span className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-[#00F0FF] shadow-[0_0_8px_#00F0FF]" />
-                )}
-              </Link>
-            );
-          })}
+        {/* Desktop Links */}
+        <nav className="hidden md:flex items-center gap-8">
+          <Link 
+            href="/#how-it-works" 
+            className="text-on-surface-variant dark:text-on-tertiary-container hover:text-on-surface dark:hover:text-inverse-on-surface transition-colors font-label-lg text-label-lg"
+          >
+            How It Works
+          </Link>
+          <Link 
+            href="/charities" 
+            className="text-on-surface-variant dark:text-on-tertiary-container hover:text-on-surface dark:hover:text-inverse-on-surface transition-colors font-label-lg text-label-lg"
+          >
+            Charity Directory
+          </Link>
+          <Link 
+            href="/#impact" 
+            className="text-on-surface-variant dark:text-on-tertiary-container hover:text-on-surface dark:hover:text-inverse-on-surface transition-colors font-label-lg text-label-lg"
+          >
+            Impact
+          </Link>
+          <Link 
+            href="/#pricing" 
+            className="text-on-surface-variant dark:text-on-tertiary-container hover:text-on-surface dark:hover:text-inverse-on-surface transition-colors font-label-lg text-label-lg"
+          >
+            Pricing
+          </Link>
         </nav>
 
-        {/* Action Controls */}
-        <div className="hidden md:flex items-center gap-3">
+        {/* Trailing Action Cluster */}
+        <div className="flex items-center gap-4">
           {user ? (
             <>
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-200">
-                <User className="w-3.5 h-3.5 text-[#00F0FF]" />
-                <span className="font-semibold max-w-[120px] truncate">
-                  {profile?.full_name || user.email}
-                </span>
-                {isAdmin ? (
-                  <Badge variant="gold" size="sm">Admin</Badge>
-                ) : (
-                  <Badge variant="emerald" size="sm">Subscriber</Badge>
-                )}
-              </div>
-
-              <Link href="/dashboard">
-                <Button variant="secondary" size="sm">
-                  Dashboard
-                </Button>
-              </Link>
-
-              {isAdmin && (
-                <Link href="/admin">
-                  <Button variant="outline" size="sm" leftIcon={<Shield className="w-3.5 h-3.5 text-amber-400" />}>
-                    Admin
-                  </Button>
+              {isAdmin ? (
+                <Link
+                  href="/admin"
+                  className="hidden sm:inline-flex text-label-lg font-label-lg text-primary hover:text-primary-container px-3 py-2 transition-colors active:scale-[0.98] items-center gap-1 font-semibold"
+                >
+                  <span className="material-symbols-outlined text-lg">admin_panel_settings</span>
+                  Admin Suite
                 </Link>
-              )}
-
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleLogout}
-                className="text-slate-400 hover:text-rose-400"
-                aria-label="Log out"
+              ) : null}
+              <Link
+                href="/dashboard"
+                className="bg-primary hover:bg-primary-container text-on-primary font-label-lg text-label-lg px-5 py-2.5 rounded-full transition-all duration-200 active:scale-[0.98] shadow-sm hover:shadow flex items-center gap-1.5"
               >
-                <LogOut className="w-4 h-4" />
-              </Button>
+                <span className="material-symbols-outlined text-lg">dashboard</span>
+                Dashboard
+              </Link>
+              <button
+                onClick={handleLogout}
+                className="text-on-surface-variant hover:text-error p-2 transition-colors rounded-full"
+                title="Log Out"
+              >
+                <span className="material-symbols-outlined text-lg">logout</span>
+              </button>
             </>
           ) : (
             <>
-              <Link href="/login">
-                <Button variant="ghost" size="sm">
-                  Sign In
-                </Button>
+              <Link
+                href="/login"
+                className="hidden sm:inline-flex text-label-lg font-label-lg text-primary hover:text-primary-container px-4 py-2 transition-colors active:scale-[0.98]"
+              >
+                Sign In
               </Link>
-              <Link href="/subscribe">
-                <Button variant="primary" size="sm" rightIcon={<ArrowRight className="w-4 h-4" />}>
-                  Subscribe
-                </Button>
+              <Link
+                href="/subscribe"
+                className="bg-primary hover:bg-primary-container text-on-primary font-label-lg text-label-lg px-6 py-2.5 rounded-full transition-all duration-200 active:scale-[0.98] shadow-sm hover:shadow"
+              >
+                Subscribe
               </Link>
             </>
           )}
-        </div>
 
-        {/* Mobile Menu Button */}
-        <button
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="md:hidden p-2.5 rounded-xl border border-slate-800 text-slate-300 hover:text-white bg-slate-900/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#00F0FF]"
-          aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
-          aria-expanded={mobileMenuOpen}
-        >
-          {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-        </button>
+          {/* Mobile menu trigger */}
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="md:hidden p-2 text-on-surface-variant hover:text-on-surface focus:outline-none"
+            aria-label="Toggle navigation menu"
+          >
+            <span className="material-symbols-outlined text-2xl">
+              {mobileMenuOpen ? 'close' : 'menu'}
+            </span>
+          </button>
+        </div>
       </div>
 
-      {/* Mobile Menu Dropdown */}
+      {/* Mobile Drawer */}
       {mobileMenuOpen && (
-        <div className="md:hidden border-b border-slate-800 bg-[#090D16]/95 backdrop-blur-2xl px-6 py-6 space-y-4 animate-in slide-in-from-top-2 duration-200">
-          <div className="flex flex-col space-y-1">
-            {navLinks.map((link) => {
-              const isActive = pathname === link.href;
-              return (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  aria-current={isActive ? 'page' : undefined}
-                  onClick={() => setMobileMenuOpen(false)}
-                  className={`px-3 py-2 rounded-xl text-sm font-medium transition-colors flex items-center justify-between ${
-                    isActive
-                      ? 'bg-slate-800/80 text-[#00F0FF] font-semibold'
-                      : 'text-slate-300 hover:bg-slate-800/40 hover:text-white'
-                  }`}
-                >
-                  <span>{link.label}</span>
-                  {isActive && <span className="w-2 h-2 rounded-full bg-[#00F0FF] shadow-[0_0_6px_#00F0FF]" />}
-                </Link>
-              );
-            })}
-          </div>
-
-          <div className="pt-4 border-t border-slate-800 flex flex-col gap-2">
+        <div className="md:hidden bg-surface-container-lowest border-b border-outline-variant/40 px-6 py-5 flex flex-col gap-4 animate-in slide-in-from-top-2">
+          <Link 
+            href="/#how-it-works" 
+            onClick={() => setMobileMenuOpen(false)}
+            className="text-on-surface-variant hover:text-on-surface font-label-lg py-1.5"
+          >
+            How It Works
+          </Link>
+          <Link 
+            href="/charities" 
+            onClick={() => setMobileMenuOpen(false)}
+            className="text-on-surface-variant hover:text-on-surface font-label-lg py-1.5"
+          >
+            Charity Directory
+          </Link>
+          <Link 
+            href="/#impact" 
+            onClick={() => setMobileMenuOpen(false)}
+            className="text-on-surface-variant hover:text-on-surface font-label-lg py-1.5"
+          >
+            Impact
+          </Link>
+          <Link 
+            href="/#pricing" 
+            onClick={() => setMobileMenuOpen(false)}
+            className="text-on-surface-variant hover:text-on-surface font-label-lg py-1.5"
+          >
+            Pricing
+          </Link>
+          <div className="pt-3 border-t border-outline-variant/30 flex flex-col gap-3">
             {user ? (
               <>
-                <div className="flex items-center justify-between p-3 rounded-xl bg-slate-900 border border-slate-800 text-xs">
-                  <span className="text-slate-200 font-semibold">{profile?.full_name || user.email}</span>
-                  {isAdmin ? <Badge variant="gold">Admin</Badge> : <Badge variant="emerald">Subscriber</Badge>}
-                </div>
-                <Link href="/dashboard" onClick={() => setMobileMenuOpen(false)}>
-                  <Button variant="secondary" className="w-full text-xs">
-                    Golfer Dashboard
-                  </Button>
+                <Link
+                  href="/dashboard"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="w-full text-center bg-primary text-on-primary font-label-lg py-2.5 rounded-full"
+                >
+                  My Dashboard
                 </Link>
                 {isAdmin && (
-                  <Link href="/admin" onClick={() => setMobileMenuOpen(false)}>
-                    <Button variant="outline" className="w-full text-xs">
-                      Admin Portal
-                    </Button>
+                  <Link
+                    href="/admin"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="w-full text-center bg-surface-container text-primary font-label-lg py-2.5 rounded-full"
+                  >
+                    Admin Suite
                   </Link>
                 )}
-                <Button variant="danger" size="sm" onClick={handleLogout} className="w-full text-xs">
-                  Sign Out
-                </Button>
               </>
             ) : (
               <>
-                <Link href="/subscribe" onClick={() => setMobileMenuOpen(false)}>
-                  <Button variant="primary" className="w-full">
-                    Subscribe Now
-                  </Button>
+                <Link
+                  href="/login"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="w-full text-center border border-outline-variant text-primary font-label-lg py-2.5 rounded-full"
+                >
+                  Sign In
                 </Link>
-                <div className="grid grid-cols-2 gap-2 pt-2">
-                  <Link href="/login" onClick={() => setMobileMenuOpen(false)}>
-                    <Button variant="outline" size="sm" className="w-full text-xs">
-                      Login
-                    </Button>
-                  </Link>
-                  <Link href="/signup" onClick={() => setMobileMenuOpen(false)}>
-                    <Button variant="secondary" size="sm" className="w-full text-xs">
-                      Signup
-                    </Button>
-                  </Link>
-                </div>
+                <Link
+                  href="/subscribe"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="w-full text-center bg-primary text-on-primary font-label-lg py-2.5 rounded-full"
+                >
+                  Subscribe
+                </Link>
               </>
             )}
           </div>

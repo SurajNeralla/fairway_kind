@@ -1,992 +1,984 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
-import {
-  Shield, Users, Trophy, Heart, FileCheck, DollarSign, Play, RefreshCw,
-  CheckCircle2, XCircle, Search, Filter, Edit3, Trash2, ArrowRight,
-  TrendingUp, BarChart3, Clock, AlertTriangle, ChevronLeft, ChevronRight,
-  Award, Eye, Lock, Sparkles, ExternalLink, Activity, Layers, CreditCard, Plus
-} from 'lucide-react';
-import { Card } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
-import { Badge } from '@/components/ui/Badge';
-import { Input } from '@/components/ui/Input';
-import { Select } from '@/components/ui/Select';
-import { Modal } from '@/components/ui/Modal';
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/Table';
-import { LoadingState } from '@/components/ui/LoadingState';
-import { EmptyState } from '@/components/ui/EmptyState';
-import { ErrorState } from '@/components/ui/ErrorState';
+import { useRouter } from 'next/navigation';
+import { FairwayKindLogo } from '@/components/ui/Logo';
+import { useAuth } from '@/lib/auth/auth-context';
 import { useToast } from '@/components/ui/Toast';
-import { Charity, Winner } from '@/lib/types';
 
-type AdminTab = 'overview' | 'users' | 'subscriptions' | 'draws' | 'charities' | 'winners' | 'reports';
+const SAMPLE_VECTORS = [
+  ['-1', 'E', '+1', '-2', 'E'],
+  ['E', '-1', '-1', '+1', '-1'],
+  ['-2', '+1', 'E', '-1', '+2'],
+  ['+1', 'E', '-2', '-1', 'E']
+];
 
-export default function AdminControlCenterPage() {
+export default function AdminDashboardPage() {
+  const router = useRouter();
+  const { user, profile, signOut } = useAuth();
   const { showToast } = useToast();
-  const [activeTab, setActiveTab] = useState<AdminTab>('overview');
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
-  // Overview & Activity Data
-  const [overviewMetrics, setOverviewMetrics] = useState<any>(null);
-  const [recentActivity, setRecentActivity] = useState<any[]>([]);
+  const [activeTab, setActiveTab] = useState('draw-management');
+  const [mode, setMode] = useState<'algo' | 'seed'>('algo');
+  const [isSimulating, setIsSimulating] = useState(false);
+  const [simIndex, setSimIndex] = useState(0);
+  const [vector, setVector] = useState<string[]>(['-1', 'E', '+1', '-2', 'E']);
+  const [simW5, setSimW5] = useState('1 Golfer');
+  const [simW4, setSimW4] = useState('7 Golfers');
+  const [simW3, setSimW3] = useState('42 Golfers');
 
-  // Users Tab State
-  const [users, setUsers] = useState<any[]>([]);
-  const [userSearch, setUserSearch] = useState('');
-  const [userRoleFilter, setUserRoleFilter] = useState('');
-  const [userSubFilter, setUserSubFilter] = useState('');
-  const [userPage, setUserPage] = useState(1);
-  const [userTotalPages, setUserTotalPages] = useState(1);
-  const [editingUser, setEditingUser] = useState<any | null>(null);
-  const [editUserName, setEditUserName] = useState('');
-  const [editUserRole, setEditUserRole] = useState<'user' | 'admin'>('user');
-  const [isUpdatingUser, setIsUpdatingUser] = useState(false);
+  // Audit drawer state
+  const [drawerOpen, setDrawerOpen] = useState(true);
+  const [activeProofStatus, setActiveProofStatus] = useState<'pending' | 'approved' | 'rejected'>('pending');
 
-  // Subscriptions Tab State
-  const [subscriptions, setSubscriptions] = useState<any[]>([]);
-  const [subStatusFilter, setSubStatusFilter] = useState('');
-  const [subSearch, setSubSearch] = useState('');
+  const handleRunSimulation = () => {
+    setIsSimulating(true);
+    setTimeout(() => {
+      const nextIdx = (simIndex + 1) % SAMPLE_VECTORS.length;
+      setSimIndex(nextIdx);
+      setVector(SAMPLE_VECTORS[nextIdx]);
 
-  // Charities Tab State
-  const [charities, setCharities] = useState<Charity[]>([]);
-  const [charityModalOpen, setCharityModalOpen] = useState(false);
-  const [editingCharity, setEditingCharity] = useState<Charity | null>(null);
-  const [charityName, setCharityName] = useState('');
-  const [charityCategory, setCharityCategory] = useState('Youth & Sports Access');
-  const [charityDesc, setCharityDesc] = useState('');
-  const [charityLogo, setCharityLogo] = useState('⛳');
-  const [isSavingCharity, setIsSavingCharity] = useState(false);
+      const w5 = nextIdx === 1 ? '2 Golfers' : (nextIdx === 2 ? '0 Golfers (Rollover)' : '1 Golfer');
+      const w4 = `${5 + nextIdx * 2} Golfers`;
+      const w3 = `${38 + nextIdx * 4} Golfers`;
 
-  // Winners Preview State
-  const [winners, setWinners] = useState<Winner[]>([]);
+      setSimW5(w5);
+      setSimW4(w4);
+      setSimW3(w3);
+      setIsSimulating(false);
 
-  // Reports Tab State
-  const [reportsData, setReportsData] = useState<any>(null);
+      showToast('Simulation Completed', 'Deterministic match completed across 24,812 active subscriber scorecards.', 'success');
+    }, 600);
+  };
 
-  // Load Overview Data
-  const loadOverview = async () => {
+  const handlePublishResults = () => {
+    showToast('Draw #DK-102 Published', 'Official results certified and winner notification records generated.', 'success');
+  };
+
+  const handleApproveProof = () => {
+    setActiveProofStatus('approved');
+    showToast('Proof Approved', 'Scorecard verified. $13,700 payout queued for Evan Mercer.', 'success');
+  };
+
+  const handleRejectProof = () => {
+    setActiveProofStatus('rejected');
+    showToast('Proof Rejected', 'Audit notice dispatched to member for scorecard re-attestation.', 'error');
+  };
+
+  const handleLogout = async () => {
     try {
-      const res = await fetch('/api/admin/overview');
-      const data = await res.json();
-      if (res.ok) {
-        setOverviewMetrics(data.metrics);
-        setRecentActivity(data.recentActivity || []);
-      } else {
-        throw new Error(data.error);
-      }
-    } catch (err: any) {
-      console.error('Error loading overview:', err);
-      setError(err.message || 'Failed to load overview data.');
-    }
-  };
-
-  // Load Users Data
-  const loadUsers = async () => {
-    try {
-      const query = new URLSearchParams({
-        search: userSearch,
-        role: userRoleFilter,
-        status: userSubFilter,
-        page: userPage.toString(),
-        limit: '15',
-      });
-      const res = await fetch(`/api/admin/users?${query.toString()}`);
-      const data = await res.json();
-      if (res.ok) {
-        setUsers(data.users || []);
-        setUserTotalPages(data.totalPages || 1);
-      }
-    } catch (err) {
-      console.error('Error loading users:', err);
-    }
-  };
-
-  // Load Subscriptions Data
-  const loadSubscriptions = async () => {
-    try {
-      const query = new URLSearchParams({
-        status: subStatusFilter,
-        search: subSearch,
-      });
-      const res = await fetch(`/api/admin/subscriptions?${query.toString()}`);
-      const data = await res.json();
-      if (res.ok) {
-        setSubscriptions(data.subscriptions || []);
-      }
-    } catch (err) {
-      console.error('Error loading subscriptions:', err);
-    }
-  };
-
-  // Load Charities Data
-  const loadCharities = async () => {
-    try {
-      const res = await fetch('/api/charities?includeInactive=true');
-      const data = await res.json();
-      if (res.ok) {
-        setCharities(data.charities || []);
-      }
-    } catch (err) {
-      console.error('Error loading charities:', err);
-    }
-  };
-
-  // Load Winners Data
-  const loadWinners = async () => {
-    try {
-      const res = await fetch('/api/winners');
-      const data = await res.json();
-      if (res.ok) {
-        setWinners(data.winners || []);
-      }
-    } catch (err) {
-      console.error('Error loading winners:', err);
-    }
-  };
-
-  // Load Reports Data
-  const loadReports = async () => {
-    try {
-      const res = await fetch('/api/admin/reports');
-      const data = await res.json();
-      if (res.ok) {
-        setReportsData(data);
-      }
-    } catch (err) {
-      console.error('Error loading reports:', err);
-    }
-  };
-
-  // Initial Data Load
-  const refreshAll = async () => {
-    setIsLoading(true);
-    setError(null);
-    await Promise.all([
-      loadOverview(),
-      loadUsers(),
-      loadSubscriptions(),
-      loadCharities(),
-      loadWinners(),
-      loadReports(),
-    ]);
-    setIsLoading(false);
-  };
-
-  useEffect(() => {
-    refreshAll();
-  }, []);
-
-  // Reload Users when filters change
-  useEffect(() => {
-    if (activeTab === 'users') {
-      loadUsers();
-    }
-  }, [userSearch, userRoleFilter, userSubFilter, userPage]);
-
-  // Reload Subscriptions when filters change
-  useEffect(() => {
-    if (activeTab === 'subscriptions') {
-      loadSubscriptions();
-    }
-  }, [subStatusFilter, subSearch]);
-
-  // --- User Edit Handlers ---
-  const openEditUser = (user: any) => {
-    setEditingUser(user);
-    setEditUserName(user.full_name || '');
-    setEditUserRole(user.role || 'user');
-  };
-
-  const handleSaveUser = async () => {
-    if (!editingUser) return;
-    setIsUpdatingUser(true);
-    try {
-      const res = await fetch('/api/admin/users', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId: editingUser.id,
-          role: editUserRole,
-          fullName: editUserName,
-        }),
-      });
-      const data = await res.json();
-      if (res.ok) {
-        showToast('Profile Updated', data.message, 'success');
-        setEditingUser(null);
-        await loadUsers();
-        await loadOverview();
-      } else {
-        showToast('Update Failed', data.error, 'error');
-      }
-    } catch (err: any) {
-      showToast('Error', err.message, 'error');
-    } finally {
-      setIsUpdatingUser(false);
-    }
-  };
-
-  // --- Charity Handlers ---
-  const openAddCharity = () => {
-    setEditingCharity(null);
-    setCharityName('');
-    setCharityCategory('Youth & Sports Access');
-    setCharityDesc('');
-    setCharityLogo('⛳');
-    setCharityModalOpen(true);
-  };
-
-  const openEditCharity = (charity: Charity) => {
-    setEditingCharity(charity);
-    setCharityName(charity.name);
-    setCharityCategory(charity.category);
-    setCharityDesc(charity.description);
-    setCharityLogo(charity.logo_url || '💙');
-    setCharityModalOpen(true);
-  };
-
-  const handleSaveCharity = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSavingCharity(true);
-    try {
-      const isEdit = Boolean(editingCharity);
-      const res = await fetch('/api/charities', {
-        method: isEdit ? 'PUT' : 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          id: editingCharity?.id,
-          name: charityName,
-          category: charityCategory,
-          description: charityDesc,
-          logo_url: charityLogo,
-          is_active: true,
-        }),
-      });
-      const data = await res.json();
-      if (res.ok) {
-        showToast(isEdit ? 'Charity Updated' : 'Charity Created', 'Catalog successfully updated.', 'success');
-        setCharityModalOpen(false);
-        await loadCharities();
-        await loadOverview();
-      } else {
-        showToast('Error', data.error, 'error');
-      }
-    } catch (err: any) {
-      showToast('Error', err.message, 'error');
-    } finally {
-      setIsSavingCharity(false);
-    }
-  };
-
-  const handleDeactivateCharity = async (id: string) => {
-    try {
-      const res = await fetch(`/api/charities?id=${id}`, { method: 'DELETE' });
-      const data = await res.json();
-      if (res.ok) {
-        showToast('Charity Deactivated', 'Charity has been marked inactive.', 'info');
-        await loadCharities();
-      } else {
-        showToast('Error', data.error, 'error');
-      }
+      await signOut();
+      showToast('Logged Out', 'Signed out from admin suite.', 'info');
+      router.push('/login');
     } catch (err: any) {
       showToast('Error', err.message, 'error');
     }
   };
-
-  if (isLoading) {
-    return <LoadingState message="Loading Admin Control Suite..." fullPage />;
-  }
-
-  if (error) {
-    return (
-      <div className="max-w-4xl mx-auto px-4 py-16">
-        <ErrorState title="Admin Access Failed" message={error} onRetry={refreshAll} />
-      </div>
-    );
-  }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
-      {/* ── Admin Top Navigation Header ── */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 p-6 rounded-3xl bg-slate-900/80 border border-amber-500/30 shadow-2xl backdrop-blur-xl">
-        <div className="space-y-1">
-          <div className="flex items-center gap-3">
-            <Shield className="w-7 h-7 text-amber-400" />
-            <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
-              Admin Control Center
-            </h1>
-            <Badge variant="gold">Root Administrator</Badge>
+    <div className="bg-surface text-on-surface antialiased font-body-md min-h-screen flex selection:bg-primary selection:text-on-primary">
+      {/* ======================== 1. ADMIN SIDEBAR ======================== */}
+      <aside className="w-64 h-screen bg-surface-container-low border-r border-outline-variant/30 flex flex-col justify-between sticky top-0 shrink-0 z-30 select-none">
+        <div className="p-4 flex flex-col gap-6">
+          {/* Brand & Admin Pill */}
+          <div className="flex items-center justify-between px-2 pt-2">
+            <Link href="/" className="flex items-center gap-2">
+              <FairwayKindLogo className="h-8 w-auto" />
+            </Link>
+            <span className="bg-secondary-container text-on-secondary-fixed font-label-sm text-label-sm px-2 py-0.5 rounded-full uppercase tracking-wider font-bold">
+              ADMIN
+            </span>
           </div>
-          <p className="text-xs text-slate-400">
-            System oversight: Users, Subscriptions, Draw Engine, Charities, Winners & Analytics.
-          </p>
-        </div>
 
-        <div className="flex items-center gap-3">
-          <Button
-            variant="outline"
-            size="sm"
-            leftIcon={<RefreshCw className="w-3.5 h-3.5" />}
-            onClick={refreshAll}
-          >
-            Refresh Data
-          </Button>
-        </div>
-      </div>
+          {/* Current Draw Context Card in Sidebar */}
+          <div className="p-3 bg-surface-container rounded-xl border border-outline-variant/20 flex flex-col gap-1.5">
+            <div className="flex items-center justify-between">
+              <span className="font-label-sm text-label-sm text-on-surface-variant uppercase">Current Cycle</span>
+              <span className="inline-flex items-center gap-1 font-label-sm text-label-sm text-primary font-bold">
+                <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span> Live Lock
+              </span>
+            </div>
+            <p className="font-headline-sm text-headline-sm font-semibold text-primary">#DK-102</p>
+            <span className="font-body-sm text-body-sm text-on-surface-variant text-[11px]">Audit Anchor: 0x8F9a...32D4</span>
+          </div>
 
-      {/* ── Navigation Tabs ── */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-2 border-b border-slate-800">
-        {[
-          { id: 'overview', label: 'Overview', icon: <Activity className="w-4 h-4" /> },
-          { id: 'users', label: 'User Management', icon: <Users className="w-4 h-4" />, count: overviewMetrics?.totalUsers },
-          { id: 'subscriptions', label: 'Subscriptions', icon: <CreditCard className="w-4 h-4" />, count: overviewMetrics?.activeSubscribers },
-          { id: 'draws', label: 'Draw Studio', icon: <Trophy className="w-4 h-4" /> },
-          { id: 'charities', label: 'Charity Management', icon: <Heart className="w-4 h-4" />, count: charities.length },
-          { id: 'winners', label: 'Winner Verification', icon: <Award className="w-4 h-4" />, count: overviewMetrics?.pendingProofsCount },
-          { id: 'reports', label: 'Reports & Analytics', icon: <BarChart3 className="w-4 h-4" /> },
-        ].map((tab) => {
-          const isActive = activeTab === tab.id;
-          return (
+          {/* Nav Links */}
+          <nav className="flex flex-col gap-1">
             <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id as AdminTab)}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
-                isActive
-                  ? 'bg-amber-500/10 text-amber-400 border border-amber-500/40 shadow-gold-glow'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-800/60 border border-transparent'
+              onClick={() => setActiveTab('overview')}
+              className={`w-full text-left rounded-xl px-3 py-2 flex items-center gap-3 transition-colors text-body-sm font-body-sm ${
+                activeTab === 'overview' ? 'bg-surface-container text-primary font-semibold' : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container'
               }`}
             >
-              {tab.icon}
-              <span>{tab.label}</span>
-              {tab.count !== undefined && (
-                <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
-                  isActive ? 'bg-amber-500/20 text-amber-300' : 'bg-slate-800 text-slate-400'
-                }`}>
-                  {tab.count}
-                </span>
-              )}
+              <span className="material-symbols-outlined text-[20px]">dashboard</span>
+              Overview
             </button>
-          );
-        })}
-      </div>
 
-      {/* ───────────────────────────────────────────────────────────── */}
-      {/* 1. OVERVIEW TAB                                              */}
-      {/* ───────────────────────────────────────────────────────────── */}
-      {activeTab === 'overview' && overviewMetrics && (
-        <div className="space-y-8">
-          {/* KPI Metrics Grid */}
-          <div className="grid grid-cols-2 lg:grid-cols-6 gap-4">
-            {[
-              { label: 'Total Users', value: overviewMetrics.totalUsers, color: 'text-white' },
-              { label: 'Active Subscribers', value: overviewMetrics.activeSubscribers, color: 'text-emerald-400' },
-              { label: 'Prize Pool Sum', value: `$${overviewMetrics.totalPrizePoolSum.toLocaleString()}`, color: 'text-[#00F0FF]' },
-              { label: 'Jackpot Rollover', value: `$${overviewMetrics.latestRollover.toLocaleString()}`, color: 'text-amber-400' },
-              { label: 'Charity Raised', value: `$${overviewMetrics.totalCharityRaised.toLocaleString()}`, color: 'text-emerald-400' },
-              { label: 'Total Paid Out', value: `$${overviewMetrics.totalPaidOutSum.toLocaleString()}`, color: 'text-emerald-400' },
-            ].map((kpi) => (
-              <Card key={kpi.label} variant="glass" className="space-y-1 text-center p-4">
-                <span className="text-[10px] text-slate-500 uppercase tracking-wider font-mono">{kpi.label}</span>
-                <span className={`block text-xl font-extrabold ${kpi.color}`}>{kpi.value}</span>
-              </Card>
-            ))}
+            <button
+              onClick={() => setActiveTab('users')}
+              className={`w-full text-left rounded-xl px-3 py-2 flex items-center gap-3 transition-colors text-body-sm font-body-sm ${
+                activeTab === 'users' ? 'bg-surface-container text-primary font-semibold' : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container'
+              }`}
+            >
+              <span className="material-symbols-outlined text-[20px]">group</span>
+              Users
+            </button>
+
+            <button
+              onClick={() => setActiveTab('subscriptions')}
+              className={`w-full text-left rounded-xl px-3 py-2 flex items-center gap-3 transition-colors text-body-sm font-body-sm ${
+                activeTab === 'subscriptions' ? 'bg-surface-container text-primary font-semibold' : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container'
+              }`}
+            >
+              <span className="material-symbols-outlined text-[20px]">credit_card</span>
+              Subscriptions
+            </button>
+
+            <button
+              onClick={() => setActiveTab('scores')}
+              className={`w-full text-left rounded-xl px-3 py-2 flex items-center gap-3 transition-colors text-body-sm font-body-sm ${
+                activeTab === 'scores' ? 'bg-surface-container text-primary font-semibold' : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container'
+              }`}
+            >
+              <span className="material-symbols-outlined text-[20px]">sports_score</span>
+              Scores
+            </button>
+
+            {/* ACTIVE TAB: Draw Management */}
+            <button
+              onClick={() => setActiveTab('draw-management')}
+              className="bg-surface-container-highest text-primary font-bold rounded-xl px-3 py-2.5 flex items-center gap-3 text-body-sm font-body-sm shadow-sm w-full text-left"
+            >
+              <span className="material-symbols-outlined text-[20px] text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>
+                celebration
+              </span>
+              Draw Management
+              <span className="ml-auto bg-primary text-on-primary font-label-sm text-label-sm px-1.5 py-0.5 rounded-full text-[10px]">Active</span>
+            </button>
+
+            <Link
+              href="/charities"
+              className="text-on-surface-variant hover:text-on-surface hover:bg-surface-container rounded-xl px-3 py-2 flex items-center gap-3 transition-colors text-body-sm font-body-sm"
+            >
+              <span className="material-symbols-outlined text-[20px]">volunteer_activism</span>
+              Charities
+            </Link>
+
+            <button
+              onClick={() => setActiveTab('winners')}
+              className={`w-full text-left rounded-xl px-3 py-2 flex items-center gap-3 transition-colors text-body-sm font-body-sm ${
+                activeTab === 'winners' ? 'bg-surface-container text-primary font-semibold' : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container'
+              }`}
+            >
+              <span className="material-symbols-outlined text-[20px]">emoji_events</span>
+              Winners &amp; Payouts
+            </button>
+
+            <button
+              onClick={() => setActiveTab('reports')}
+              className={`w-full text-left rounded-xl px-3 py-2 flex items-center gap-3 transition-colors text-body-sm font-body-sm ${
+                activeTab === 'reports' ? 'bg-surface-container text-primary font-semibold' : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container'
+              }`}
+            >
+              <span className="material-symbols-outlined text-[20px]">insights</span>
+              Reports &amp; Analytics
+            </button>
+
+            <Link
+              href="/dashboard"
+              className="text-on-surface-variant hover:text-on-surface hover:bg-surface-container rounded-xl px-3 py-2 flex items-center gap-3 transition-colors text-body-sm font-body-sm"
+            >
+              <span className="material-symbols-outlined text-[20px]">person</span>
+              Member View
+            </Link>
+          </nav>
+        </div>
+
+        {/* Sidebar Footer */}
+        <div className="p-4 border-t border-outline-variant/30 flex flex-col gap-3 bg-surface-container-low">
+          <div className="flex items-center gap-3 px-2 py-1">
+            <div className="w-9 h-9 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-headline-sm text-headline-sm font-bold shadow-inner">
+              AR
+            </div>
+            <div className="flex flex-col min-w-0">
+              <p className="font-label-lg text-label-lg font-bold text-on-surface truncate">Arthur Ross, Esq.</p>
+              <span className="font-label-sm text-label-sm text-on-surface-variant truncate">Chief Compliance Officer</span>
+            </div>
           </div>
-
-          {/* Quick Actions Bar */}
-          <Card variant="glow" className="flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="space-y-0.5">
-              <span className="text-xs font-bold text-amber-400 uppercase tracking-wider">Direct Control Studio</span>
-              <p className="text-xs text-slate-300">Run simulations, verify winner proofs, or manage 501(c)(3) charities.</p>
-            </div>
-            <div className="flex flex-wrap gap-2.5">
-              <Link href="/admin/draws">
-                <Button variant="gold" size="sm" leftIcon={<Play className="w-3.5 h-3.5" />}>
-                  Open Draw Studio
-                </Button>
-              </Link>
-              <Link href="/admin/winners">
-                <Button variant="primary" size="sm" leftIcon={<Award className="w-3.5 h-3.5" />}>
-                  Review Proofs ({overviewMetrics.pendingProofsCount})
-                </Button>
-              </Link>
-              <Button variant="outline" size="sm" leftIcon={<Heart className="w-3.5 h-3.5" />} onClick={openAddCharity}>
-                Add Charity
-              </Button>
-            </div>
-          </Card>
-
-          {/* Activity & System Health Log */}
-          <div className="space-y-4">
-            <h3 className="text-base font-bold text-white flex items-center gap-2">
-              <Clock className="w-4 h-4 text-cyan-400" /> Recent System Audit Logs
-            </h3>
-            {recentActivity.length > 0 ? (
-              <div className="space-y-2">
-                {recentActivity.map((log) => (
-                  <div key={log.id} className="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800 flex items-center justify-between text-xs">
-                    <div className="space-y-0.5">
-                      <span className="font-bold text-white">{log.action}</span>
-                      <p className="text-slate-400 font-mono text-[11px]">
-                        Entity: {log.entity_type} • ID: {log.entity_id?.slice(0, 8)}... • Actor: {log.actor_id?.slice(0, 8)}...
-                      </p>
-                    </div>
-                    <span className="text-slate-500 font-mono text-[10px]">
-                      {new Date(log.created_at).toLocaleString('en-IE')}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <EmptyState title="No Audit Records" description="System audit actions will appear here automatically." />
-            )}
+          <div className="flex items-center justify-between text-on-surface-variant pt-1 text-[12px]">
+            <a href="mailto:compliance@fairwaykind.com" className="hover:text-primary flex items-center gap-1.5 transition-colors">
+              <span className="material-symbols-outlined text-[16px]">help_outline</span> Support
+            </a>
+            <button onClick={handleLogout} className="hover:text-error flex items-center gap-1.5 transition-colors">
+              <span className="material-symbols-outlined text-[16px]">logout</span> Log Out
+            </button>
           </div>
         </div>
-      )}
+      </aside>
 
-      {/* ───────────────────────────────────────────────────────────── */}
-      {/* 2. USER MANAGEMENT TAB                                       */}
-      {/* ───────────────────────────────────────────────────────────── */}
-      {activeTab === 'users' && (
-        <div className="space-y-6">
-          {/* Filters */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-end gap-4">
-            <div className="flex-1">
-              <Input
-                label="Search Users"
-                placeholder="Name or email address..."
-                value={userSearch}
-                onChange={(e) => {
-                  setUserSearch(e.target.value);
-                  setUserPage(1);
-                }}
-                leftIcon={<Search className="w-4 h-4" />}
-              />
+      {/* ======================== MAIN CONTENT CANVAS ======================== */}
+      <main className="flex-1 flex flex-col min-w-0 overflow-y-auto">
+        {/* ======================== 2. HEADER BAR ======================== */}
+        <header className="sticky top-0 z-20 bg-surface/90 backdrop-blur-md border-b border-outline-variant/30 px-8 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-3">
+              <h1 className="font-headline-md text-headline-md font-semibold text-primary tracking-tight">
+                Draw Management &amp; Verification Suite
+              </h1>
+              <span className="px-2.5 py-0.5 rounded-full bg-surface-container-high text-on-surface-variant font-label-sm text-label-sm border border-outline-variant/40">
+                October 2024 (#DK-102)
+              </span>
             </div>
-            <div className="w-full sm:w-44">
-              <Select
-                label="Role Filter"
-                value={userRoleFilter}
-                onChange={(e) => {
-                  setUserRoleFilter(e.target.value);
-                  setUserPage(1);
-                }}
-                options={[
-                  { value: '', label: 'All Roles' },
-                  { value: 'user', label: 'Users Only' },
-                  { value: 'admin', label: 'Admins Only' },
-                ]}
-              />
-            </div>
-            <div className="w-full sm:w-48">
-              <Select
-                label="Subscription State"
-                value={userSubFilter}
-                onChange={(e) => {
-                  setUserSubFilter(e.target.value);
-                  setUserPage(1);
-                }}
-                options={[
-                  { value: '', label: 'All Subscriptions' },
-                  { value: 'active', label: 'Active' },
-                  { value: 'past_due', label: 'Past Due' },
-                  { value: 'canceled', label: 'Canceled' },
-                  { value: 'none', label: 'No Subscription' },
-                ]}
-              />
-            </div>
+            <p className="font-body-sm text-body-sm text-on-surface-variant mt-0.5">
+              Deterministic algorithm seed matching • Philanthropic reserve lock • Regulatory non-gambling protocol
+            </p>
           </div>
 
-          {/* Users Table */}
-          {users.length > 0 ? (
-            <div className="space-y-4">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>User / Email</TableHead>
-                    <TableHead>Role</TableHead>
-                    <TableHead>Subscription</TableHead>
-                    <TableHead>Scores (Active/5)</TableHead>
-                    <TableHead>Winnings Paid</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {users.map((u) => (
-                    <TableRow key={u.id}>
-                      <TableCell className="font-semibold text-white">
-                        <div>
-                          <span>{u.full_name || 'Unnamed Golfer'}</span>
-                          <span className="block text-xs text-slate-400 font-mono">{u.email}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={u.role === 'admin' ? 'gold' : 'slate'}>
-                          {u.role.toUpperCase()}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        {u.subscription ? (
-                          <Badge variant={u.subscription.status === 'active' ? 'emerald' : 'rose'}>
-                            {u.subscription.status.toUpperCase()} ({u.subscription.plan_type})
-                          </Badge>
-                        ) : (
-                          <span className="text-xs text-slate-500">None</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={u.activeScoreCount === 5 ? 'cyan' : 'slate'}>
-                          {u.activeScoreCount} / 5 Scores
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="font-extrabold text-amber-400 font-mono">
-                        ${(u.totalWinnings || 0).toLocaleString()}
-                      </TableCell>
-                      <TableCell className="text-right space-x-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => openEditUser(u)}
-                          className="text-slate-400 hover:text-[#00F0FF]"
-                        >
-                          <Edit3 className="w-3.5 h-3.5" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 bg-surface-container-lowest px-3.5 py-1.5 rounded-full border border-outline-variant/40 shadow-sm">
+              <span className="relative flex h-2.5 w-2.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-secondary-fixed-dim opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-secondary"></span>
+              </span>
+              <span className="font-label-md text-label-md font-semibold text-on-surface">Ready for Simulation</span>
+            </div>
+            <button
+              onClick={() => showToast('Compliance Log', 'SHA-256 seed verifiable snapshot exported.', 'info')}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-surface-container hover:bg-surface-container-high text-primary border border-outline-variant/40 font-label-lg text-label-lg transition-colors font-medium"
+            >
+              <span className="material-symbols-outlined text-[18px]">history_edu</span>
+              Compliance Logs
+            </button>
+            <button
+              onClick={() => showToast('Parameters Locked', 'Draw #DK-102 seed parameters permanently locked.', 'success')}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-on-primary font-label-lg text-label-lg shadow-sm hover:bg-primary-container active:scale-[0.98] transition-all font-semibold"
+            >
+              <span className="material-symbols-outlined text-[18px]">verified_user</span>
+              Lock Draw Parameters
+            </button>
+          </div>
+        </header>
 
-              {/* Pagination Controls */}
-              {userTotalPages > 1 && (
-                <div className="flex items-center justify-between pt-4 text-xs text-slate-400">
-                  <span>Page {userPage} of {userTotalPages}</span>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      disabled={userPage <= 1}
-                      onClick={() => setUserPage((p) => Math.max(1, p - 1))}
-                      leftIcon={<ChevronLeft className="w-3.5 h-3.5" />}
-                    >
-                      Prev
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      disabled={userPage >= userTotalPages}
-                      onClick={() => setUserPage((p) => p + 1)}
-                      rightIcon={<ChevronRight className="w-3.5 h-3.5" />}
-                    >
-                      Next
-                    </Button>
+        {/* Canvas Inner Container */}
+        <div className="px-8 py-8 flex flex-col gap-8 max-w-[1400px] w-full mx-auto">
+          {/* ======================== 3. KEY METRICS KPI ROW ======================== */}
+          <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            {/* Metric 1 */}
+            <div className="bg-surface-container-lowest p-6 rounded-2xl border border-outline-variant/30 shadow-sm flex flex-col justify-between relative overflow-hidden group hover:border-outline-variant/70 transition-all">
+              <div className="flex items-center justify-between mb-4">
+                <span className="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider font-semibold">
+                  Total Active Subscribers
+                </span>
+                <div className="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center text-primary">
+                  <span className="material-symbols-outlined text-[18px]">group</span>
+                </div>
+              </div>
+              <div>
+                <div className="flex items-baseline gap-2">
+                  <span className="font-headline-lg text-headline-lg font-bold text-on-surface">24,812</span>
+                  <span className="inline-flex items-center text-[12px] font-label-md text-primary font-bold bg-primary-fixed/40 px-2 py-0.5 rounded-full">
+                    <span className="material-symbols-outlined text-[14px]">arrow_upward</span> +8.4%
+                  </span>
+                </div>
+                <p className="font-body-sm text-body-sm text-on-surface-variant mt-1.5">MoM verified subscription accounts</p>
+              </div>
+              <div className="absolute bottom-0 left-0 right-0 h-1 bg-surface-container group-hover:bg-primary/30 transition-colors"></div>
+            </div>
+
+            {/* Metric 2 */}
+            <div className="bg-surface-container-lowest p-6 rounded-2xl border border-outline-variant/30 shadow-sm flex flex-col justify-between relative overflow-hidden group hover:border-outline-variant/70 transition-all">
+              <div className="flex items-center justify-between mb-4">
+                <span className="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider font-semibold">
+                  Current Draw Pool
+                </span>
+                <div className="w-8 h-8 rounded-full bg-secondary-fixed/40 flex items-center justify-center text-secondary">
+                  <span className="material-symbols-outlined text-[18px]" style={{ fontVariationSettings: "'FILL' 1" }}>
+                    monetization_on
+                  </span>
+                </div>
+              </div>
+              <div>
+                <div className="flex items-baseline gap-2">
+                  <span className="font-headline-lg text-headline-lg font-bold text-primary">$34,250.00</span>
+                </div>
+                <p className="font-body-sm text-body-sm text-on-surface-variant mt-1.5">Fixed escrow vault • 100% audited</p>
+              </div>
+              <div className="absolute bottom-0 left-0 right-0 h-1 bg-surface-container group-hover:bg-secondary transition-colors"></div>
+            </div>
+
+            {/* Metric 3 */}
+            <div className="bg-surface-container-lowest p-6 rounded-2xl border border-outline-variant/30 shadow-sm flex flex-col justify-between relative overflow-hidden group hover:border-outline-variant/70 transition-all">
+              <div className="flex items-center justify-between mb-4">
+                <span className="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider font-semibold">
+                  Charity Reserve (25%)
+                </span>
+                <div className="w-8 h-8 rounded-full bg-primary-fixed/40 flex items-center justify-center text-primary">
+                  <span className="material-symbols-outlined text-[18px]">volunteer_activism</span>
+                </div>
+              </div>
+              <div>
+                <div className="flex items-baseline gap-2">
+                  <span className="font-headline-lg text-headline-lg font-bold text-on-surface">$8,562.50</span>
+                </div>
+                <p className="font-body-sm text-body-sm text-on-surface-variant mt-1.5">Earmarked across 142 Charities</p>
+              </div>
+              <div className="absolute bottom-0 left-0 right-0 h-1 bg-surface-container group-hover:bg-primary transition-colors"></div>
+            </div>
+
+            {/* Metric 4 */}
+            <div className="bg-surface-container-lowest p-6 rounded-2xl border border-outline-variant/30 shadow-sm flex flex-col justify-between relative overflow-hidden group hover:border-outline-variant/70 transition-all">
+              <div className="flex items-center justify-between mb-4">
+                <span className="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider font-semibold">
+                  Pending Scorecard Proofs
+                </span>
+                <div className="w-8 h-8 rounded-full bg-error-container/60 flex items-center justify-center text-error">
+                  <span className="material-symbols-outlined text-[18px]">pending_actions</span>
+                </div>
+              </div>
+              <div>
+                <div className="flex items-baseline gap-2">
+                  <span className="font-headline-lg text-headline-lg font-bold text-error">6</span>
+                  <span className="font-label-md text-label-md text-on-surface-variant font-medium">cards queued</span>
+                </div>
+                <p className="font-body-sm text-body-sm text-on-surface-variant mt-1.5">Requires compliance sign-off</p>
+              </div>
+              <div className="absolute bottom-0 left-0 right-0 h-1 bg-surface-container group-hover:bg-error transition-colors"></div>
+            </div>
+          </section>
+
+          {/* ======================== 4. FEATURED INTERACTIVE MODULE: DRAW ENGINE & SIMULATOR ======================== */}
+          <section className="bg-surface-container-lowest rounded-2xl border border-outline-variant/30 shadow-sm overflow-hidden">
+            {/* Header of the Simulator */}
+            <div className="p-6 md:p-8 border-b border-outline-variant/20 flex flex-col lg:flex-row lg:items-center justify-between gap-6 bg-surface-container-low/40">
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-primary text-on-primary flex items-center justify-center shrink-0 shadow-sm">
+                  <span className="material-symbols-outlined text-[24px]">terminal</span>
+                </div>
+                <div>
+                  <div className="flex items-center gap-3">
+                    <h2 className="font-headline-md text-headline-md font-bold text-primary">
+                      Algorithmic Draw Engine &amp; Simulator
+                    </h2>
+                    <span className="px-2.5 py-0.5 rounded-full text-primary bg-primary-fixed/50 font-label-sm text-label-sm font-semibold border border-primary-fixed-dim">
+                      Seed Verifiable v4.2
+                    </span>
+                  </div>
+                  <p className="font-body-md text-body-md text-on-surface-variant mt-1">
+                    Execute dry-run simulation of stroke performance vectors against active handicap-adjusted subscriber entries.
+                  </p>
+                </div>
+              </div>
+
+              {/* Controls: Draw Mode Selector & Buttons */}
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="flex items-center p-1 bg-surface-container rounded-xl border border-outline-variant/30 text-body-sm">
+                  <button
+                    onClick={() => setMode('algo')}
+                    className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${
+                      mode === 'algo'
+                        ? 'bg-surface-container-lowest text-primary font-bold shadow-xs'
+                        : 'text-on-surface-variant hover:text-on-surface'
+                    }`}
+                  >
+                    <span className="material-symbols-outlined text-[16px]">calculate</span>
+                    Algorithmic Skill Match
+                  </button>
+                  <button
+                    onClick={() => setMode('seed')}
+                    className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${
+                      mode === 'seed'
+                        ? 'bg-surface-container-lowest text-primary font-bold shadow-xs'
+                        : 'text-on-surface-variant hover:text-on-surface'
+                    }`}
+                  >
+                    <span className="material-symbols-outlined text-[16px]">lock</span>
+                    Random Seed Verified
+                  </button>
+                </div>
+
+                <button
+                  onClick={handleRunSimulation}
+                  disabled={isSimulating}
+                  className="px-5 py-2.5 rounded-xl bg-primary-container text-on-primary font-label-lg text-label-lg font-semibold hover:bg-primary transition-all flex items-center gap-2 active:scale-[0.98] shadow-sm disabled:opacity-50"
+                >
+                  <span className={`material-symbols-outlined text-[18px] ${isSimulating ? 'animate-spin' : ''}`}>
+                    {isSimulating ? 'refresh' : 'play_arrow'}
+                  </span>
+                  <span>{isSimulating ? 'Simulating...' : 'Run Simulation'}</span>
+                </button>
+
+                <button
+                  onClick={handlePublishResults}
+                  className="px-5 py-2.5 rounded-xl bg-secondary text-on-secondary font-label-lg text-label-lg font-semibold hover:bg-on-secondary-container transition-all flex items-center gap-2 active:scale-[0.98] shadow-sm"
+                >
+                  <span className="material-symbols-outlined text-[18px]">publish</span>
+                  Publish Official Results
+                </button>
+              </div>
+            </div>
+
+            {/* Simulation Grid: 3 Match Tiers */}
+            <div className="p-6 md:p-8 grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Tier 1 */}
+              <div className="bg-surface-container-low p-5 rounded-xl border border-outline-variant/30 flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between">
+                    <span className="font-label-sm text-label-sm uppercase font-bold tracking-wider text-secondary">
+                      Grand Skill Tier
+                    </span>
+                    <span className="font-label-md text-label-md text-on-surface-variant font-medium">40% Allocation</span>
+                  </div>
+                  <h3 className="font-headline-sm text-headline-sm font-semibold text-primary mt-1">
+                    5-Hole Precision Match
+                  </h3>
+                  <p className="font-body-sm text-body-sm text-on-surface-variant mt-1">
+                    Exact net strokes matching the official course par-differential vector.
+                  </p>
+                </div>
+                <div className="pt-6 mt-4 border-t border-outline-variant/20 flex items-baseline justify-between">
+                  <div>
+                    <span className="font-label-sm text-label-sm text-on-surface-variant font-medium">Prize Pool</span>
+                    <p className="font-headline-sm text-headline-sm font-bold text-on-surface">$13,700.00</p>
+                  </div>
+                  <div className="text-right">
+                    <span className="font-label-sm text-label-sm text-on-surface-variant font-medium">Sim Winners</span>
+                    <p className="font-headline-sm text-headline-sm font-bold text-primary">{simW5}</p>
                   </div>
                 </div>
-              )}
+              </div>
+
+              {/* Tier 2 */}
+              <div className="bg-surface-container-low p-5 rounded-xl border border-outline-variant/30 flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between">
+                    <span className="font-label-sm text-label-sm uppercase font-bold tracking-wider text-primary">
+                      Secondary Tier
+                    </span>
+                    <span className="font-label-md text-label-md text-on-surface-variant font-medium">35% Allocation</span>
+                  </div>
+                  <h3 className="font-headline-sm text-headline-sm font-semibold text-primary mt-1">
+                    4-Hole Precision Match
+                  </h3>
+                  <p className="font-body-sm text-body-sm text-on-surface-variant mt-1">
+                    4-hole exact differential accuracy across back-nine scoring records.
+                  </p>
+                </div>
+                <div className="pt-6 mt-4 border-t border-outline-variant/20 flex items-baseline justify-between">
+                  <div>
+                    <span className="font-label-sm text-label-sm text-on-surface-variant font-medium">Prize Pool</span>
+                    <p className="font-headline-sm text-headline-sm font-bold text-on-surface">$11,987.50</p>
+                  </div>
+                  <div className="text-right">
+                    <span className="font-label-sm text-label-sm text-on-surface-variant font-medium">Sim Winners</span>
+                    <p className="font-headline-sm text-headline-sm font-bold text-primary">{simW4}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Tier 3 */}
+              <div className="bg-surface-container-low p-5 rounded-xl border border-outline-variant/30 flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between">
+                    <span className="font-label-sm text-label-sm uppercase font-bold tracking-wider text-on-surface-variant">
+                      Foundation Tier
+                    </span>
+                    <span className="font-label-md text-label-md text-on-surface-variant font-medium">25% Allocation</span>
+                  </div>
+                  <h3 className="font-headline-sm text-headline-sm font-semibold text-primary mt-1">
+                    3-Hole Precision Match
+                  </h3>
+                  <p className="font-body-sm text-body-sm text-on-surface-variant mt-1">
+                    3-hole match distribution shared equally among verified subscriber entrants.
+                  </p>
+                </div>
+                <div className="pt-6 mt-4 border-t border-outline-variant/20 flex items-baseline justify-between">
+                  <div>
+                    <span className="font-label-sm text-label-sm text-on-surface-variant font-medium">Prize Pool</span>
+                    <p className="font-headline-sm text-headline-sm font-bold text-on-surface">$8,562.50</p>
+                  </div>
+                  <div className="text-right">
+                    <span className="font-label-sm text-label-sm text-on-surface-variant font-medium">Sim Winners</span>
+                    <p className="font-headline-sm text-headline-sm font-bold text-primary">{simW3}</p>
+                  </div>
+                </div>
+              </div>
             </div>
-          ) : (
-            <EmptyState title="No Users Found" description="No users match your current filter parameters." />
-          )}
 
-          {/* Edit User Modal */}
-          <Modal
-            isOpen={!!editingUser}
-            onClose={() => setEditingUser(null)}
-            title="Inspect & Edit User Profile"
-            maxWidth="md"
-          >
-            {editingUser && (
-              <div className="space-y-4 text-xs">
-                <Input
-                  label="Full Name"
-                  value={editUserName}
-                  onChange={(e) => setEditUserName(e.target.value)}
-                />
-
-                <Select
-                  label="System Role"
-                  value={editUserRole}
-                  onChange={(e) => setEditUserRole(e.target.value as 'user' | 'admin')}
-                  options={[
-                    { value: 'user', label: 'Standard Golfer (User)' },
-                    { value: 'admin', label: 'System Administrator (Admin)' },
-                  ]}
-                />
-
-                {/* Scores preview */}
-                <div className="p-3.5 rounded-xl bg-slate-900 border border-slate-800 space-y-2">
-                  <span className="font-semibold text-slate-300 block">Active 5 Golf Scores</span>
-                  {editingUser.activeScores && editingUser.activeScores.length > 0 ? (
-                    <div className="flex gap-2 flex-wrap">
-                      {editingUser.activeScores.map((s: any, idx: number) => (
-                        <span key={idx} className="px-2 py-1 rounded bg-slate-800 text-cyan-300 font-mono text-xs">
-                          {s.score} pts ({s.played_on})
+            {/* Simulation Output Panel */}
+            <div className="px-6 md:px-8 pb-8">
+              <div className="bg-surface-container rounded-xl p-5 border border-outline-variant/30 flex flex-col lg:flex-row items-center justify-between gap-6">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-4 w-full lg:w-auto">
+                  <div>
+                    <span className="font-label-sm text-label-sm uppercase font-bold text-on-surface-variant">
+                      Simulated Winning Vector (Par Diffs):
+                    </span>
+                    <div className="flex items-center gap-2 mt-1.5">
+                      {vector.map((val, i) => (
+                        <span
+                          key={i}
+                          className="w-10 h-10 rounded-xl bg-primary text-on-primary flex items-center justify-center font-headline-sm font-bold shadow-xs transition-all duration-300"
+                        >
+                          {val}
                         </span>
                       ))}
                     </div>
-                  ) : (
-                    <span className="text-slate-500">No active scores logged.</span>
-                  )}
+                  </div>
+                  <div className="hidden sm:block h-10 w-px bg-outline-variant/40 mx-2"></div>
+                  <div>
+                    <span className="font-label-sm text-label-sm uppercase font-bold text-on-surface-variant">
+                      Total Projected Payout
+                    </span>
+                    <p className="font-headline-sm text-headline-sm font-bold text-on-surface mt-1">
+                      $34,250.00 <span className="font-body-sm text-body-sm font-normal text-on-surface-variant">(100% of pool)</span>
+                    </p>
+                  </div>
                 </div>
 
-                <div className="flex gap-3 pt-2">
-                  <Button variant="primary" className="flex-1" isLoading={isUpdatingUser} onClick={handleSaveUser}>
-                    Save User Profile
-                  </Button>
-                  <Button variant="outline" className="flex-1" onClick={() => setEditingUser(null)}>
-                    Cancel
-                  </Button>
+                <div className="flex items-center gap-4 w-full lg:w-auto justify-end">
+                  <div className="text-right">
+                    <span className="font-label-sm text-label-sm uppercase font-bold text-on-surface-variant">Rollover to #DK-103</span>
+                    <p className="font-label-lg text-label-lg font-bold text-primary">$0.00 (Zero Deficit)</p>
+                  </div>
+                  <div className="h-9 px-3 rounded-lg bg-surface-container-lowest border border-outline-variant/40 flex items-center gap-2 text-primary font-label-md text-label-md font-semibold">
+                    <span className="material-symbols-outlined text-[18px] text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>
+                      check_circle
+                    </span>
+                    Compliance Determinism Passed
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* ======================== 5. WINNER PROOF VERIFICATION QUEUE ======================== */}
+          <section className="grid grid-cols-1 xl:grid-cols-3 gap-8 items-start">
+            {/* Left 2 Cols: Winner Proof Table */}
+            <div className="xl:col-span-2 bg-surface-container-lowest rounded-2xl border border-outline-variant/30 shadow-sm overflow-hidden">
+              <div className="p-6 border-b border-outline-variant/20 flex items-center justify-between">
+                <div>
+                  <div className="flex items-center gap-2.5">
+                    <h2 className="font-headline-sm text-headline-sm font-bold text-primary">Scorecard Proof Verification Queue</h2>
+                    <span className="px-2 py-0.5 rounded-full bg-error-container text-on-error-container font-label-sm text-label-sm font-bold">
+                      6 Pending
+                    </span>
+                  </div>
+                  <p className="font-body-sm text-body-sm text-on-surface-variant mt-0.5">
+                    Physical marker attestation review required prior to automated ACH settlement.
+                  </p>
+                </div>
+                <button
+                  onClick={() => showToast('Filters', 'Filtering by all pending verifications.', 'info')}
+                  className="text-primary font-label-md text-label-md hover:underline flex items-center gap-1 font-semibold"
+                >
+                  Filter by Status <span className="material-symbols-outlined text-[16px]">tune</span>
+                </button>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="border-b border-outline-variant/30 bg-surface-container-low/50 text-on-surface-variant font-label-sm text-label-sm uppercase tracking-wider">
+                      <th className="py-3.5 px-6 font-bold">Winner &amp; Home Club</th>
+                      <th className="py-3.5 px-4 font-bold">Draw #</th>
+                      <th className="py-3.5 px-4 font-bold">Match Tier</th>
+                      <th className="py-3.5 px-4 font-bold">Prize Amount</th>
+                      <th className="py-3.5 px-4 font-bold">Proof Status</th>
+                      <th className="py-3.5 px-6 font-bold text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-outline-variant/20 font-body-sm text-body-sm">
+                    {/* Row 1 */}
+                    <tr className="bg-surface-container-high/40 hover:bg-surface-container-high transition-colors">
+                      <td className="py-4 px-6">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-full bg-primary-fixed-dim text-primary flex items-center justify-center font-bold text-xs">
+                            EM
+                          </div>
+                          <div>
+                            <span className="font-label-lg text-label-lg font-bold text-on-surface block">Evan Mercer</span>
+                            <span className="text-on-surface-variant text-[12px]">Pebble Beach GC (HI: 4.2)</span>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="py-4 px-4 font-medium text-on-surface">#DK-102</td>
+                      <td className="py-4 px-4">
+                        <span className="px-2.5 py-1 rounded-full bg-secondary-container/60 text-on-secondary-fixed font-label-sm text-label-sm font-bold">
+                          5-Hole Match
+                        </span>
+                      </td>
+                      <td className="py-4 px-4 font-bold text-primary">$13,700.00</td>
+                      <td className="py-4 px-4">
+                        {activeProofStatus === 'pending' && (
+                          <span className="inline-flex items-center gap-1.5 text-error font-label-sm text-label-sm font-semibold bg-error-container/40 px-2 py-0.5 rounded-md">
+                            <span className="w-1.5 h-1.5 rounded-full bg-error"></span> Pending Review
+                          </span>
+                        )}
+                        {activeProofStatus === 'approved' && (
+                          <span className="inline-flex items-center gap-1.5 text-primary font-label-sm text-label-sm font-semibold bg-primary-fixed/40 px-2 py-0.5 rounded-md">
+                            <span className="w-1.5 h-1.5 rounded-full bg-primary"></span> Verified &amp; Paid
+                          </span>
+                        )}
+                        {activeProofStatus === 'rejected' && (
+                          <span className="inline-flex items-center gap-1.5 text-error font-label-sm text-label-sm font-semibold bg-error-container/60 px-2 py-0.5 rounded-md">
+                            <span className="w-1.5 h-1.5 rounded-full bg-error"></span> Rejected
+                          </span>
+                        )}
+                      </td>
+                      <td className="py-4 px-6 text-right">
+                        <button
+                          onClick={() => setDrawerOpen(true)}
+                          className="px-3 py-1.5 rounded-lg bg-primary text-on-primary font-label-md text-label-md font-semibold hover:bg-primary-container transition-colors shadow-2xs"
+                        >
+                          Review Proof
+                        </button>
+                      </td>
+                    </tr>
+
+                    {/* Row 2 */}
+                    <tr className="hover:bg-surface-container-low transition-colors">
+                      <td className="py-4 px-6">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-full bg-surface-container-highest text-on-surface flex items-center justify-center font-bold text-xs">
+                            SJ
+                          </div>
+                          <div>
+                            <span className="font-label-lg text-label-lg font-bold text-on-surface block">Sarah Jenkins</span>
+                            <span className="text-on-surface-variant text-[12px]">Olympic Club (HI: 8.9)</span>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="py-4 px-4 font-medium text-on-surface">#DK-102</td>
+                      <td className="py-4 px-4">
+                        <span className="px-2.5 py-1 rounded-full bg-surface-container-highest text-primary font-label-sm text-label-sm font-bold">
+                          4-Hole Match
+                        </span>
+                      </td>
+                      <td className="py-4 px-4 font-bold text-on-surface">$1,712.50</td>
+                      <td className="py-4 px-4">
+                        <span className="inline-flex items-center gap-1.5 text-secondary font-label-sm text-label-sm font-semibold bg-secondary-fixed/40 px-2 py-0.5 rounded-md">
+                          <span className="w-1.5 h-1.5 rounded-full bg-secondary"></span> Under Review
+                        </span>
+                      </td>
+                      <td className="py-4 px-6 text-right">
+                        <button
+                          onClick={() => showToast('Sarah Jenkins', 'Scorecard loaded for audit review.', 'info')}
+                          className="px-3 py-1.5 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md text-label-md font-semibold border border-outline-variant/40 transition-colors"
+                        >
+                          View
+                        </button>
+                      </td>
+                    </tr>
+
+                    {/* Row 3 */}
+                    <tr className="hover:bg-surface-container-low transition-colors">
+                      <td className="py-4 px-6">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-full bg-surface-container-highest text-on-surface flex items-center justify-center font-bold text-xs">
+                            MV
+                          </div>
+                          <div>
+                            <span className="font-label-lg text-label-lg font-bold text-on-surface block">Marcus Vance</span>
+                            <span className="text-on-surface-variant text-[12px]">Bandon Dunes (HI: 1.4)</span>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="py-4 px-4 font-medium text-on-surface">#DK-102</td>
+                      <td className="py-4 px-4">
+                        <span className="px-2.5 py-1 rounded-full bg-surface-container-highest text-primary font-label-sm text-label-sm font-bold">
+                          4-Hole Match
+                        </span>
+                      </td>
+                      <td className="py-4 px-4 font-bold text-on-surface">$1,712.50</td>
+                      <td className="py-4 px-4">
+                        <span className="inline-flex items-center gap-1.5 text-primary font-label-sm text-label-sm font-semibold bg-primary-fixed/40 px-2 py-0.5 rounded-md">
+                          <span className="w-1.5 h-1.5 rounded-full bg-primary"></span> Verified
+                        </span>
+                      </td>
+                      <td className="py-4 px-6 text-right">
+                        <span className="text-on-surface-variant font-label-sm text-label-sm">Approved</span>
+                      </td>
+                    </tr>
+
+                    {/* Row 4 */}
+                    <tr className="hover:bg-surface-container-low transition-colors">
+                      <td className="py-4 px-6">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-full bg-surface-container-highest text-on-surface flex items-center justify-center font-bold text-xs">
+                            DL
+                          </div>
+                          <div>
+                            <span className="font-label-lg text-label-lg font-bold text-on-surface block">David Lindqvist</span>
+                            <span className="text-on-surface-variant text-[12px]">Torrey Pines South (HI: 6.0)</span>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="py-4 px-4 font-medium text-on-surface">#DK-102</td>
+                      <td className="py-4 px-4">
+                        <span className="px-2.5 py-1 rounded-full bg-surface-container-highest text-primary font-label-sm text-label-sm font-bold">
+                          3-Hole Match
+                        </span>
+                      </td>
+                      <td className="py-4 px-4 font-bold text-on-surface">$203.86</td>
+                      <td className="py-4 px-4">
+                        <span className="inline-flex items-center gap-1.5 text-on-surface-variant font-label-sm text-label-sm font-semibold bg-surface-container px-2 py-0.5 rounded-md">
+                          <span className="w-1.5 h-1.5 rounded-full bg-primary"></span> Paid
+                        </span>
+                      </td>
+                      <td className="py-4 px-6 text-right">
+                        <span className="text-on-surface-variant font-label-sm text-label-sm">Settled</span>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="p-4 border-t border-outline-variant/20 bg-surface-container-low/40 flex items-center justify-between text-body-sm text-on-surface-variant">
+                <span>Showing 4 of 6 active verification submissions</span>
+                <div className="flex items-center gap-2">
+                  <button className="px-3 py-1 rounded-lg border border-outline-variant/40 bg-surface hover:bg-surface-container text-xs font-semibold">Previous</button>
+                  <button className="px-3 py-1 rounded-lg border border-outline-variant/40 bg-surface hover:bg-surface-container text-xs font-semibold">Next</button>
+                </div>
+              </div>
+            </div>
+
+            {/* Right 1 Col: Scorecard Audit Drawer Preview */}
+            {drawerOpen && (
+              <div className="bg-surface-container-lowest rounded-2xl border border-outline-variant/30 shadow-sm p-6 flex flex-col gap-5">
+                <div className="flex items-center justify-between border-b border-outline-variant/20 pb-4">
+                  <div>
+                    <span className="font-label-sm text-label-sm uppercase font-bold text-secondary tracking-wider">Proof Audit Drawer</span>
+                    <h3 className="font-headline-sm text-headline-sm font-bold text-primary">Evan Mercer (#DK-102-01)</h3>
+                  </div>
+                  <button
+                    onClick={() => setDrawerOpen(false)}
+                    className="w-7 h-7 rounded-full bg-surface-container flex items-center justify-center text-on-surface-variant hover:bg-surface-container-high"
+                  >
+                    <span className="material-symbols-outlined text-[16px]">close</span>
+                  </button>
+                </div>
+
+                {/* Scorecard Image Mockup */}
+                <div className="flex flex-col gap-2">
+                  <span className="font-label-md text-label-md font-semibold text-on-surface">Uploaded Scorecard Attestation</span>
+                  <div className="w-full h-44 rounded-xl overflow-hidden border border-outline-variant/40 relative group bg-surface-container">
+                    <img
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      alt="Official Golf Tournament Scorecard"
+                      src="https://lh3.googleusercontent.com/aida-public/AB6AXuD0J3bjsuYWRp2G2JoS4q8QmO6fT0AKmHRGVurpwuM2IsrpyHrxkxdKaJDXevgfquICkT0QQReJr86l4IiXkGgcQIoAJgtjbzoZrFwMUhGnEl8xzFF9q4blMlZ-NhaAMmh3_VY-tQo2DBmITeBIWtMwci1iq8YSaFxIdzOcZppP20kD4b82ycoY12vZ-7xzWK4RVK7vi8R5WVD4TZtws1AT5GfJM-_ei47RuZcbmtfYeDfaOKd_SF-z"
+                    />
+                    <div className="absolute bottom-2 right-2 bg-on-background/80 backdrop-blur-xs text-white text-[11px] font-label-sm px-2 py-1 rounded-md flex items-center gap-1">
+                      <span className="material-symbols-outlined text-[13px]">zoom_in</span> Click to Enlarge
+                    </div>
+                  </div>
+                </div>
+
+                {/* Verification Points */}
+                <div className="space-y-3 pt-2">
+                  <div className="flex items-start gap-2.5 text-body-sm font-body-sm">
+                    <span className="material-symbols-outlined text-primary text-[18px] shrink-0 mt-0.5" style={{ fontVariationSettings: "'FILL' 1" }}>
+                      check_circle
+                    </span>
+                    <div>
+                      <p className="font-label-md text-label-md text-on-surface font-semibold">Attestation Club Marker Match</p>
+                      <p className="text-on-surface-variant text-[12px]">Signed by PGA Pro David K. (Lic #78491)</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-2.5 text-body-sm font-body-sm">
+                    <span className="material-symbols-outlined text-primary text-[18px] shrink-0 mt-0.5" style={{ fontVariationSettings: "'FILL' 1" }}>
+                      check_circle
+                    </span>
+                    <div>
+                      <p className="font-label-md text-label-md text-on-surface font-semibold">Handicap Differential Consistency</p>
+                      <p className="text-on-surface-variant text-[12px]">USGA GHIN recorded timestamp: Oct 18, 14:22 PST</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-2.5 text-body-sm font-body-sm">
+                    <span className="material-symbols-outlined text-secondary text-[18px] shrink-0 mt-0.5">help</span>
+                    <div>
+                      <p className="font-label-md text-label-md text-on-surface font-semibold">Compliance Auditor Sign-Off</p>
+                      <p className="text-on-surface-variant text-[12px]">Requires Arthur Ross signature</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="grid grid-cols-2 gap-3 pt-4 border-t border-outline-variant/20 mt-auto">
+                  <button
+                    onClick={handleRejectProof}
+                    className="w-full py-2.5 rounded-xl border border-error text-error hover:bg-error-container/30 font-label-md text-label-md font-semibold transition-colors flex items-center justify-center gap-1.5"
+                  >
+                    <span className="material-symbols-outlined text-[16px]">close</span>
+                    Reject Proof
+                  </button>
+                  <button
+                    onClick={handleApproveProof}
+                    className="w-full py-2.5 rounded-xl bg-primary text-on-primary hover:bg-primary-container font-label-md text-label-md font-semibold transition-colors flex items-center justify-center gap-1.5 shadow-sm"
+                  >
+                    <span className="material-symbols-outlined text-[16px]">verified</span>
+                    Approve &amp; Pay
+                  </button>
                 </div>
               </div>
             )}
-          </Modal>
-        </div>
-      )}
+          </section>
 
-      {/* ───────────────────────────────────────────────────────────── */}
-      {/* 3. SUBSCRIPTION MANAGEMENT TAB                                */}
-      {/* ───────────────────────────────────────────────────────────── */}
-      {activeTab === 'subscriptions' && (
-        <div className="space-y-6">
-          <div className="flex flex-col sm:flex-row items-start sm:items-end gap-4">
-            <div className="flex-1">
-              <Input
-                label="Search Subscriptions"
-                placeholder="Member email, customer ID, or charity name..."
-                value={subSearch}
-                onChange={(e) => setSubSearch(e.target.value)}
-                leftIcon={<Search className="w-4 h-4" />}
-              />
-            </div>
-            <div className="w-full sm:w-48">
-              <Select
-                label="Filter by Status"
-                value={subStatusFilter}
-                onChange={(e) => setSubStatusFilter(e.target.value)}
-                options={[
-                  { value: '', label: 'All Subscriptions' },
-                  { value: 'active', label: 'Active Only' },
-                  { value: 'past_due', label: 'Past Due' },
-                  { value: 'canceled', label: 'Canceled / Lapsed' },
-                ]}
-              />
-            </div>
-          </div>
-
-          {subscriptions.length > 0 ? (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Subscriber</TableHead>
-                  <TableHead>Plan</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Charity Allocation</TableHead>
-                  <TableHead>Period End</TableHead>
-                  <TableHead className="text-right">Stripe Customer ID</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {subscriptions.map((sub: any) => (
-                  <TableRow key={sub.id}>
-                    <TableCell className="font-semibold text-white">
-                      <div>
-                        <span>{sub.profiles?.full_name || 'Member'}</span>
-                        <span className="block text-xs text-slate-400 font-mono">{sub.profiles?.email}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="cyan">{sub.plan_type?.toUpperCase()}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={sub.status === 'active' ? 'emerald' : sub.status === 'past_due' ? 'amber' : 'rose'}>
-                        {sub.status.toUpperCase()}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <span className="text-xs font-semibold text-white">
-                        {sub.charities?.name || 'Unassigned'} ({sub.voluntary_charity_percent}%)
-                      </span>
-                    </TableCell>
-                    <TableCell className="font-mono text-xs text-slate-300">
-                      {sub.current_period_end ? new Date(sub.current_period_end).toLocaleDateString('en-IE') : 'N/A'}
-                    </TableCell>
-                    <TableCell className="text-right font-mono text-[11px] text-slate-400">
-                      {sub.stripe_customer_id || 'N/A'}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          ) : (
-            <EmptyState title="No Subscriptions Found" description="No subscription records match the query." />
-          )}
-        </div>
-      )}
-
-      {/* ───────────────────────────────────────────────────────────── */}
-      {/* 4. DRAW STUDIO TAB                                            */}
-      {/* ───────────────────────────────────────────────────────────── */}
-      {activeTab === 'draws' && (
-        <div className="space-y-6">
-          <Card variant="glow" className="space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-800">
+          {/* ======================== 6. CHARITY ALLOCATION SUMMARY ======================== */}
+          <section className="bg-surface-container-lowest rounded-2xl border border-outline-variant/30 shadow-sm p-6 md:p-8">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-outline-variant/20 pb-6 mb-6">
               <div>
-                <h3 className="text-base font-bold text-white flex items-center gap-2">
-                  <Trophy className="w-5 h-5 text-amber-400" /> Dedicated Draw Studio Engine
-                </h3>
-                <p className="text-xs text-slate-400">
-                  Execute PRNG & algorithmic simulations, calculate tier splits, and commit published winners to database.
+                <div className="flex items-center gap-2">
+                  <h2 className="font-headline-sm text-headline-sm font-bold text-primary">Charity Allocation Settlement &amp; Volume</h2>
+                  <span className="px-2.5 py-0.5 rounded-full bg-primary-fixed/40 text-primary font-label-sm text-label-sm font-bold">
+                    100% Guaranteed Non-Profit Escrow
+                  </span>
+                </div>
+                <p className="font-body-sm text-body-sm text-on-surface-variant mt-1">
+                  Real-time distribution of the 25% platform reserve across subscriber-designated partner foundations.
                 </p>
               </div>
-              <Link href="/admin/draws">
-                <Button variant="gold" size="sm" rightIcon={<ArrowRight className="w-3.5 h-3.5" />}>
-                  Open Full Draw Studio Console
-                </Button>
-              </Link>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
-              <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 space-y-1">
-                <span className="text-slate-400 uppercase tracking-wider text-[10px]">Tier 5 (40% Pool)</span>
-                <span className="block text-lg font-bold text-white">$10,000.00 + $2,500 Rollover</span>
-                <span className="text-slate-400 text-[10px]">5 Matches Required</span>
-              </div>
-              <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 space-y-1">
-                <span className="text-slate-400 uppercase tracking-wider text-[10px]">Tier 4 (35% Pool)</span>
-                <span className="block text-lg font-bold text-white">$8,750.00</span>
-                <span className="text-slate-400 text-[10px]">4 Matches Required</span>
-              </div>
-              <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 space-y-1">
-                <span className="text-slate-400 uppercase tracking-wider text-[10px]">Tier 3 (25% Pool)</span>
-                <span className="block text-lg font-bold text-white">$6,250.00</span>
-                <span className="text-slate-400 text-[10px]">3 Matches Required</span>
+              <div className="flex items-center gap-3">
+                <span className="font-label-md text-label-md text-on-surface-variant">Cycle Reserve:</span>
+                <span className="font-headline-sm text-headline-sm font-bold text-primary">$8,562.50</span>
               </div>
             </div>
-          </Card>
-        </div>
-      )}
 
-      {/* ───────────────────────────────────────────────────────────── */}
-      {/* 5. CHARITY MANAGEMENT TAB                                     */}
-      {/* ───────────────────────────────────────────────────────────── */}
-      {activeTab === 'charities' && (
-        <div className="space-y-6">
-          <div className="flex items-center justify-between">
-            <h3 className="text-base font-bold text-white flex items-center gap-2">
-              <Heart className="w-5 h-5 text-emerald-400" /> Active 501(c)(3) Partner Charities
-            </h3>
-            <Button variant="charity" size="sm" leftIcon={<Plus className="w-4 h-4" />} onClick={openAddCharity}>
-              Add Partner Charity
-            </Button>
-          </div>
-
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Charity Name</TableHead>
-                <TableHead>Category</TableHead>
-                <TableHead>Total Raised</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {charities.map((c) => (
-                <TableRow key={c.id}>
-                  <TableCell className="font-semibold text-white flex items-center gap-2">
-                    <span className="text-lg">{c.logo_url || '💙'}</span>
-                    <span>{c.name}</span>
-                  </TableCell>
-                  <TableCell><Badge variant="neutral">{c.category}</Badge></TableCell>
-                  <TableCell className="font-extrabold text-emerald-400">
-                    ${(c.total_raised || 0).toLocaleString()}
-                  </TableCell>
-                  <TableCell>
-                    {c.is_active ? <Badge variant="emerald">Active</Badge> : <Badge variant="rose">Inactive</Badge>}
-                  </TableCell>
-                  <TableCell className="text-right space-x-2">
-                    <Button variant="ghost" size="sm" onClick={() => openEditCharity(c)} className="text-slate-400 hover:text-amber-400 p-1.5">
-                      <Edit3 className="w-4 h-4" />
-                    </Button>
-                    {c.is_active && (
-                      <Button variant="ghost" size="sm" onClick={() => handleDeactivateCharity(c.id)} className="text-slate-400 hover:text-rose-400 p-1.5">
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    )}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-
-          {/* Charity Modal */}
-          <Modal
-            isOpen={charityModalOpen}
-            onClose={() => setCharityModalOpen(false)}
-            title={editingCharity ? 'Edit Partner Charity' : 'Add New Partner Charity'}
-            maxWidth="md"
-          >
-            <form onSubmit={handleSaveCharity} className="space-y-4">
-              <Input
-                label="Charity Name"
-                value={charityName}
-                onChange={(e) => setCharityName(e.target.value)}
-                required
-              />
-              <Select
-                label="Category"
-                value={charityCategory}
-                onChange={(e) => setCharityCategory(e.target.value)}
-                options={[
-                  { value: 'Youth & Sports Access', label: 'Youth & Sports Access' },
-                  { value: 'Ecological Stewardship', label: 'Ecological Stewardship' },
-                  { value: 'Pediatric Health', label: 'Pediatric Health' },
-                  { value: 'Veteran Welfare', label: 'Veteran Welfare' },
-                ]}
-              />
-              <Input
-                label="Logo Emoji / Icon"
-                value={charityLogo}
-                onChange={(e) => setCharityLogo(e.target.value)}
-              />
-              <div className="space-y-1 text-xs">
-                <label className="text-slate-300 font-semibold uppercase">Description</label>
-                <textarea
-                  rows={3}
-                  className="w-full rounded-xl glass-input text-xs p-3 text-white"
-                  value={charityDesc}
-                  onChange={(e) => setCharityDesc(e.target.value)}
-                  required
-                />
-              </div>
-              <Button type="submit" variant="charity" className="w-full" isLoading={isSavingCharity}>
-                {editingCharity ? 'Save Changes' : 'Create Charity'}
-              </Button>
-            </form>
-          </Modal>
-        </div>
-      )}
-
-      {/* ───────────────────────────────────────────────────────────── */}
-      {/* 6. WINNER MANAGEMENT TAB                                      */}
-      {/* ───────────────────────────────────────────────────────────── */}
-      {activeTab === 'winners' && (
-        <div className="space-y-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-base font-bold text-white flex items-center gap-2">
-                <Award className="w-5 h-5 text-amber-400" /> Winner Verification Queue
-              </h3>
-              <p className="text-xs text-slate-400">Review official scorecards, approve/reject proof, and mark payouts paid.</p>
-            </div>
-            <Link href="/admin/winners">
-              <Button variant="gold" size="sm" rightIcon={<ArrowRight className="w-3.5 h-3.5" />}>
-                Open Full Verification Console
-              </Button>
-            </Link>
-          </div>
-
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Winner ID</TableHead>
-                <TableHead>Prize Tier</TableHead>
-                <TableHead>Prize Amount</TableHead>
-                <TableHead>Proof Status</TableHead>
-                <TableHead>Payout Status</TableHead>
-                <TableHead className="text-right">Action</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {winners.slice(0, 8).map((w) => (
-                <TableRow key={w.id}>
-                  <TableCell className="font-mono text-xs text-slate-300">
-                    {w.id.slice(0, 8)}...
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="gold">{w.prize_tier.replace('_', ' ').toUpperCase()}</Badge>
-                  </TableCell>
-                  <TableCell className="font-extrabold text-amber-400 font-mono">
-                    ${w.prize_amount.toLocaleString()}
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={w.proof_status === 'approved' ? 'emerald' : w.proof_status === 'submitted' ? 'cyan' : w.proof_status === 'rejected' ? 'rose' : 'amber'}>
-                      {w.proof_status.replace('_', ' ').toUpperCase()}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={w.payout_status === 'paid' ? 'emerald' : 'slate'}>
-                      {w.payout_status.toUpperCase()}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <Link href="/admin/winners">
-                      <Button variant="outline" size="sm" className="text-xs">
-                        Inspect →
-                      </Button>
-                    </Link>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      )}
-
-      {/* ───────────────────────────────────────────────────────────── */}
-      {/* 7. REPORTS & ANALYTICS TAB                                    */}
-      {/* ───────────────────────────────────────────────────────────── */}
-      {activeTab === 'reports' && reportsData && (
-        <div className="space-y-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <Card variant="glass" className="space-y-2">
-              <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Subscriber Conversion</span>
-              <span className="block text-2xl font-extrabold text-emerald-400">{reportsData.userStats.conversionRate}</span>
-              <span className="text-[10px] text-slate-400">{reportsData.userStats.activeSubscribers} Active / {reportsData.userStats.totalUsers} Total Users</span>
-            </Card>
-            <Card variant="glass" className="space-y-2">
-              <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Plan Distribution</span>
-              <span className="block text-base font-bold text-white">
-                {reportsData.userStats.monthlyCount} Monthly • {reportsData.userStats.yearlyCount} Yearly
-              </span>
-              <span className="text-[10px] text-slate-400">Churned: {reportsData.userStats.churnCount}</span>
-            </Card>
-            <Card variant="glass" className="space-y-2">
-              <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Average Voluntary Grant</span>
-              <span className="block text-2xl font-extrabold text-[#00F0FF]">{reportsData.charityStats.avgVoluntaryPercent}</span>
-              <span className="text-[10px] text-slate-400">Above mandatory 10% minimum</span>
-            </Card>
-            <Card variant="glass" className="space-y-2">
-              <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Winners Created</span>
-              <span className="block text-2xl font-extrabold text-amber-400">{reportsData.drawStats.totalWinners}</span>
-              <span className="text-[10px] text-slate-400">{reportsData.drawStats.totalTicketsEntered} Total Tickets Played</span>
-            </Card>
-          </div>
-
-          {/* Charity Distributions Breakdown */}
-          <Card variant="glass" className="space-y-4">
-            <h4 className="text-sm font-bold text-white flex items-center gap-2">
-              <Heart className="w-4 h-4 text-emerald-400" /> Charity Contribution Share
-            </h4>
-            <div className="space-y-3">
-              {reportsData.charityStats.charityBreakdown.map((c: any) => (
-                <div key={c.id} className="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800 flex items-center justify-between text-xs">
-                  <div>
-                    <span className="font-bold text-white">{c.name}</span>
-                    <span className="block text-[11px] text-slate-400">{c.category}</span>
+            {/* Charity Breakdown List */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+              {/* Charity 1 */}
+              <div className="p-4 rounded-xl bg-surface-container-low border border-outline-variant/20 flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between">
+                    <span className="font-label-sm text-label-sm text-on-surface-variant font-bold uppercase">Rank #1</span>
+                    <span className="w-2 h-2 rounded-full bg-primary"></span>
                   </div>
-                  <div className="text-right">
-                    <span className="font-extrabold text-emerald-400 font-mono">${c.totalRaised.toLocaleString()}</span>
-                    <span className="block text-[10px] text-slate-500">{c.percentageOfTotal}% of all grants</span>
-                  </div>
+                  <p className="font-label-lg text-label-lg font-bold text-on-surface mt-2 truncate">First Tee Foundation</p>
+                  <p className="text-on-surface-variant text-[12px]">Youth Golf &amp; Life Skills</p>
                 </div>
-              ))}
+                <div className="mt-4 pt-3 border-t border-outline-variant/20">
+                  <div className="flex items-baseline justify-between mb-1.5">
+                    <span className="font-headline-sm text-headline-sm font-bold text-primary">$2,996.88</span>
+                    <span className="font-label-sm text-label-sm text-on-surface-variant font-semibold">35%</span>
+                  </div>
+                  <div className="w-full bg-surface-container h-2 rounded-full overflow-hidden">
+                    <div className="bg-primary h-full rounded-full" style={{ width: "35%" }}></div>
+                  </div>
+                  <span className="inline-block text-[11px] font-label-sm text-primary font-bold mt-2">Ready to Disburse</span>
+                </div>
+              </div>
+
+              {/* Charity 2 */}
+              <div className="p-4 rounded-xl bg-surface-container-low border border-outline-variant/20 flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between">
+                    <span className="font-label-sm text-label-sm text-on-surface-variant font-bold uppercase">Rank #2</span>
+                    <span className="w-2 h-2 rounded-full bg-primary"></span>
+                  </div>
+                  <p className="font-label-lg text-label-lg font-bold text-on-surface mt-2 truncate">PGA REACH Military</p>
+                  <p className="text-on-surface-variant text-[12px]">Veteran Rehabilitation</p>
+                </div>
+                <div className="mt-4 pt-3 border-t border-outline-variant/20">
+                  <div className="flex items-baseline justify-between mb-1.5">
+                    <span className="font-headline-sm text-headline-sm font-bold text-primary">$2,140.63</span>
+                    <span className="font-label-sm text-label-sm text-on-surface-variant font-semibold">25%</span>
+                  </div>
+                  <div className="w-full bg-surface-container h-2 rounded-full overflow-hidden">
+                    <div className="bg-primary h-full rounded-full" style={{ width: "25%" }}></div>
+                  </div>
+                  <span className="inline-block text-[11px] font-label-sm text-primary font-bold mt-2">Ready to Disburse</span>
+                </div>
+              </div>
+
+              {/* Charity 3 */}
+              <div className="p-4 rounded-xl bg-surface-container-low border border-outline-variant/20 flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between">
+                    <span className="font-label-sm text-label-sm text-on-surface-variant font-bold uppercase">Rank #3</span>
+                    <span className="w-2 h-2 rounded-full bg-primary"></span>
+                  </div>
+                  <p className="font-label-lg text-label-lg font-bold text-on-surface mt-2 truncate">Green Fairways Forest</p>
+                  <p className="text-on-surface-variant text-[12px]">Ecological Course Preservation</p>
+                </div>
+                <div className="mt-4 pt-3 border-t border-outline-variant/20">
+                  <div className="flex items-baseline justify-between mb-1.5">
+                    <span className="font-headline-sm text-headline-sm font-bold text-primary">$1,712.50</span>
+                    <span className="font-label-sm text-label-sm text-on-surface-variant font-semibold">20%</span>
+                  </div>
+                  <div className="w-full bg-surface-container h-2 rounded-full overflow-hidden">
+                    <div className="bg-primary h-full rounded-full" style={{ width: "20%" }}></div>
+                  </div>
+                  <span className="inline-block text-[11px] font-label-sm text-primary font-bold mt-2">Ready to Disburse</span>
+                </div>
+              </div>
+
+              {/* Charity 4 */}
+              <div className="p-4 rounded-xl bg-surface-container-low border border-outline-variant/20 flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between">
+                    <span className="font-label-sm text-label-sm text-on-surface-variant font-bold uppercase">Rank #4</span>
+                    <span className="w-2 h-2 rounded-full bg-primary"></span>
+                  </div>
+                  <p className="font-label-lg text-label-lg font-bold text-on-surface mt-2 truncate">Stand Up To Cancer</p>
+                  <p className="text-on-surface-variant text-[12px]">Community Health Research</p>
+                </div>
+                <div className="mt-4 pt-3 border-t border-outline-variant/20">
+                  <div className="flex items-baseline justify-between mb-1.5">
+                    <span className="font-headline-sm text-headline-sm font-bold text-primary">$1,027.50</span>
+                    <span className="font-label-sm text-label-sm text-on-surface-variant font-semibold">12%</span>
+                  </div>
+                  <div className="w-full bg-surface-container h-2 rounded-full overflow-hidden">
+                    <div className="bg-primary h-full rounded-full" style={{ width: "12%" }}></div>
+                  </div>
+                  <span className="inline-block text-[11px] font-label-sm text-primary font-bold mt-2">Ready to Disburse</span>
+                </div>
+              </div>
+
+              {/* Charity 5 */}
+              <div className="p-4 rounded-xl bg-surface-container-low border border-outline-variant/20 flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between">
+                    <span className="font-label-sm text-label-sm text-on-surface-variant font-bold uppercase">Others (138)</span>
+                    <span className="w-2 h-2 rounded-full bg-secondary"></span>
+                  </div>
+                  <p className="font-label-lg text-label-lg font-bold text-on-surface mt-2 truncate">Regional Micro-Charities</p>
+                  <p className="text-on-surface-variant text-[12px]">Grassroots Direct Match</p>
+                </div>
+                <div className="mt-4 pt-3 border-t border-outline-variant/20">
+                  <div className="flex items-baseline justify-between mb-1.5">
+                    <span className="font-headline-sm text-headline-sm font-bold text-primary">$684.99</span>
+                    <span className="font-label-sm text-label-sm text-on-surface-variant font-semibold">8%</span>
+                  </div>
+                  <div className="w-full bg-surface-container h-2 rounded-full overflow-hidden">
+                    <div className="bg-secondary h-full rounded-full" style={{ width: "8%" }}></div>
+                  </div>
+                  <span className="inline-block text-[11px] font-label-sm text-secondary font-bold mt-2">Batch Aggregated</span>
+                </div>
+              </div>
             </div>
-          </Card>
+          </section>
         </div>
-      )}
+
+        {/* ======================== SHARED FOOTER COMPONENT ======================== */}
+        <footer className="bg-surface-container border-t border-outline-variant/30 mt-auto">
+          <div className="max-w-7xl mx-auto px-6 md:px-12 py-12 flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="flex items-center gap-3">
+              <FairwayKindLogo className="h-7 w-auto" />
+              <span className="text-on-surface-variant text-body-sm font-body-sm ml-2">Admin Control Environment</span>
+            </div>
+            <p className="font-body-sm text-body-sm text-on-surface-variant text-center md:text-left max-w-xl">
+              © 2024 FairwayKind Technologies Inc. All rights reserved. Skill-based performance draws with philanthropic allocation; strictly non-gambling mechanics.
+            </p>
+            <div className="flex flex-wrap items-center gap-4 text-label-sm font-label-sm text-on-surface-variant">
+              <span className="hover:text-primary transition-colors cursor-pointer">Terms of Service</span>
+              <span className="hover:text-primary transition-colors cursor-pointer">Privacy Policy</span>
+              <span className="hover:text-primary transition-colors cursor-pointer">Responsible Play</span>
+              <a href="/#impact" className="hover:text-primary transition-colors">Impact Report</a>
+            </div>
+          </div>
+        </footer>
+      </main>
     </div>
   );
 }

@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * GET /api/dashboard/summary
  * Returns all data needed to hydrate the subscriber dashboard in one round-trip.

@@ -6,8 +6,11 @@ import { ToastProvider } from '@/components/ui/Toast';
 import { AuthProvider } from '@/lib/auth/auth-context';
 
 export const metadata: Metadata = {
-  title: 'Digital Heroes — Golf Performance, Monthly Draws & Charity Platform',
-  description: 'Track your latest 5 golf scores, win monthly prize pools, and fund impactful charities with your monthly membership.',
+  title: 'FairwayKind | Feel, Not Fairway — Modern Performance & Philanthropy',
+  description: 'The modern performance platform where your golf rounds unlock monthly community rewards while directly funding causes you care about. A minimum 10% of every membership is donated to your chosen charity.',
+  icons: {
+    icon: '/favicon.ico',
+  },
 };
 
 export default function RootLayout({
@@ -16,8 +19,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="dark">
-      <body className="bg-[#090D16] text-[#F1F5F9] min-h-screen flex flex-col antialiased">
+    <html lang="en" className="scroll-smooth">
+      <body className="bg-background text-on-surface antialiased font-sans selection:bg-primary-fixed selection:text-primary min-h-screen flex flex-col">
         <ToastProvider>
           <AuthProvider>
             <Navbar />
