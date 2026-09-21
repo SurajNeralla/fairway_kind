@@ -62,24 +62,24 @@ export default function HowItWorksPage() {
               </div>
               <div>
                 <span className="font-label-sm text-label-sm text-secondary font-bold uppercase tracking-wider">Pillar 02</span>
-                <h3 className="font-headline-sm text-headline-sm text-on-surface font-semibold">2. Skill-Verified Monthly Draws</h3>
+                <h3 className="font-headline-sm text-headline-sm text-on-surface font-semibold">2. Monthly Draw &amp; Prize System</h3>
               </div>
             </div>
             <p className="text-on-surface-variant font-body-sm text-body-sm">
-              Closed-loop skill performance reward system designed in compliance with state and federal contest regulations. Zero gambling or sports-book speculation.
+              Monthly draw engine with pre-defined pool allocations. Standard random lottery selection or algorithmic selection weighted by score frequency.
             </p>
             <ul className="space-y-3 text-body-sm text-on-surface">
               <li className="flex items-start gap-2.5">
                 <CheckCircle2 className="w-4 h-4 text-secondary shrink-0 mt-1" />
-                <span><strong>Tier 5 Match (Grand Skill Tier):</strong> Receives 40% of the monthly pool (+ rollover from unclaimed 5-match rounds).</span>
+                <span><strong>5-Number Match (Jackpot):</strong> Receives 40% of the prize pool (+ rollover if unclaimed). Multiple winners split equally.</span>
               </li>
               <li className="flex items-start gap-2.5">
                 <CheckCircle2 className="w-4 h-4 text-secondary shrink-0 mt-1" />
-                <span><strong>Tier 4 Match (Secondary Tier):</strong> Receives 35% of the allocated monthly draw pool.</span>
+                <span><strong>4-Number Match:</strong> Receives 35% of the monthly prize pool. Multiple winners split equally (no rollover).</span>
               </li>
               <li className="flex items-start gap-2.5">
                 <CheckCircle2 className="w-4 h-4 text-secondary shrink-0 mt-1" />
-                <span><strong>Tier 3 Match (Foundation Tier):</strong> Receives 25% of the pool, distributed equally among verified entrants.</span>
+                <span><strong>3-Number Match:</strong> Receives 25% of the monthly prize pool. Multiple winners split equally (no rollover).</span>
               </li>
             </ul>
           </div>
@@ -105,11 +105,11 @@ export default function HowItWorksPage() {
               </li>
               <li className="flex items-start gap-2.5">
                 <CheckCircle2 className="w-4 h-4 text-primary shrink-0 mt-1" />
-                <span><strong>Voluntary Round Matches:</strong> Members can boost their giving up to 100% per round with certified tax receipts.</span>
+                <span><strong>Voluntary Contribution Boost:</strong> Members can increase their charity giving percentage up to 100%.</span>
               </li>
               <li className="flex items-start gap-2.5">
                 <CheckCircle2 className="w-4 h-4 text-primary shrink-0 mt-1" />
-                <span><strong>100% Escrow Transparency:</strong> Monies are audited by independent philanthropic escrow before disbursement.</span>
+                <span><strong>Independent Giving:</strong> Support causes with direct independent donations not tied to gameplay.</span>
               </li>
             </ul>
           </div>
@@ -122,24 +122,24 @@ export default function HowItWorksPage() {
               </div>
               <div>
                 <span className="font-label-sm text-label-sm text-primary font-bold uppercase tracking-wider">Pillar 04</span>
-                <h3 className="font-headline-sm text-headline-sm text-on-surface font-semibold">4. Proof Verification & Payouts</h3>
+                <h3 className="font-headline-sm text-headline-sm text-on-surface font-semibold">4. Winner Verification &amp; Payouts</h3>
               </div>
             </div>
             <p className="text-on-surface-variant font-body-sm text-body-sm">
-              Integrity guaranteed through peer marker validation and digital handicap audit registries.
+              Verification applies strictly to winners, protecting prize distribution integrity.
             </p>
             <ul className="space-y-3 text-body-sm text-on-surface">
               <li className="flex items-start gap-2.5">
                 <CheckCircle2 className="w-4 h-4 text-primary shrink-0 mt-1" />
-                <span><strong>Marker Attestation:</strong> Winning scores must be verified by a registered marker or attested physical card upload.</span>
+                <span><strong>Proof Upload:</strong> Winners upload a screenshot of their scores from the relevant golf platform.</span>
               </li>
               <li className="flex items-start gap-2.5">
                 <CheckCircle2 className="w-4 h-4 text-primary shrink-0 mt-1" />
-                <span><strong>Compliance Audit:</strong> Payout proofs are validated by our compliance officers before settlement.</span>
+                <span><strong>Admin Review:</strong> Submissions are reviewed and approved or rejected by platform administrators.</span>
               </li>
               <li className="flex items-start gap-2.5">
                 <CheckCircle2 className="w-4 h-4 text-primary shrink-0 mt-1" />
-                <span><strong>Automated ACH Disbursement:</strong> Funds transfer securely on the 1st of every month via connected bank transfer.</span>
+                <span><strong>Payment Status:</strong> Payout transitions from Pending to Paid upon administrative verification.</span>
               </li>
             </ul>
           </div>
@@ -149,14 +149,14 @@ export default function HowItWorksPage() {
         <div className="bg-surface-container-lowest border border-outline-variant/40 rounded-3xl p-8 md:p-12 custom-card-shadow flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="space-y-2 text-center md:text-left">
             <h3 className="font-headline-md text-headline-md text-on-surface font-semibold">Ready to Elevate Your Play?</h3>
-            <p className="text-on-surface-variant font-body-md text-body-md">Join thousands of mindful golfers making every swing count toward social good.</p>
+            <p className="text-on-surface-variant font-body-md text-body-md">Join mindful golfers making every swing count toward social good.</p>
           </div>
           <div className="flex items-center gap-4">
             <Link
               href="/subscribe"
               className="bg-primary hover:bg-primary-container text-on-primary font-label-lg text-label-lg px-8 py-3.5 rounded-full transition-all duration-200 active:scale-[0.98] shadow-sm hover:shadow flex items-center gap-2 font-semibold"
             >
-              <span>Start 14-Day Free Trial</span>
+              <span>Subscribe to FairwayKind</span>
               <ArrowRight className="w-4 h-4" />
             </Link>
           </div>

@@ -114,7 +114,7 @@ export const Footer: React.FC = () => {
             </li>
             <li>
               <span className="text-label-sm font-label-sm text-on-surface-variant dark:text-on-tertiary-container hover:text-primary dark:hover:text-inverse-primary transition-colors cursor-pointer">
-                Cryptographic Audit Proofs
+                Winner Verification Process
               </span>
             </li>
             <li>

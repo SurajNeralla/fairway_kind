@@ -56,7 +56,7 @@ export default function HomePage() {
                   href={user ? "/dashboard" : "/subscribe"}
                   className="inline-flex justify-center items-center gap-2 px-8 py-4 rounded-full bg-primary hover:bg-primary-container text-on-primary font-label-lg text-label-lg transition-all active:scale-[0.98] shadow-sm"
                 >
-                  <span>{user ? "Go to Dashboard" : "Subscribe Now — Join Free for 14 Days"}</span>
+                  <span>{user ? "Go to Dashboard" : "Subscribe to FairwayKind"}</span>
                   <span className="material-symbols-outlined text-lg">arrow_forward</span>
                 </Link>
                 <a
@@ -72,12 +72,12 @@ export default function HomePage() {
               <div className="flex items-center gap-6 pt-4 text-on-surface-variant font-label-md text-label-md">
                 <div className="flex items-center gap-1.5">
                   <span className="material-symbols-outlined text-primary text-base">verified_user</span>
-                  <span>100% Skill-Verified</span>
+                  <span>Stableford Scoring (1–45)</span>
                 </div>
                 <div className="w-1 h-1 rounded-full bg-outline-variant"></div>
                 <div className="flex items-center gap-1.5">
                   <span className="material-symbols-outlined text-secondary text-base">handshake</span>
-                  <span>Vetted 501(c)(3) Charities</span>
+                  <span>10%+ Direct Charity Giving</span>
                 </div>
               </div>
             </div>
@@ -94,11 +94,11 @@ export default function HomePage() {
                     </div>
                     <div>
                       <div className="font-headline-sm text-headline-sm text-on-background font-semibold">David K. Miller</div>
-                      <div className="font-label-sm text-label-sm text-on-surface-variant">Round verified • St. Jude Classic</div>
+                      <div className="font-label-sm text-label-sm text-on-surface-variant">Active Member • Monthly Draw Entrant</div>
                     </div>
                   </div>
                   <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-surface-container text-primary font-label-sm text-label-sm font-semibold">
-                    Handicap 9.4
+                    Rolling 5 Scores Active
                   </span>
                 </div>
 
@@ -106,23 +106,23 @@ export default function HomePage() {
                 <div className="grid grid-cols-2 gap-4 py-6">
                   {/* Stableford Metric */}
                   <div className="bg-surface-container-low rounded-2xl p-4 border border-outline-variant/20">
-                    <div className="text-on-surface-variant font-label-sm text-label-sm tracking-wide uppercase">Official Score</div>
+                    <div className="text-on-surface-variant font-label-sm text-label-sm tracking-wide uppercase">Latest Score</div>
                     <div className="font-headline-lg text-headline-lg text-primary mt-1 tabular-nums font-semibold">
                       38 <span className="font-body-sm text-body-sm text-on-surface-variant font-normal">pts</span>
                     </div>
                     <div className="flex items-center gap-1 mt-2 text-primary font-label-sm text-label-sm">
-                      <span className="material-symbols-outlined text-sm">trending_up</span>
-                      <span>Top 8% in flight</span>
+                      <span className="material-symbols-outlined text-sm">check_circle</span>
+                      <span>Stableford Format</span>
                     </div>
                   </div>
 
                   {/* Monthly Draw Pool Entry */}
                   <div className="bg-surface-container-low rounded-2xl p-4 border border-outline-variant/20">
-                    <div className="text-on-surface-variant font-label-sm text-label-sm tracking-wide uppercase">September Draw Pool</div>
-                    <div className="font-headline-lg text-headline-lg text-secondary mt-1 tabular-nums font-semibold">$25,000</div>
+                    <div className="text-on-surface-variant font-label-sm text-label-sm tracking-wide uppercase">Monthly Draw</div>
+                    <div className="font-headline-lg text-headline-lg text-secondary mt-1 tabular-nums font-semibold">5 Numbers</div>
                     <div className="flex items-center gap-1 mt-2 text-on-surface-variant font-label-sm text-label-sm">
                       <span className="material-symbols-outlined text-sm text-secondary">verified</span>
-                      <span>Skill Tier Gold</span>
+                      <span>40% / 35% / 25% Pools</span>
                     </div>
                   </div>
                 </div>
@@ -132,17 +132,17 @@ export default function HomePage() {
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
                       <span className="material-symbols-outlined text-primary text-base">volunteer_activism</span>
-                      <span className="font-label-md text-label-md text-on-surface font-medium">Children’s Health Fund</span>
+                      <span className="font-label-md text-label-md text-on-surface font-medium">Youth on Course</span>
                     </div>
-                    <span className="font-headline-sm text-headline-sm text-primary font-semibold tabular-nums">$248.00</span>
+                    <span className="font-headline-sm text-headline-sm text-primary font-semibold tabular-nums">15% Grant</span>
                   </div>
                   {/* Progress Bar */}
                   <div className="w-full bg-surface-variant rounded-full h-2 overflow-hidden mt-1">
                     <div className="bg-primary-container h-full rounded-full w-4/5"></div>
                   </div>
                   <div className="flex justify-between text-on-surface-variant font-label-sm text-label-sm mt-2">
-                    <span>82% of annual pledge target</span>
-                    <span className="text-primary font-semibold">10% Monthly Match Active</span>
+                    <span>Selected Charity Partner</span>
+                    <span className="text-primary font-semibold">Min 10% Enforced</span>
                   </div>
                 </div>
 
@@ -150,110 +150,110 @@ export default function HomePage() {
                 <div className="mt-6 pt-4 border-t border-surface-container flex items-center justify-between text-on-surface-variant font-label-sm text-label-sm">
                   <span className="flex items-center gap-1.5">
                     <span className="w-2 h-2 rounded-full bg-secondary animate-pulse"></span>
-                    Draw closes in 4d 18h
+                    Monthly Draw Active
                   </span>
-                  <span className="text-tertiary">Cryptographic Audit ID: #88219-FK</span>
+                  <span className="text-tertiary">Jackpot Rollover Enabled</span>
                 </div>
               </div>
 
               {/* Floating Subtle Accent Tag */}
               <div className="hidden sm:flex absolute -bottom-5 -left-5 bg-primary text-on-primary px-4 py-2.5 rounded-2xl shadow-lg items-center gap-2 text-label-sm font-label-sm border border-primary-fixed/20">
                 <span className="material-symbols-outlined text-secondary-fixed text-base">stars</span>
-                <span>100% Skill-Based Verified Allocation</span>
+                <span>Feel, Not Fairway</span>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* 3. IMPACT & TRUST STATS TICKER */}
+      {/* 3. PLATFORM FUNDAMENTALS (PRD Level 1) */}
       <section className="border-y border-outline-variant/30 bg-surface-container-low py-12" id="impact">
         <div className="max-w-7xl mx-auto px-6 md:px-12">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12">
             <div className="flex flex-col">
-              <span className="font-headline-lg text-headline-lg font-semibold text-primary tabular-nums">$1,420,000+</span>
-              <span className="text-on-surface-variant font-label-md text-label-md mt-1">Donated to Verified Charities</span>
+              <span className="font-headline-lg text-headline-lg font-semibold text-primary">1–45 Pts</span>
+              <span className="text-on-surface-variant font-label-md text-label-md mt-1">Stableford Score Format</span>
             </div>
             <div className="flex flex-col">
-              <span className="font-headline-lg text-headline-lg font-semibold text-on-surface tabular-nums">24,000+</span>
-              <span className="text-on-surface-variant font-label-md text-label-md mt-1">Active Monthly Members</span>
+              <span className="font-headline-lg text-headline-lg font-semibold text-on-surface">5 Scores</span>
+              <span className="text-on-surface-variant font-label-md text-label-md mt-1">Rolling Active Entries</span>
             </div>
             <div className="flex flex-col">
-              <span className="font-headline-lg text-headline-lg font-semibold text-secondary tabular-nums">100%</span>
-              <span className="text-on-surface-variant font-label-md text-label-md mt-1">Skill-Based Verified Rewards</span>
+              <span className="font-headline-lg text-headline-lg font-semibold text-secondary">40% / 35% / 25%</span>
+              <span className="text-on-surface-variant font-label-md text-label-md mt-1">Monthly Prize Pool Tiers</span>
             </div>
             <div className="flex flex-col">
-              <span className="font-headline-lg text-headline-lg font-semibold text-primary tabular-nums">450+</span>
-              <span className="text-on-surface-variant font-label-md text-label-md mt-1">Partner Non-Profits Supported</span>
+              <span className="font-headline-lg text-headline-lg font-semibold text-primary">10%–100%</span>
+              <span className="text-on-surface-variant font-label-md text-label-md mt-1">Direct Charity Giving</span>
             </div>
           </div>
         </div>
       </section>
 
-      {/* 4. THE THREE PILLARS: HOW FAIRWAYKIND REINVENTS PLAY */}
+      {/* 4. THE THREE PILLARS: HOW FAIRWAYKIND OPERATES */}
       <section className="py-24 md:py-32" id="how-it-works">
         <div className="max-w-7xl mx-auto px-6 md:px-12">
           <div className="max-w-2xl mx-auto text-center mb-16 md:mb-20">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-surface-container text-tertiary font-label-sm text-label-sm uppercase tracking-wider mb-4">
-              The Purpose Cycle
+              Platform Architecture
             </div>
             <h2 className="font-headline-lg text-headline-lg text-on-surface tracking-tight font-semibold">
-              How FairwayKind Reinvents Play
+              How FairwayKind Works
             </h2>
             <p className="text-on-surface-variant font-body-lg text-body-lg mt-4">
-              We removed exclusionary club baggage and toxic sports-book mechanics to build a mindful loop where good performance generates genuine social prosperity.
+              Combining golf performance tracking, guaranteed monthly prize pools, and transparent non-profit funding into a modern, mindful platform. Feel, not fairway.
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {/* Pillar 1: Play */}
+            {/* Pillar 1: Play & Score */}
             <div className="bg-surface-container-lowest border border-outline-variant/40 rounded-3xl p-8 custom-card-shadow hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between">
               <div>
                 <div className="w-12 h-12 rounded-2xl bg-surface-container flex items-center justify-center text-primary font-headline-sm font-semibold mb-6">
                   01
                 </div>
-                <h3 className="font-headline-sm text-headline-sm text-on-surface font-semibold mb-3">Log Official Play</h3>
+                <h3 className="font-headline-sm text-headline-sm text-on-surface font-semibold mb-3">Stableford Score Entry</h3>
                 <p className="text-on-surface-variant font-body-md text-body-md leading-relaxed">
-                  Log your official Stableford scores (1–45 points) from any accredited course worldwide. Simply upload an official attested card or link your GHIN handicap.
+                  Log your golf scores in Stableford format (1–45 points) with round date. Only your latest 5 scores are retained — when a new round is entered, it automatically replaces the oldest.
                 </p>
               </div>
               <div className="mt-8 pt-6 border-t border-surface-container flex items-center gap-2 text-primary font-label-md text-label-md">
-                <span className="material-symbols-outlined text-base">sports_golf</span>
-                <span>Universal course compatibility</span>
+                <span className="material-symbols-outlined text-base">sports_score</span>
+                <span>Max 5 rolling scores • 1 score per date</span>
               </div>
             </div>
 
-            {/* Pillar 2: Win */}
+            {/* Pillar 2: Monthly Draw */}
             <div className="bg-surface-container-lowest border border-outline-variant/40 rounded-3xl p-8 custom-card-shadow hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between">
               <div>
                 <div className="w-12 h-12 rounded-2xl bg-surface-container flex items-center justify-center text-secondary font-headline-sm font-semibold mb-6">
                   02
                 </div>
-                <h3 className="font-headline-sm text-headline-sm text-on-surface font-semibold mb-3">Skill-Verified Draws</h3>
+                <h3 className="font-headline-sm text-headline-sm text-on-surface font-semibold mb-3">Monthly Prize Draw</h3>
                 <p className="text-on-surface-variant font-body-md text-body-md leading-relaxed">
-                  Your monthly scoring performance automatically qualifies you for tiered cash pools and luxury equipment drops. Strictly non-gambling: rewards reflect verified handicap mastery.
+                  Every month, 5 winning numbers are drawn. Match 5 numbers to win 40% (Jackpot), match 4 for 35%, or match 3 for 25%. Unclaimed 5-number Jackpots roll forward to the next draw.
                 </p>
               </div>
               <div className="mt-8 pt-6 border-t border-surface-container flex items-center gap-2 text-secondary font-label-md text-label-md">
                 <span className="material-symbols-outlined text-base">emoji_events</span>
-                <span>Audited monthly allocations</span>
+                <span>5, 4 &amp; 3-number match tiers • Rollover</span>
               </div>
             </div>
 
-            {/* Pillar 3: Give Back */}
+            {/* Pillar 3: Charity Giving */}
             <div className="bg-surface-container-lowest border border-outline-variant/40 rounded-3xl p-8 custom-card-shadow hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between">
               <div>
                 <div className="w-12 h-12 rounded-2xl bg-primary-fixed/30 flex items-center justify-center text-primary font-headline-sm font-semibold mb-6">
                   03
                 </div>
-                <h3 className="font-headline-sm text-headline-sm text-on-surface font-semibold mb-3">Guaranteed Impact</h3>
+                <h3 className="font-headline-sm text-headline-sm text-on-surface font-semibold mb-3">Direct Charity Impact</h3>
                 <p className="text-on-surface-variant font-body-md text-body-md leading-relaxed">
-                  A minimum of 10% (and up to 100% of optional round pledges) directly funds vetted non-profits in youth golf access, environmental protection, and pediatric health.
+                  Choose your charity at signup. A minimum 10% of every subscription fee automatically supports your chosen cause, with the option to voluntarily increase your giving up to 100%.
                 </p>
               </div>
               <div className="mt-8 pt-6 border-t border-surface-container flex items-center gap-2 text-primary font-label-md text-label-md">
                 <span className="material-symbols-outlined text-base">favorite</span>
-                <span>Direct 501(c)(3) receipts</span>
+                <span>Minimum 10% • Slider up to 100%</span>
               </div>
             </div>
           </div>
@@ -272,14 +272,14 @@ export default function HomePage() {
                 Direct Impact. Complete Transparency.
               </h2>
               <p className="text-on-surface-variant font-body-lg text-body-lg mt-2 max-w-xl">
-                Choose where your membership portion goes each month, or split your contribution across multiple causes.
+                Every subscription fee directly allocates a minimum of 10% to your selected non-profit cause.
               </p>
             </div>
             <Link 
               className="inline-flex items-center gap-2 font-label-lg text-label-lg text-primary hover:text-primary-container font-semibold transition-colors" 
               href="/charities"
             >
-              <span>Explore All Verified Partners</span>
+              <span>Explore All Verified Causes</span>
               <span className="material-symbols-outlined text-lg">arrow_outward</span>
             </Link>
           </div>
@@ -293,44 +293,36 @@ export default function HomePage() {
                     <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-surface-container text-primary font-label-sm text-label-sm mb-2 font-medium">
                       Youth &amp; Community Access
                     </span>
-                    <h3 className="font-headline-sm text-headline-sm text-on-surface font-semibold">Youth on Course</h3>
+                    <h3 className="font-headline-sm text-headline-sm text-on-surface font-semibold">Youth on Course Foundation</h3>
                   </div>
                   <div className="w-12 h-12 rounded-full bg-primary-fixed/30 flex items-center justify-center text-primary">
                     <span className="material-symbols-outlined text-2xl">school</span>
                   </div>
                 </div>
                 <p className="text-on-surface-variant font-body-md text-body-md mb-6 leading-relaxed">
-                  Eliminating economic barriers so junior golfers from underrepresented backgrounds can play for $5 or less per round at over 2,000 premier facilities nationwide.
+                  Eliminating economic barriers so junior golfers from underrepresented backgrounds can play for $5 or less per round at premier facilities nationwide.
                 </p>
 
-                {/* Impact Stats Split */}
-                <div className="grid grid-cols-2 gap-4 p-4 rounded-2xl bg-surface-container-low border border-outline-variant/20 mb-6">
-                  <div>
-                    <div className="font-headline-md text-headline-md text-primary font-semibold tabular-nums">$384,200</div>
-                    <div className="text-on-surface-variant font-label-sm text-label-sm">FairwayKind pool donated</div>
+                {/* Upcoming Golf Event */}
+                <div className="p-4 rounded-2xl bg-surface-container-low border border-outline-variant/20 mb-6">
+                  <div className="flex items-center gap-2 text-primary font-label-sm text-label-sm font-semibold mb-1">
+                    <span className="material-symbols-outlined text-base">event</span>
+                    <span>Upcoming Charity Golf Day</span>
                   </div>
-                  <div>
-                    <div className="font-headline-md text-headline-md text-on-surface font-semibold tabular-nums">76,840</div>
-                    <div className="text-on-surface-variant font-label-sm text-label-sm">Subsidized youth rounds funded</div>
-                  </div>
+                  <p className="text-on-surface font-body-sm text-body-sm">Annual Junior Invitational &amp; Charity Fundraiser — October 18, 2026</p>
                 </div>
-
-                <blockquote className="italic text-on-surface-variant font-body-sm text-body-sm border-l-2 border-primary pl-4">
-                  &ldquo;FairwayKind members have opened fairways to thousands of kids who otherwise would never have had the chance to touch a club.&rdquo;
-                  <footer className="mt-1 font-label-sm text-label-sm text-on-surface not-italic font-semibold">— Adam H., Executive Director</footer>
-                </blockquote>
               </div>
 
-              <div className="mt-8 pt-6 border-t border-surface-container flex items-center justify-between">
+              <div className="mt-4 pt-6 border-t border-surface-container flex items-center justify-between">
                 <span className="text-on-surface-variant font-label-md text-label-md flex items-center gap-1.5">
                   <span className="material-symbols-outlined text-secondary text-sm">verified</span>
-                  GuideStar Platinum Seal
+                  Verified 501(c)(3) Partner
                 </span>
                 <button 
-                  onClick={() => handleSelectCharity('Youth on Course')}
+                  onClick={() => handleSelectCharity('Youth on Course Foundation')}
                   className="px-4 py-2 rounded-full bg-surface-container hover:bg-surface-container-high text-primary font-label-sm text-label-sm font-semibold transition-colors active:scale-95"
                 >
-                  {selectedCharity === 'Youth on Course' ? '✓ Selected' : 'Select as My Charity'}
+                  {selectedCharity === 'Youth on Course Foundation' ? '✓ Selected' : 'Select as My Charity'}
                 </button>
               </div>
             </div>
@@ -343,44 +335,36 @@ export default function HomePage() {
                     <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-surface-container text-primary font-label-sm text-label-sm mb-2 font-medium">
                       Ecological Stewardship
                     </span>
-                    <h3 className="font-headline-sm text-headline-sm text-on-surface font-semibold">Clean Oceans &amp; Wetlands</h3>
+                    <h3 className="font-headline-sm text-headline-sm text-on-surface font-semibold">Clean Oceans &amp; Coastal Wetlands</h3>
                   </div>
                   <div className="w-12 h-12 rounded-full bg-primary-fixed/30 flex items-center justify-center text-primary">
                     <span className="material-symbols-outlined text-2xl">water_drop</span>
                   </div>
                 </div>
                 <p className="text-on-surface-variant font-body-md text-body-md mb-6 leading-relaxed">
-                  Revitalizing coastal ecosystems, restoring critical water habitats adjacent to coastal links courses, and eliminating synthetic micro-plastic runoff.
+                  Revitalizing coastal ecosystems, restoring critical water habitats adjacent to coastal links courses, and eliminating synthetic runoff.
                 </p>
 
-                {/* Impact Stats Split */}
-                <div className="grid grid-cols-2 gap-4 p-4 rounded-2xl bg-surface-container-low border border-outline-variant/20 mb-6">
-                  <div>
-                    <div className="font-headline-md text-headline-md text-primary font-semibold tabular-nums">$291,500</div>
-                    <div className="text-on-surface-variant font-label-sm text-label-sm">FairwayKind pool donated</div>
+                {/* Upcoming Golf Event */}
+                <div className="p-4 rounded-2xl bg-surface-container-low border border-outline-variant/20 mb-6">
+                  <div className="flex items-center gap-2 text-primary font-label-sm text-label-sm font-semibold mb-1">
+                    <span className="material-symbols-outlined text-base">event</span>
+                    <span>Upcoming Charity Golf Day</span>
                   </div>
-                  <div>
-                    <div className="font-headline-md text-headline-md text-on-surface font-semibold tabular-nums">410 Acres</div>
-                    <div className="text-on-surface-variant font-label-sm text-label-sm">Riparian wetlands restored</div>
-                  </div>
+                  <p className="text-on-surface font-body-sm text-body-sm">Coastal Links Scramble for Conservation — November 07, 2026</p>
                 </div>
-
-                <blockquote className="italic text-on-surface-variant font-body-sm text-body-sm border-l-2 border-primary pl-4">
-                  &ldquo;Modern athletes care deeply about the landscape they walk. The partnership with FairwayKind proves performance and preservation coexist.&rdquo;
-                  <footer className="mt-1 font-label-sm text-label-sm text-on-surface not-italic font-semibold">— Dr. Elena Rostova, Marine Biologist</footer>
-                </blockquote>
               </div>
 
-              <div className="mt-8 pt-6 border-t border-surface-container flex items-center justify-between">
+              <div className="mt-4 pt-6 border-t border-surface-container flex items-center justify-between">
                 <span className="text-on-surface-variant font-label-md text-label-md flex items-center gap-1.5">
                   <span className="material-symbols-outlined text-secondary text-sm">verified</span>
-                  Charity Navigator 4-Star
+                  Verified 501(c)(3) Partner
                 </span>
                 <button 
-                  onClick={() => handleSelectCharity('Clean Oceans & Wetlands')}
+                  onClick={() => handleSelectCharity('Clean Oceans & Coastal Wetlands')}
                   className="px-4 py-2 rounded-full bg-surface-container hover:bg-surface-container-high text-primary font-label-sm text-label-sm font-semibold transition-colors active:scale-95"
                 >
-                  {selectedCharity === 'Clean Oceans & Wetlands' ? '✓ Selected' : 'Select as My Charity'}
+                  {selectedCharity === 'Clean Oceans & Coastal Wetlands' ? '✓ Selected' : 'Select as My Charity'}
                 </button>
               </div>
             </div>
@@ -388,20 +372,20 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* 6. MONTHLY REWARDS & INTEGRITY SHOWCASE */}
+      {/* 6. MONTHLY DRAW ARCHITECTURE & PRIZE ALLOCATION */}
       <section className="py-24 md:py-32">
         <div className="max-w-7xl mx-auto px-6 md:px-12">
           <div className="bg-surface-container-lowest border border-outline-variant/40 rounded-3xl p-8 md:p-14 custom-floating-shadow">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
               <div className="lg:col-span-6 space-y-6">
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-surface-container text-tertiary font-label-sm text-label-sm uppercase tracking-wider">
-                  Fair, Audited Mechanics
+                  Official Draw System
                 </div>
                 <h2 className="font-headline-lg text-headline-lg text-on-surface tracking-tight font-semibold">
-                  Skill Verification.<br />Zero Speculation.
+                  Monthly Draw Engine.<br />Pre-Defined Prize Logic.
                 </h2>
                 <p className="text-on-surface-variant font-body-lg text-body-lg leading-relaxed">
-                  FairwayKind does not operate gambling, sports betting, or lottery pools. We run a closed-loop skill performance reward system designed in compliance with state and federal contest regulations.
+                  A fixed portion of each subscription contributes to the prize pool. The monthly draw selects 5 winning numbers, and prize distribution is strictly governed by pre-defined PRD allocation tiers.
                 </p>
 
                 <div className="space-y-4 pt-2">
@@ -410,8 +394,8 @@ export default function HomePage() {
                       <span className="material-symbols-outlined text-sm">check</span>
                     </div>
                     <div>
-                      <h4 className="font-headline-sm text-headline-sm text-on-surface font-semibold text-base">Algorithmic Handicap Matching</h4>
-                      <p className="text-on-surface-variant font-body-sm text-body-sm">Rounds are normalized using standard course slope and differential ratings to guarantee equal opportunity across all handicap bands.</p>
+                      <h4 className="font-headline-sm text-headline-sm text-on-surface font-semibold text-base">5-Number Match (40% Jackpot)</h4>
+                      <p className="text-on-surface-variant font-body-sm text-body-sm">40% of the prize pool is allocated to 5-number matches. If unclaimed, the entire 5-number Jackpot rolls forward to the following month.</p>
                     </div>
                   </div>
 
@@ -420,8 +404,8 @@ export default function HomePage() {
                       <span className="material-symbols-outlined text-sm">check</span>
                     </div>
                     <div>
-                      <h4 className="font-headline-sm text-headline-sm text-on-surface font-semibold text-base">Attested Proof Verification</h4>
-                      <p className="text-on-surface-variant font-body-sm text-body-sm">Winning scorecards undergo verification via digital markers and handicap registry cross-checks before prize disbursement.</p>
+                      <h4 className="font-headline-sm text-headline-sm text-on-surface font-semibold text-base">4-Number Match (35%) &amp; 3-Number Match (25%)</h4>
+                      <p className="text-on-surface-variant font-body-sm text-body-sm">35% and 25% of the pool are allocated to 4-number and 3-number matches. These tiers do not roll forward; prizes split equally among all winners in the tier.</p>
                     </div>
                   </div>
 
@@ -430,8 +414,8 @@ export default function HomePage() {
                       <span className="material-symbols-outlined text-sm">check</span>
                     </div>
                     <div>
-                      <h4 className="font-headline-sm text-headline-sm text-on-surface font-semibold text-base">Direct Fintech Payouts</h4>
-                      <p className="text-on-surface-variant font-body-sm text-body-sm">Direct ACH or card credit delivery on the 1st of every month, alongside certified charitable tax receipts for your records.</p>
+                      <h4 className="font-headline-sm text-headline-sm text-on-surface font-semibold text-base">Draw Simulation &amp; Publishing</h4>
+                      <p className="text-on-surface-variant font-body-sm text-body-sm">Platform administrators can configure random lottery-style or score-weighted algorithmic draws, simulate results, and review before official publishing.</p>
                     </div>
                   </div>
                 </div>
@@ -440,46 +424,46 @@ export default function HomePage() {
               {/* Visual breakdown card */}
               <div className="lg:col-span-6 bg-surface-container-low border border-outline-variant/30 rounded-2xl p-6 md:p-8">
                 <div className="flex items-center justify-between pb-4 border-b border-outline-variant/30">
-                  <div className="font-headline-sm text-headline-sm text-on-surface font-semibold">Monthly Member Yield</div>
-                  <span className="text-primary font-label-sm text-label-sm font-semibold">September Distribution</span>
+                  <div className="font-headline-sm text-headline-sm text-on-surface font-semibold">Prize Pool Allocation</div>
+                  <span className="text-primary font-label-sm text-label-sm font-semibold">PRD Standard</span>
                 </div>
 
                 <div className="space-y-4 py-6">
                   <div>
                     <div className="flex justify-between font-label-md text-label-md mb-1.5">
-                      <span className="text-on-surface font-medium">Skill Performance Pool (Distributed)</span>
-                      <span className="text-primary font-semibold tabular-nums">$65,000.00</span>
+                      <span className="text-on-surface font-medium">5-Number Match (Jackpot Rollover)</span>
+                      <span className="text-primary font-semibold">40% of Pool</span>
                     </div>
                     <div className="w-full bg-surface-variant rounded-full h-2 overflow-hidden">
-                      <div className="bg-primary h-full rounded-full" style={{ width: "70%" }}></div>
+                      <div className="bg-primary h-full rounded-full" style={{ width: "40%" }}></div>
                     </div>
                   </div>
 
                   <div>
                     <div className="flex justify-between font-label-md text-label-md mb-1.5">
-                      <span className="text-on-surface font-medium">Philanthropic Grants (501c3)</span>
-                      <span className="text-secondary font-semibold tabular-nums">$22,400.00</span>
+                      <span className="text-on-surface font-medium">4-Number Match Tier</span>
+                      <span className="text-secondary font-semibold">35% of Pool</span>
                     </div>
                     <div className="w-full bg-surface-variant rounded-full h-2 overflow-hidden">
-                      <div className="bg-secondary h-full rounded-full" style={{ width: "25%" }}></div>
+                      <div className="bg-secondary h-full rounded-full" style={{ width: "35%" }}></div>
                     </div>
                   </div>
 
                   <div>
                     <div className="flex justify-between font-label-md text-label-md mb-1.5">
-                      <span className="text-on-surface font-medium">Platform Infrastructure &amp; Audits</span>
-                      <span className="text-tertiary font-semibold tabular-nums">$4,800.00</span>
+                      <span className="text-on-surface font-medium">3-Number Match Tier</span>
+                      <span className="text-tertiary font-semibold">25% of Pool</span>
                     </div>
                     <div className="w-full bg-surface-variant rounded-full h-2 overflow-hidden">
-                      <div className="bg-outline h-full rounded-full" style={{ width: "5%" }}></div>
+                      <div className="bg-tertiary h-full rounded-full" style={{ width: "25%" }}></div>
                     </div>
                   </div>
                 </div>
 
                 <div className="bg-surface-container-lowest rounded-xl p-4 border border-outline-variant/30 flex items-center gap-3">
-                  <span className="material-symbols-outlined text-secondary text-2xl shrink-0">policy</span>
+                  <span className="material-symbols-outlined text-secondary text-2xl shrink-0">verified</span>
                   <span className="text-on-surface-variant font-body-sm text-body-sm">
-                    Independent compliance verified by Global Philanthropy Audits Group. Strictly non-gambling mechanics.
+                    Multiple winners in any tier split the allocated tier pool equally. Winner proof verification required prior to disbursement.
                   </span>
                 </div>
               </div>
@@ -488,94 +472,83 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* 7. TESTIMONIALS & SOCIAL PROOF */}
+      {/* 7. HOW TO PARTICIPATE: 4 SIMPLE STEPS */}
       <section className="bg-surface-container-low py-24 border-b border-outline-variant/30">
         <div className="max-w-7xl mx-auto px-6 md:px-12">
           <div className="max-w-2xl mx-auto text-center mb-16">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-surface-container text-tertiary font-label-sm text-label-sm uppercase tracking-wider mb-4">
-              Voices from the Community
+              Member Journey
             </div>
             <h2 className="font-headline-lg text-headline-lg text-on-surface tracking-tight font-semibold">
-              Played with Purpose
+              How You Participate
             </h2>
             <p className="text-on-surface-variant font-body-lg text-body-lg mt-2">
-              What happens when competitive drive meets intentional philanthropy.
+              Follow four straightforward steps from your first score to monthly draw participation and charitable impact.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {/* Testimonial 1 */}
-            <div className="bg-surface-container-lowest border border-outline-variant/40 rounded-3xl p-8 custom-card-shadow flex flex-col justify-between">
-              <div className="space-y-4">
-                <div className="flex items-center gap-1 text-secondary">
-                  {[...Array(5)].map((_, i) => (
-                    <span key={i} className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>
-                      star
-                    </span>
-                  ))}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            {/* Step 1 */}
+            <div className="bg-surface-container-lowest border border-outline-variant/40 rounded-3xl p-6 custom-card-shadow flex flex-col justify-between">
+              <div>
+                <div className="w-10 h-10 rounded-2xl bg-primary-fixed/30 flex items-center justify-center text-primary font-headline-sm font-bold mb-4">
+                  1
                 </div>
-                <p className="text-on-surface font-body-md text-body-md leading-relaxed">
-                  &ldquo;FairwayKind completely re-framed why I step onto the first tee. Knowing my weekend round contributed directly to a junior golf scholarship gave every putt a renewed sense of pride.&rdquo;
+                <h3 className="font-headline-sm text-headline-sm text-on-surface font-semibold mb-2">Subscribe &amp; Choose Cause</h3>
+                <p className="text-on-surface-variant font-body-sm text-body-sm leading-relaxed">
+                  Join on a monthly ($29/mo) or discounted yearly plan ($290/yr). Select your preferred verified 501(c)(3) charity during registration.
                 </p>
               </div>
-              <div className="mt-8 pt-6 border-t border-surface-container flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center font-headline-sm text-primary font-semibold">
-                  MT
-                </div>
-                <div>
-                  <div className="font-headline-sm text-headline-sm text-on-surface font-semibold text-base">Marcus Thorne</div>
-                  <div className="font-label-sm text-label-sm text-on-surface-variant">Member since 2023 • Handicap 6.2</div>
-                </div>
+              <div className="mt-6 pt-4 border-t border-surface-container text-xs text-primary font-semibold">
+                Min 10% automatically remitted
               </div>
             </div>
 
-            {/* Testimonial 2 */}
-            <div className="bg-surface-container-lowest border border-outline-variant/40 rounded-3xl p-8 custom-card-shadow flex flex-col justify-between">
-              <div className="space-y-4">
-                <div className="flex items-center gap-1 text-secondary">
-                  {[...Array(5)].map((_, i) => (
-                    <span key={i} className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>
-                      star
-                    </span>
-                  ))}
+            {/* Step 2 */}
+            <div className="bg-surface-container-lowest border border-outline-variant/40 rounded-3xl p-6 custom-card-shadow flex flex-col justify-between">
+              <div>
+                <div className="w-10 h-10 rounded-2xl bg-primary-fixed/30 flex items-center justify-center text-primary font-headline-sm font-bold mb-4">
+                  2
                 </div>
-                <p className="text-on-surface font-body-md text-body-md leading-relaxed">
-                  &ldquo;The UI is immaculate—it looks like a sleek wealth management app rather than a loud gaming site. I won a $1,200 equipment allocation in July and half of it went straight back into clean water.&rdquo;
+                <h3 className="font-headline-sm text-headline-sm text-on-surface font-semibold mb-2">Enter Golf Scores</h3>
+                <p className="text-on-surface-variant font-body-sm text-body-sm leading-relaxed">
+                  Log your latest rounds using Stableford scoring (1–45 points) with round date. Your rolling latest 5 scores are automatically retained.
                 </p>
               </div>
-              <div className="mt-8 pt-6 border-t border-surface-container flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center font-headline-sm text-primary font-semibold">
-                  SL
-                </div>
-                <div>
-                  <div className="font-headline-sm text-headline-sm text-on-surface font-semibold text-base">Sarah Lindqvist</div>
-                  <div className="font-label-sm text-label-sm text-on-surface-variant">Member since 2024 • Handicap 14.8</div>
-                </div>
+              <div className="mt-6 pt-4 border-t border-surface-container text-xs text-primary font-semibold">
+                1 score per date • Edit anytime
               </div>
             </div>
 
-            {/* Testimonial 3 */}
-            <div className="bg-surface-container-lowest border border-outline-variant/40 rounded-3xl p-8 custom-card-shadow flex flex-col justify-between">
-              <div className="space-y-4">
-                <div className="flex items-center gap-1 text-secondary">
-                  {[...Array(5)].map((_, i) => (
-                    <span key={i} className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>
-                      star
-                    </span>
-                  ))}
+            {/* Step 3 */}
+            <div className="bg-surface-container-lowest border border-outline-variant/40 rounded-3xl p-6 custom-card-shadow flex flex-col justify-between">
+              <div>
+                <div className="w-10 h-10 rounded-2xl bg-secondary-fixed/40 flex items-center justify-center text-secondary font-headline-sm font-bold mb-4">
+                  3
                 </div>
-                <p className="text-on-surface font-body-md text-body-md leading-relaxed">
-                  &ldquo;As a non-profit director, having recurring, reliable donations coming from an active sporting community has been transformative for our ocean conservation initiatives.&rdquo;
+                <h3 className="font-headline-sm text-headline-sm text-on-surface font-semibold mb-2">Monthly Draw</h3>
+                <p className="text-on-surface-variant font-body-sm text-body-sm leading-relaxed">
+                  Your active 5 scores enter the monthly draw. Match 5 numbers for the 40% Jackpot, 4 for 35%, or 3 for 25%.
                 </p>
               </div>
-              <div className="mt-8 pt-6 border-t border-surface-container flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center font-headline-sm text-primary font-semibold">
-                  CJ
+              <div className="mt-6 pt-4 border-t border-surface-container text-xs text-secondary font-semibold">
+                5-match rollover if unclaimed
+              </div>
+            </div>
+
+            {/* Step 4 */}
+            <div className="bg-surface-container-lowest border border-outline-variant/40 rounded-3xl p-6 custom-card-shadow flex flex-col justify-between">
+              <div>
+                <div className="w-10 h-10 rounded-2xl bg-primary-fixed/30 flex items-center justify-center text-primary font-headline-sm font-bold mb-4">
+                  4
                 </div>
-                <div>
-                  <div className="font-headline-sm text-headline-sm text-on-surface font-semibold text-base">Claire Jenkins</div>
-                  <div className="font-label-sm text-label-sm text-on-surface-variant">Partnership Lead • Clean Oceans</div>
-                </div>
+                <h3 className="font-headline-sm text-headline-sm text-on-surface font-semibold mb-2">Verify &amp; Win</h3>
+                <p className="text-on-surface-variant font-body-sm text-body-sm leading-relaxed">
+                  Winners upload a scorecard screenshot from their golf platform. Admin reviews and approves proof, and payout status updates to Paid.
+                </p>
+              </div>
+              <div className="mt-6 pt-4 border-t border-surface-container text-xs text-primary font-semibold">
+                Pending → Paid payout tracking
               </div>
             </div>
           </div>
@@ -601,13 +574,13 @@ export default function HomePage() {
                   Turn Every Swing into Social Good.
                 </h2>
                 <p className="text-on-tertiary-container font-body-lg text-body-lg max-w-xl">
-                  Join thousands of mindful golfers elevating their play and empowering causes. 14-day zero-risk trial. Cancel anytime with a single tap.
+                  Choose between flexible monthly billing or our discounted yearly plan. Cancel anytime with a single click.
                 </p>
 
                 <ul className="space-y-3 pt-2 font-body-md text-body-md text-inverse-on-surface">
                   <li className="flex items-center gap-3">
                     <span className="material-symbols-outlined text-primary-fixed text-lg">check_circle</span>
-                    <span>Full entry into all monthly skill-based draws ($25k+ guaranteed)</span>
+                    <span>Full entry into monthly prize draws (5-number, 4-number, and 3-number matches)</span>
                   </li>
                   <li className="flex items-center gap-3">
                     <span className="material-symbols-outlined text-primary-fixed text-lg">check_circle</span>
@@ -615,29 +588,29 @@ export default function HomePage() {
                   </li>
                   <li className="flex items-center gap-3">
                     <span className="material-symbols-outlined text-primary-fixed text-lg">check_circle</span>
-                    <span>Official GHIN handicap integration &amp; attested scorecard parsing</span>
+                    <span>Stableford score tracking with rolling latest 5 scores management</span>
                   </li>
                 </ul>
               </div>
 
               {/* Price Tier Floating Card */}
               <div className="lg:col-span-5 bg-tertiary-container/80 backdrop-blur-md rounded-2xl p-8 border border-outline/30 text-center flex flex-col items-center">
-                <span className="font-label-md text-label-md text-secondary-fixed uppercase tracking-wider font-semibold">Full Access Membership</span>
+                <span className="font-label-md text-label-md text-secondary-fixed uppercase tracking-wider font-semibold">FairwayKind Membership</span>
                 <div className="mt-4 mb-2 flex items-baseline justify-center gap-1">
                   <span className="font-headline-lg md:font-display text-headline-lg md:text-display font-semibold text-inverse-on-surface">$29</span>
                   <span className="text-on-tertiary-container font-body-md text-body-md">/ month</span>
                 </div>
                 <p className="text-on-tertiary-container font-body-sm text-body-sm mb-6">
-                  Includes $2.90 minimum automatic monthly charity grant.
+                  Includes $2.90 min charity grant • Or $290/yr (Save 17%)
                 </p>
                 <Link
                   href={user ? "/dashboard" : "/subscribe"}
                   className="w-full py-4 rounded-full bg-secondary hover:bg-secondary/90 text-on-secondary font-label-lg text-label-lg font-semibold transition-all duration-150 active:scale-[0.98] shadow-md block text-center"
                 >
-                  Start 14-Day Free Trial
+                  Subscribe to FairwayKind
                 </Link>
                 <span className="text-on-tertiary-container font-label-sm text-label-sm mt-3">
-                  No commitment • Seamless online cancellation
+                  Monthly &amp; Yearly Plans • Cancel Anytime
                 </span>
               </div>
             </div>

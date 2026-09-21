@@ -73,15 +73,15 @@ const PROOF_STATUS_CONFIG: Record<ProofStatus, { label: string; color: string; i
 
 const PAYOUT_STATUS_CONFIG: Record<PayoutStatus, { label: string; color: string }> = {
   unpaid: { label: 'Awaiting Proof', color: 'slate' },
-  pending: { label: 'ACH Pending', color: 'amber' },
-  paid: { label: 'Disbursed to Bank', color: 'emerald' },
-  failed: { label: 'ACH Transfer Failed', color: 'rose' },
+  pending: { label: 'Pending', color: 'amber' },
+  paid: { label: 'Paid', color: 'emerald' },
+  failed: { label: 'Failed', color: 'rose' },
 };
 
 const TIER_LABELS: Record<string, string> = {
-  tier_5: '5-Hole Match (Grand Skill Tier)',
-  tier_4: '4-Hole Match (Secondary Tier)',
-  tier_3: '3-Hole Match (Foundation Tier)',
+  tier_5: '5-Number Match (Jackpot)',
+  tier_4: '4-Number Match',
+  tier_3: '3-Number Match',
 };
 
 export default function MyWinningsPage() {
@@ -192,7 +192,7 @@ export default function MyWinningsPage() {
               </span>
             </div>
             <p className="font-body-sm text-body-sm text-on-surface-variant">
-              View your monthly performance prize allocations, upload marker-attested scorecards, and track direct ACH transfers.
+              View your monthly prize allocations, upload score proof, and track your payout status.
             </p>
           </div>
           <Button
@@ -216,12 +216,12 @@ export default function MyWinningsPage() {
             <div className="bg-surface-container-lowest border border-outline-variant/40 rounded-2xl p-5 custom-card-shadow">
               <span className="font-label-sm text-label-sm text-outline uppercase tracking-wider">Total Paid Out</span>
               <span className="block font-headline-lg text-headline-lg font-bold text-primary mt-1">${totalWinnings.toLocaleString()}</span>
-              <span className="text-xs text-on-surface-variant">Verified & settled via ACH</span>
+              <span className="text-xs text-on-surface-variant">Verified &amp; paid</span>
             </div>
             <div className="bg-surface-container-lowest border border-outline-variant/40 rounded-2xl p-5 custom-card-shadow">
               <span className="font-label-sm text-label-sm text-outline uppercase tracking-wider">Pending Winnings</span>
               <span className="block font-headline-lg text-headline-lg font-bold text-secondary mt-1">${pendingWinnings.toLocaleString()}</span>
-              <span className="text-xs text-on-surface-variant">Awaiting scorecard attestation</span>
+              <span className="text-xs text-on-surface-variant">Awaiting score verification</span>
             </div>
           </div>
         )}
@@ -359,7 +359,7 @@ export default function MyWinningsPage() {
               <div className="flex items-start gap-2 p-3.5 rounded-xl bg-surface-container-low border border-outline-variant/30">
                 <Shield className="w-4 h-4 text-primary shrink-0 mt-0.5" />
                 <p className="text-xs text-on-surface-variant">
-                  Your scorecard attestation is reviewed by certified compliance officers. Payout is processed automatically via ACH transfer once verified.
+                  Your scorecard is reviewed by platform administrators. Payout status updates from Pending to Paid once verified.
                 </p>
               </div>
             </div>

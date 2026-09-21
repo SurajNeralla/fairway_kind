@@ -17,15 +17,48 @@ export default function AdminDashboardPage() {
   const [isSimulating, setIsSimulating] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
   const [winningNumbers, setWinningNumbers] = useState<number[]>([12, 19, 27, 34, 41]);
-  const [simTier5, setSimTier5] = useState({ pool: 13700, count: 1, perWinner: 13700 });
-  const [simTier4, setSimTier4] = useState({ pool: 11987.5, count: 7, perWinner: 1712.5 });
-  const [simTier3, setSimTier3] = useState({ pool: 8562.5, count: 42, perWinner: 203.87 });
-  const [simTotalPool, setSimTotalPool] = useState(34250);
+  const [simTier5, setSimTier5] = useState({ pool: 0, count: 0, perWinner: 0 });
+  const [simTier4, setSimTier4] = useState({ pool: 0, count: 0, perWinner: 0 });
+  const [simTier3, setSimTier3] = useState({ pool: 0, count: 0, perWinner: 0 });
+  const [simTotalPool, setSimTotalPool] = useState(0);
   const [simRollover, setSimRollover] = useState(0);
+  const [simHasRun, setSimHasRun] = useState(false);
+
+  // Real admin metrics from API
+  const [adminMetrics, setAdminMetrics] = useState<{
+    activeSubscribers: number;
+    pendingProofsCount: number;
+    totalCharityRaised: number;
+    totalPrizePoolSum: number;
+  } | null>(null);
 
   // Audit drawer state
   const [drawerOpen, setDrawerOpen] = useState(true);
   const [activeProofStatus, setActiveProofStatus] = useState<'pending' | 'approved' | 'rejected'>('pending');
+
+  // Load real admin metrics
+  const fetchAdminOverview = async () => {
+    try {
+      const res = await fetch('/api/admin/overview');
+      if (res.ok) {
+        const data = await res.json();
+        if (data.metrics) {
+          setAdminMetrics({
+            activeSubscribers: data.metrics.activeSubscribers,
+            pendingProofsCount: data.metrics.pendingProofsCount,
+            totalCharityRaised: data.metrics.totalCharityRaised,
+            totalPrizePoolSum: data.metrics.totalPrizePoolSum,
+          });
+        }
+      }
+    } catch (err) {
+      console.error('Admin metrics load error:', err);
+    }
+  };
+
+  React.useEffect(() => {
+    fetchAdminOverview();
+  }, []);
 
   const handleRunSimulation = async () => {
     setIsSimulating(true);
@@ -34,8 +67,8 @@ export default function AdminDashboardPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          periodMonth: 9,
-          periodYear: 2026,
+          periodMonth: new Date().getMonth() + 1,
+          periodYear: new Date().getFullYear(),
           mode: mode === 'algo' ? 'algorithmic' : 'random',
           seed: `sim-seed-${Date.now()}`
         })
@@ -60,9 +93,10 @@ export default function AdminDashboardPage() {
         });
         setSimTotalPool(data.simulation.totalPrizePool);
         setSimRollover(data.simulation.nextRollover);
+        setSimHasRun(true);
         showToast(
           'Simulation Completed',
-          `Numbers: [${data.simulation.winningNumbers.join(', ')}] • T5: ${data.simulation.tier5.winnerCount}, T4: ${data.simulation.tier4.winnerCount}, T3: ${data.simulation.tier3.winnerCount}`,
+          `Numbers: [${data.simulation.winningNumbers.join(', ')}]`,
           'success'
         );
       } else {
@@ -82,8 +116,8 @@ export default function AdminDashboardPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          periodMonth: 9,
-          periodYear: 2026,
+          periodMonth: new Date().getMonth() + 1,
+          periodYear: new Date().getFullYear(),
           mode: mode === 'algo' ? 'algorithmic' : 'random',
           seed: `publish-seed-${Date.now()}`
         })
@@ -144,8 +178,9 @@ export default function AdminDashboardPage() {
                 <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span> Live Lock
               </span>
             </div>
-            <p className="font-headline-sm text-headline-sm font-semibold text-primary">#DK-102</p>
-            <span className="font-body-sm text-body-sm text-on-surface-variant text-[11px]">Audit Anchor: 0x8F9a...32D4</span>
+            <p className="font-headline-sm text-headline-sm font-semibold text-primary">
+              {new Date().toLocaleString('default', { month: 'long', year: 'numeric' })}
+            </p>
           </div>
 
           {/* Nav Links */}
@@ -269,9 +304,6 @@ export default function AdminDashboardPage() {
               <h1 className="font-headline-md text-headline-md font-semibold text-primary tracking-tight">
                 Draw Management &amp; Verification Suite
               </h1>
-              <span className="px-2.5 py-0.5 rounded-full bg-surface-container-high text-on-surface-variant font-label-sm text-label-sm border border-outline-variant/40">
-                October 2024 (#DK-102)
-              </span>
             </div>
             <p className="font-body-sm text-body-sm text-on-surface-variant mt-0.5">
               Deterministic algorithm seed matching • Philanthropic reserve lock • Regulatory non-gambling protocol
@@ -286,13 +318,6 @@ export default function AdminDashboardPage() {
               </span>
               <span className="font-label-md text-label-md font-semibold text-on-surface">Ready for Simulation</span>
             </div>
-            <button
-              onClick={() => showToast('Compliance Log', 'SHA-256 seed verifiable snapshot exported.', 'info')}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-surface-container hover:bg-surface-container-high text-primary border border-outline-variant/40 font-label-lg text-label-lg transition-colors font-medium"
-            >
-              <span className="material-symbols-outlined text-[18px]">history_edu</span>
-              Compliance Logs
-            </button>
             <button
               onClick={() => showToast('Parameters Locked', 'Draw #DK-102 seed parameters permanently locked.', 'success')}
               className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-on-primary font-label-lg text-label-lg shadow-sm hover:bg-primary-container active:scale-[0.98] transition-all font-semibold"
@@ -319,12 +344,11 @@ export default function AdminDashboardPage() {
               </div>
               <div>
                 <div className="flex items-baseline gap-2">
-                  <span className="font-headline-lg text-headline-lg font-bold text-on-surface">24,812</span>
-                  <span className="inline-flex items-center text-[12px] font-label-md text-primary font-bold bg-primary-fixed/40 px-2 py-0.5 rounded-full">
-                    <span className="material-symbols-outlined text-[14px]">arrow_upward</span> +8.4%
+                  <span className="font-headline-lg text-headline-lg font-bold text-on-surface">
+                    {adminMetrics ? adminMetrics.activeSubscribers.toLocaleString() : '—'}
                   </span>
                 </div>
-                <p className="font-body-sm text-body-sm text-on-surface-variant mt-1.5">MoM verified subscription accounts</p>
+                <p className="font-body-sm text-body-sm text-on-surface-variant mt-1.5">Verified active subscription accounts</p>
               </div>
               <div className="absolute bottom-0 left-0 right-0 h-1 bg-surface-container group-hover:bg-primary/30 transition-colors"></div>
             </div>
@@ -343,7 +367,9 @@ export default function AdminDashboardPage() {
               </div>
               <div>
                 <div className="flex items-baseline gap-2">
-                  <span className="font-headline-lg text-headline-lg font-bold text-primary">$34,250.00</span>
+                  <span className="font-headline-lg text-headline-lg font-bold text-primary">
+                    {adminMetrics ? `$${adminMetrics.totalPrizePoolSum.toLocaleString()}` : '—'}
+                  </span>
                 </div>
                 <p className="font-body-sm text-body-sm text-on-surface-variant mt-1.5">Fixed escrow vault • 100% audited</p>
               </div>
@@ -362,9 +388,11 @@ export default function AdminDashboardPage() {
               </div>
               <div>
                 <div className="flex items-baseline gap-2">
-                  <span className="font-headline-lg text-headline-lg font-bold text-on-surface">$8,562.50</span>
+                  <span className="font-headline-lg text-headline-lg font-bold text-on-surface">
+                    {adminMetrics ? `$${adminMetrics.totalCharityRaised.toLocaleString()}` : '—'}
+                  </span>
                 </div>
-                <p className="font-body-sm text-body-sm text-on-surface-variant mt-1.5">Earmarked across 142 Charities</p>
+                <p className="font-body-sm text-body-sm text-on-surface-variant mt-1.5">Earmarked for registered charity partners</p>
               </div>
               <div className="absolute bottom-0 left-0 right-0 h-1 bg-surface-container group-hover:bg-primary transition-colors"></div>
             </div>
@@ -381,8 +409,10 @@ export default function AdminDashboardPage() {
               </div>
               <div>
                 <div className="flex items-baseline gap-2">
-                  <span className="font-headline-lg text-headline-lg font-bold text-error">6</span>
-                  <span className="font-label-md text-label-md text-on-surface-variant font-medium">cards queued</span>
+                  <span className="font-headline-lg text-headline-lg font-bold text-error">
+                    {adminMetrics ? adminMetrics.pendingProofsCount : '—'}
+                  </span>
+                  <span className="font-label-md text-label-md text-on-surface-variant font-medium">awaiting review</span>
                 </div>
                 <p className="font-body-sm text-body-sm text-on-surface-variant mt-1.5">Requires compliance sign-off</p>
               </div>
@@ -403,12 +433,9 @@ export default function AdminDashboardPage() {
                     <h2 className="font-headline-md text-headline-md font-bold text-primary">
                       Algorithmic Draw Engine &amp; Simulator
                     </h2>
-                    <span className="px-2.5 py-0.5 rounded-full text-primary bg-primary-fixed/50 font-label-sm text-label-sm font-semibold border border-primary-fixed-dim">
-                      Seed Verifiable v4.2
-                    </span>
                   </div>
                   <p className="font-body-md text-body-md text-on-surface-variant mt-1">
-                    Execute dry-run simulation of stroke performance vectors against active handicap-adjusted subscriber entries.
+                    Run a dry-run simulation against active subscriber entries. Results are not persisted until published.
                   </p>
                 </div>
               </div>
@@ -588,12 +615,14 @@ export default function AdminDashboardPage() {
                     <span className="font-label-sm text-label-sm uppercase font-bold text-on-surface-variant">Rollover</span>
                     <p className="font-label-lg text-label-lg font-bold text-primary">${simRollover.toLocaleString()}</p>
                   </div>
-                  <div className="h-9 px-3 rounded-lg bg-surface-container-lowest border border-outline-variant/40 flex items-center gap-2 text-primary font-label-md text-label-md font-semibold">
-                    <span className="material-symbols-outlined text-[18px] text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>
-                      check_circle
-                    </span>
-                    Compliance Determinism Passed
-                  </div>
+                  {simHasRun && (
+                    <div className="h-9 px-3 rounded-lg bg-surface-container-lowest border border-outline-variant/40 flex items-center gap-2 text-primary font-label-md text-label-md font-semibold">
+                      <span className="material-symbols-outlined text-[18px] text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>
+                        check_circle
+                      </span>
+                      Simulation Complete
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -612,7 +641,7 @@ export default function AdminDashboardPage() {
                     </span>
                   </div>
                   <p className="font-body-sm text-body-sm text-on-surface-variant mt-0.5">
-                    Physical marker attestation review required prior to automated ACH settlement.
+                    Scorecard review required prior to payout settlement.
                   </p>
                 </div>
                 <button
@@ -652,7 +681,7 @@ export default function AdminDashboardPage() {
                       <td className="py-4 px-4 font-medium text-on-surface">#DK-102</td>
                       <td className="py-4 px-4">
                         <span className="px-2.5 py-1 rounded-full bg-secondary-container/60 text-on-secondary-fixed font-label-sm text-label-sm font-bold">
-                          5-Hole Match
+                          5-Number Match
                         </span>
                       </td>
                       <td className="py-4 px-4 font-bold text-primary">$13,700.00</td>
@@ -699,7 +728,7 @@ export default function AdminDashboardPage() {
                       <td className="py-4 px-4 font-medium text-on-surface">#DK-102</td>
                       <td className="py-4 px-4">
                         <span className="px-2.5 py-1 rounded-full bg-surface-container-highest text-primary font-label-sm text-label-sm font-bold">
-                          4-Hole Match
+                          4-Number Match
                         </span>
                       </td>
                       <td className="py-4 px-4 font-bold text-on-surface">$1,712.50</td>
@@ -734,7 +763,7 @@ export default function AdminDashboardPage() {
                       <td className="py-4 px-4 font-medium text-on-surface">#DK-102</td>
                       <td className="py-4 px-4">
                         <span className="px-2.5 py-1 rounded-full bg-surface-container-highest text-primary font-label-sm text-label-sm font-bold">
-                          4-Hole Match
+                          4-Number Match
                         </span>
                       </td>
                       <td className="py-4 px-4 font-bold text-on-surface">$1,712.50</td>
@@ -764,7 +793,7 @@ export default function AdminDashboardPage() {
                       <td className="py-4 px-4 font-medium text-on-surface">#DK-102</td>
                       <td className="py-4 px-4">
                         <span className="px-2.5 py-1 rounded-full bg-surface-container-highest text-primary font-label-sm text-label-sm font-bold">
-                          3-Hole Match
+                          3-Number Match
                         </span>
                       </td>
                       <td className="py-4 px-4 font-bold text-on-surface">$203.86</td>
@@ -839,7 +868,7 @@ export default function AdminDashboardPage() {
                     </span>
                     <div>
                       <p className="font-label-md text-label-md text-on-surface font-semibold">Handicap Differential Consistency</p>
-                      <p className="text-on-surface-variant text-[12px]">USGA GHIN recorded timestamp: Oct 18, 14:22 PST</p>
+                      <p className="text-on-surface-variant text-[12px]">Platform scorecard recorded timestamp: Oct 18, 14:22 PST</p>
                     </div>
                   </div>
 

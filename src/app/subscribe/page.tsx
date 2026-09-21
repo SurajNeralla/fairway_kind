@@ -67,7 +67,7 @@ export default function SubscribePage() {
             Select Your Fairway<span className="text-primary">Kind</span> Plan
           </h1>
           <p className="font-body-lg text-body-lg text-on-surface-variant">
-            Gain full entry into monthly skill-based draws ($25k+) while funding your preferred verified charity.
+            Gain full entry into monthly prize draws while funding your preferred verified charity.
           </p>
         </div>
 
@@ -103,7 +103,7 @@ export default function SubscribePage() {
             <div className="flex items-center justify-between pb-5 border-b border-surface-container">
               <div>
                 <h3 className="font-headline-sm text-headline-sm text-on-surface font-semibold capitalize">{billingCycle} Membership</h3>
-                <p className="font-body-sm text-body-sm text-on-surface-variant">Full platform access & monthly draw entries</p>
+                <p className="font-body-sm text-body-sm text-on-surface-variant">Full platform access &amp; monthly draw entries</p>
               </div>
               <div className="text-right">
                 <span className="font-headline-lg text-headline-lg font-bold text-primary">${price}</span>
@@ -126,11 +126,11 @@ export default function SubscribePage() {
               </div>
               <div className="flex items-center gap-3">
                 <Check className="w-4 h-4 text-primary shrink-0" />
-                <span>Peer marker attestation and direct ACH prize payout workflow</span>
+                <span>Official winner score proof verification and payout tracking</span>
               </div>
               <div className="flex items-center gap-3">
                 <Check className="w-4 h-4 text-primary shrink-0" />
-                <span>Direct 501(c)(3) tax receipts provided for every philanthropic contribution</span>
+                <span>Minimum 10% (and up to 100%) directly remitted to your chosen charity</span>
               </div>
             </div>
           </div>
@@ -142,7 +142,7 @@ export default function SubscribePage() {
                 <Heart className="w-3.5 h-3.5" />
                 Charity Customizer
               </div>
-              <h3 className="font-headline-sm text-headline-sm font-semibold text-on-surface">Select Cause & Contribution</h3>
+              <h3 className="font-headline-sm text-headline-sm font-semibold text-on-surface">Select Cause &amp; Contribution</h3>
             </div>
 
             <Select
@@ -178,7 +178,7 @@ export default function SubscribePage() {
             </div>
 
             <div className="p-4 rounded-2xl bg-surface-container-low border border-outline-variant/30 text-body-sm flex items-center justify-between">
-              <span className="text-on-surface-variant">Monthly Grant to Charity:</span>
+              <span className="text-on-surface-variant">{billingCycle === 'monthly' ? 'Monthly' : 'Yearly'} Grant to Charity:</span>
               <span className="text-primary font-bold text-base">${charityAmount}</span>
             </div>
 
@@ -189,7 +189,7 @@ export default function SubscribePage() {
               onClick={handleCheckout}
               rightIcon={<ArrowRight className="w-4 h-4" />}
             >
-              Start 14-Day Free Trial
+              Subscribe to FairwayKind
             </Button>
 
             <p className="text-xs text-center text-on-surface-variant flex items-center justify-center gap-1.5">

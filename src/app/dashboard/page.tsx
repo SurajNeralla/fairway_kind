@@ -10,93 +10,35 @@ import { useToast } from '@/components/ui/Toast';
 interface ScoreItem {
   id: string;
   date: string;
-  course: string;
-  tees: string;
-  slope: string;
   score: number;
-  attestation: string;
-  attestedAt: string;
+  played_on: string;
 }
-
-const INITIAL_SCORES: ScoreItem[] = [
-  {
-    id: 's1',
-    date: 'Oct 22, 2024',
-    course: 'Cypress Pines GC',
-    tees: 'White Tees',
-    slope: 'Rating 72.4 / Slope 131',
-    score: 39,
-    attestation: 'Verified (Dave R.)',
-    attestedAt: 'Attested Oct 22, 19:12'
-  },
-  {
-    id: 's2',
-    date: 'Oct 14, 2024',
-    course: 'Meadow Creek Links',
-    tees: 'Blue Tees',
-    slope: 'Rating 71.8 / Slope 128',
-    score: 36,
-    attestation: 'Verified (Club Pro)',
-    attestedAt: 'Club Pro In-System'
-  },
-  {
-    id: 's3',
-    date: 'Oct 04, 2024',
-    course: 'Oakridge National',
-    tees: 'Gold Tees',
-    slope: 'Rating 73.1 / Slope 135',
-    score: 41,
-    attestation: 'Verified (Sarah M.)',
-    attestedAt: 'Attested Sarah M.'
-  },
-  {
-    id: 's4',
-    date: 'Sep 28, 2024',
-    course: 'Bandon Dunes',
-    tees: 'Championship Tees',
-    slope: 'Rating 74.0 / Slope 138',
-    score: 34,
-    attestation: 'Verified Upload',
-    attestedAt: 'Verified Scorecard Upload'
-  },
-  {
-    id: 's5',
-    date: 'Sep 18, 2024',
-    course: 'Torrey Pines South',
-    tees: 'Black Tees',
-    slope: 'Rating 75.3 / Slope 142',
-    score: 38,
-    attestation: 'Verified (Ken G.)',
-    attestedAt: 'Attested Ken G.'
-  }
-];
 
 export default function SubscriberDashboard() {
   const router = useRouter();
   const { user, profile, signOut } = useAuth();
   const { showToast } = useToast();
 
-  const [scores, setScores] = useState<ScoreItem[]>(INITIAL_SCORES);
+  const [scores, setScores] = useState<ScoreItem[]>([]);
   const [modalOpen, setModalOpen] = useState(false);
-  const [charityPercent, setCharityPercent] = useState(15);
-  const [charityName, setCharityName] = useState("St. Jude");
-  const [subStatus, setSubStatus] = useState('Yearly Plan — Active');
+  const [charityPercent, setCharityPercent] = useState(10);
+  const [charityName, setCharityName] = useState('');
+  const [subStatus, setSubStatus] = useState('');
+  const [renewalDate, setRenewalDate] = useState<string | null>(null);
+  const [cancelAtPeriodEnd, setCancelAtPeriodEnd] = useState(false);
   const [totalWonAmount, setTotalWonAmount] = useState(0);
   const [activeTab, setActiveTab] = useState('overview');
+  const [winners, setWinners] = useState<any[]>([]);
+  const [drawInfo, setDrawInfo] = useState<any>(null);
 
   // Inline form state
-  const [inlineDate, setInlineDate] = useState('2024-10-27');
-  const [inlineCourse, setInlineCourse] = useState('Pasatiempo Golf Club — Green Tees');
-  const [inlinePoints, setInlinePoints] = useState('38');
-  const [inlineEmail, setInlineEmail] = useState('dave.ross@golf.net');
-  const [inlineAttestToggle, setInlineAttestToggle] = useState(true);
+  const today = new Date().toISOString().split('T')[0];
+  const [inlineDate, setInlineDate] = useState(today);
+  const [inlinePoints, setInlinePoints] = useState('');
 
   // Modal form state
-  const [modalCourse, setModalCourse] = useState('');
-  const [modalDate, setModalDate] = useState('2024-10-27');
+  const [modalDate, setModalDate] = useState(today);
   const [modalPoints, setModalPoints] = useState('');
-  const [modalEmail, setModalEmail] = useState('');
-  const [modalBoost, setModalBoost] = useState(true);
 
   const userName = profile?.full_name || 'Marcus Vance';
 
@@ -108,28 +50,40 @@ export default function SubscriberDashboard() {
         if (data.activeScores && data.activeScores.length > 0) {
           const mappedScores: ScoreItem[] = data.activeScores.map((s: any) => ({
             id: s.id,
-            date: new Date(s.played_on).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }),
-            course: 'Fairway Attested Round',
-            tees: 'Standard Tees',
-            slope: 'Rating 72.0 / Slope 130',
+            date: new Date(s.played_on + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }),
             score: s.score,
-            attestation: 'Verified Round',
-            attestedAt: new Date(s.created_at || s.played_on).toLocaleDateString('en-US')
+            played_on: s.played_on,
           }));
           setScores(mappedScores);
+        } else {
+          setScores([]);
         }
         if (data.subscription?.voluntary_charity_percent) {
           setCharityPercent(data.subscription.voluntary_charity_percent);
         }
-        if (data.subscription?.charities?.name) {
-          setCharityName(data.subscription.charities.name);
+        const charityDisplayName = data.stats?.charityName || (data.subscription as any)?.charities?.name || '';
+        if (charityDisplayName) {
+          setCharityName(charityDisplayName);
         }
         if (data.subscription?.status) {
           const planLabel = data.subscription.plan_type === 'yearly' ? 'Yearly' : 'Monthly';
-          setSubStatus(`${planLabel} Plan — ${data.subscription.status === 'active' ? 'Active' : data.subscription.status}`);
+          const statusLabel = data.subscription.status === 'active' ? 'Active'
+            : data.subscription.status === 'past_due' ? 'Past Due'
+            : data.subscription.status === 'canceled' ? 'Cancelled'
+            : data.subscription.status === 'trialing' ? 'Trial'
+            : data.subscription.status;
+          setSubStatus(`${planLabel} Plan — ${statusLabel}`);
+          setCancelAtPeriodEnd(data.subscription.cancel_at_period_end || false);
+          setRenewalDate(data.subscription.current_period_end || null);
         }
-        if (data.totalWon !== undefined) {
-          setTotalWonAmount(data.totalWon);
+        if (data.stats?.totalWon !== undefined) {
+          setTotalWonAmount(data.stats.totalWon);
+        }
+        if (data.winners) {
+          setWinners(data.winners);
+        }
+        if (data.publishedDraws && data.publishedDraws.length > 0) {
+          setDrawInfo(data.publishedDraws[0]);
         }
       }
     } catch (err) {
@@ -158,6 +112,10 @@ export default function SubscriberDashboard() {
       showToast('Invalid Score', 'Stableford points must be between 1 and 45.', 'error');
       return;
     }
+    if (!inlineDate) {
+      showToast('Date Required', 'Please enter the date of the round.', 'error');
+      return;
+    }
 
     try {
       const res = await fetch('/api/scores', {
@@ -171,10 +129,12 @@ export default function SubscriberDashboard() {
 
       const data = await res.json();
       if (res.ok) {
-        showToast('Score Attested!', 'Score saved to your rolling 5 entries in database.', 'success');
+        showToast('Score Saved!', 'Score added to your rolling 5 entries.', 'success');
+        setInlinePoints('');
+        setInlineDate(today);
         await loadDashboardSummary();
       } else {
-        showToast('Submission Notice', data.error || 'Failed to submit score.', 'error');
+        showToast('Error', data.error || 'Failed to submit score.', 'error');
       }
     } catch (err: any) {
       showToast('Error', err.message || 'Score submit error', 'error');
@@ -186,6 +146,10 @@ export default function SubscriberDashboard() {
     const pts = parseInt(modalPoints, 10);
     if (isNaN(pts) || pts < 1 || pts > 45) {
       showToast('Invalid Score', 'Stableford points must be between 1 and 45.', 'error');
+      return;
+    }
+    if (!modalDate) {
+      showToast('Date Required', 'Please enter the date of the round.', 'error');
       return;
     }
 
@@ -201,14 +165,13 @@ export default function SubscriberDashboard() {
 
       const data = await res.json();
       if (res.ok) {
-        showToast('Score Logged!', 'Score successfully saved to your rolling 5 entries.', 'success');
+        showToast('Score Added!', 'Score saved to your rolling 5 entries.', 'success');
         setModalOpen(false);
-        setModalCourse('');
         setModalPoints('');
-        setModalEmail('');
+        setModalDate(today);
         await loadDashboardSummary();
       } else {
-        showToast('Submission Notice', data.error || 'Failed to submit score.', 'error');
+        showToast('Error', data.error || 'Failed to submit score.', 'error');
       }
     } catch (err: any) {
       showToast('Error', err.message || 'Score submit error', 'error');
@@ -423,8 +386,10 @@ export default function SubscriberDashboard() {
                 </p>
               </div>
               <div className="mt-4 pt-3 border-t border-surface-container flex items-center justify-between text-body-sm text-on-surface-variant">
-                <span>Next Renewal</span>
-                <span className="font-semibold text-on-surface">Oct 14, 2025</span>
+                <span>{cancelAtPeriodEnd ? 'Expires' : 'Next Renewal'}</span>
+                <span className="font-semibold text-on-surface">
+                  {renewalDate ? new Date(renewalDate).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }) : '—'}
+                </span>
               </div>
             </div>
 
@@ -438,15 +403,15 @@ export default function SubscriberDashboard() {
               </div>
               <div className="mt-4">
                 <div className="font-headline-lg text-headline-lg font-bold text-on-surface tracking-tight">
-                  $384.50
+                  {charityPercent}% Allocation
                 </div>
                 <p className="font-label-md text-label-md text-primary font-medium mt-1">
-                  {charityPercent}% fee + voluntary rounds match
+                  Minimum 10% of subscription fee
                 </p>
               </div>
               <div className="mt-4 pt-3 border-t border-surface-container flex items-center justify-between gap-2 text-body-sm text-on-surface-variant">
                 <span className="shrink-0">Beneficiary</span>
-                <span className="font-semibold text-on-surface truncate text-right">{charityName}</span>
+                <span className="font-semibold text-on-surface truncate text-right">{charityName || 'No charity selected'}</span>
               </div>
             </div>
 
@@ -461,19 +426,18 @@ export default function SubscriberDashboard() {
               </div>
               <div className="mt-4">
                 <div className="font-headline-lg text-headline-lg font-bold text-on-surface tracking-tight">
-                  $32,500
+                  {drawInfo ? `$${Number(drawInfo.total_prize_pool || 0).toLocaleString()}` : 'Accumulating'}
                 </div>
                 <div className="flex items-center gap-1.5 mt-1">
                   <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-[#FBF6E9] text-secondary border border-[#E9DCB6]">
-                    Draw Oct 31, 2024
+                    {drawInfo ? `Draw ${drawInfo.period_month}/${drawInfo.period_year}` : 'Next Monthly Draw'}
                   </span>
                 </div>
               </div>
               <div className="mt-4 pt-3 border-t border-surface-container flex items-center justify-between text-body-sm">
-                <span className="text-on-surface-variant">Eligibility Window</span>
+                <span className="text-on-surface-variant">Prize Pool Split</span>
                 <span className="font-semibold text-secondary-fixed-dim dark:text-secondary flex items-center gap-1">
-                  <span className="material-symbols-outlined text-sm">lock_clock</span>
-                  3d 14h left
+                  40% / 35% / 25%
                 </span>
               </div>
             </div>
@@ -512,53 +476,38 @@ export default function SubscriberDashboard() {
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-5 border-b border-outline-variant/20">
               <div>
                 <div className="flex items-center gap-2">
-                  <h2 className="font-headline-sm text-headline-sm font-semibold text-on-surface">Enter Round Score</h2>
+                  <h2 className="font-headline-sm text-headline-sm font-semibold text-on-surface">Add Golf Score</h2>
                   <span className="bg-[#E8EFEA] text-[#2E5A44] font-label-md text-label-md px-2.5 py-0.5 rounded-full font-semibold">
-                    Valid Range: 1–45 Pts
+                    Stableford 1–45 Pts
                   </span>
                 </div>
                 <p className="font-body-sm text-body-sm text-on-surface-variant mt-1">
-                  Skill-based performance points are anchored on peer-attested Stableford scoring. Every verified round generates a draw entry &amp; charity boost.
+                  Log your Stableford score and round date. Your latest 5 scores are retained automatically.
                 </p>
               </div>
               <div className="flex items-center gap-2 text-label-md font-label-md text-outline">
-                <span className="material-symbols-outlined text-base text-primary">shield</span>
-                <span>Anti-Tamper Peer Protocol Active</span>
+                <span className="material-symbols-outlined text-base text-primary">info</span>
+                <span>Max 5 rolling scores • 1 per date</span>
               </div>
             </div>
 
-            <form onSubmit={handleInlineSubmit} className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-4 items-end">
+            <form onSubmit={handleInlineSubmit} className="mt-6 grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-12 gap-4 items-end">
               {/* Date Played */}
-              <div className="lg:col-span-2">
+              <div className="lg:col-span-4">
                 <label className="block font-label-md text-label-md text-on-surface mb-1.5 font-medium">Date of Round</label>
                 <input
                   type="date"
                   value={inlineDate}
+                  max={today}
                   onChange={(e) => setInlineDate(e.target.value)}
                   className="w-full h-12 px-3.5 bg-surface rounded-xl border border-outline-variant/60 font-body-sm text-on-surface focus:outline-none focus:border-primary-container focus:ring-1 focus:ring-primary-container"
                   required
                 />
               </div>
 
-              {/* Course Name */}
-              <div className="lg:col-span-4">
-                <label className="block font-label-md text-label-md text-on-surface mb-1.5 font-medium">Course Name &amp; Tee Box</label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    value={inlineCourse}
-                    onChange={(e) => setInlineCourse(e.target.value)}
-                    placeholder="e.g. Cypress Pines GC — White Tees"
-                    className="w-full h-12 pl-10 pr-3.5 bg-surface rounded-xl border border-outline-variant/60 font-body-sm text-on-surface focus:outline-none focus:border-primary-container focus:ring-1 focus:ring-primary-container"
-                    required
-                  />
-                  <span className="material-symbols-outlined absolute left-3 top-3 text-outline text-lg">sports_golf</span>
-                </div>
-              </div>
-
               {/* Stableford Points */}
-              <div className="lg:col-span-2">
-                <label className="block font-label-md text-label-md text-on-surface mb-1.5 font-medium">Stableford Points</label>
+              <div className="lg:col-span-4">
+                <label className="block font-label-md text-label-md text-on-surface mb-1.5 font-medium">Stableford Score (1–45)</label>
                 <div className="relative">
                   <input
                     type="number"
@@ -566,6 +515,7 @@ export default function SubscriberDashboard() {
                     max="45"
                     value={inlinePoints}
                     onChange={(e) => setInlinePoints(e.target.value)}
+                    placeholder="e.g. 38"
                     className="w-full h-12 pl-3.5 pr-10 bg-surface rounded-xl border border-outline-variant/60 font-body-md text-body-md font-semibold text-on-surface focus:outline-none focus:border-primary-container focus:ring-1 focus:ring-primary-container"
                     required
                   />
@@ -573,45 +523,20 @@ export default function SubscriberDashboard() {
                 </div>
               </div>
 
-              {/* Attester / Marker */}
-              <div className="lg:col-span-2">
-                <label className="block font-label-md text-label-md text-on-surface mb-1.5 font-medium">Attester Email / Member</label>
-                <input
-                  type="email"
-                  value={inlineEmail}
-                  onChange={(e) => setInlineEmail(e.target.value)}
-                  placeholder="marker@club.com"
-                  className="w-full h-12 px-3.5 bg-surface rounded-xl border border-outline-variant/60 font-body-sm text-on-surface focus:outline-none focus:border-primary-container focus:ring-1 focus:ring-primary-container"
-                  required
-                />
-              </div>
-
               {/* Submit CTA Button */}
-              <div className="lg:col-span-2">
+              <div className="lg:col-span-4">
                 <button
                   type="submit"
                   className="w-full h-12 bg-primary-container hover:bg-primary text-on-primary rounded-xl font-label-md text-label-md flex items-center justify-center gap-1.5 transition-all duration-150 active:scale-[0.98] shadow-xs font-semibold"
                 >
-                  <span className="material-symbols-outlined text-base">publish</span>
-                  <span>Submit Score</span>
+                  <span className="material-symbols-outlined text-base">add_circle</span>
+                  <span>Add Score</span>
                 </button>
               </div>
             </form>
 
-            <div className="mt-4 flex flex-wrap items-center justify-between text-body-sm text-on-surface-variant pt-3 border-t border-surface-container">
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  id="attest-verify-toggle"
-                  checked={inlineAttestToggle}
-                  onChange={(e) => setInlineAttestToggle(e.target.checked)}
-                  className="rounded border-outline-variant text-primary focus:ring-primary w-4 h-4"
-                />
-                <label htmlFor="attest-verify-toggle" className="cursor-pointer text-xs">
-                  Request instant marker attestation via SMS or in-app ping
-                </label>
-              </div>
-              <span className="text-xs text-outline">Submission updates handicap differential and unlocks Draw #29 entry.</span>
+            <div className="mt-3 text-xs text-on-surface-variant pt-2 border-t border-surface-container">
+              One score per date allowed. Duplicate dates will be rejected. Score must be between 1 and 45.
             </div>
           </section>
 
@@ -633,27 +558,28 @@ export default function SubscriberDashboard() {
 
               {/* Table Container */}
               <div className="bg-surface-container-lowest border border-outline-variant/40 rounded-2xl shadow-xs overflow-hidden">
+                {scores.length === 0 ? (
+                  <div className="p-12 text-center">
+                    <span className="material-symbols-outlined text-4xl text-outline mb-3 block">sports_score</span>
+                    <p className="font-label-lg text-label-lg text-on-surface-variant">No scores yet.</p>
+                    <p className="text-xs text-outline mt-1">Add your first Stableford score using the form above.</p>
+                  </div>
+                ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full text-left border-collapse">
                     <thead>
                       <tr className="bg-surface-container-low/70 border-b border-outline-variant/30 text-on-surface-variant font-label-md text-label-md uppercase tracking-wider text-[11px]">
-                        <th className="py-3.5 px-5 font-semibold">Round Details</th>
-                        <th className="py-3.5 px-4 font-semibold">Course &amp; Tees</th>
-                        <th className="py-3.5 px-4 font-semibold text-center">Score</th>
-                        <th className="py-3.5 px-4 font-semibold">Attestation</th>
+                        <th className="py-3.5 px-5 font-semibold">Date Played</th>
+                        <th className="py-3.5 px-4 font-semibold text-center">Stableford Score</th>
+                        <th className="py-3.5 px-4 font-semibold">Status</th>
                         <th className="py-3.5 px-5 font-semibold text-right">Actions</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-surface-container text-body-sm">
-                      {scores.map((s, idx) => (
+                      {scores.map((s) => (
                         <tr key={s.id} className="hover:bg-surface-container-low/40 transition-colors group">
                           <td className="py-4 px-5">
                             <div className="font-semibold text-on-surface">{s.date}</div>
-                            <div className="text-xs text-outline">Round #{52 - idx} • 18 Holes</div>
-                          </td>
-                          <td className="py-4 px-4">
-                            <div className="font-medium text-on-surface">{s.course}</div>
-                            <div className="text-xs text-on-surface-variant">{s.slope}</div>
                           </td>
                           <td className="py-4 px-4 text-center">
                             <span className="inline-flex items-center px-2.5 py-1 rounded-lg bg-[#E8EFEA] text-[#2E5A44] font-headline-sm font-bold text-sm">
@@ -662,24 +588,16 @@ export default function SubscriberDashboard() {
                           </td>
                           <td className="py-4 px-4">
                             <div className="inline-flex items-center gap-1.5 text-xs text-primary font-medium">
-                              <span className="material-symbols-outlined text-sm text-primary">verified</span>
-                              {s.attestation}
+                              <span className="material-symbols-outlined text-sm text-primary">check_circle</span>
+                              Active Entry
                             </div>
-                            <div className="text-[11px] text-outline">{s.attestedAt}</div>
                           </td>
                           <td className="py-4 px-5 text-right">
                             <div className="inline-flex items-center gap-1 text-on-surface-variant">
                               <button
-                                onClick={() => showToast('Edit Round', 'You can update marker or round notes.', 'info')}
-                                className="p-1.5 hover:text-primary hover:bg-surface-container rounded-lg transition-colors"
-                                title="Edit Round"
-                              >
-                                <span className="material-symbols-outlined text-base">edit</span>
-                              </button>
-                              <button
                                 onClick={() => handleDeleteScore(s.id)}
                                 className="p-1.5 hover:text-error hover:bg-error-container/30 rounded-lg transition-colors"
-                                title="Delete Round"
+                                title="Delete Score"
                               >
                                 <span className="material-symbols-outlined text-base">delete</span>
                               </button>
@@ -690,15 +608,16 @@ export default function SubscriberDashboard() {
                     </tbody>
                   </table>
                 </div>
+                )}
 
                 <div className="p-4 bg-surface-container-low/40 border-t border-outline-variant/20 flex flex-col sm:flex-row items-center justify-between text-body-sm text-on-surface-variant gap-2">
-                  <span className="text-xs">Showing 5 most recent rounds. Older verified rounds remain archived in Handicap Vault.</span>
+                  <span className="text-xs">{scores.length} of 5 active scores — newest scores replace oldest when limit is reached.</span>
                   <button 
-                    onClick={() => showToast('Score Archive', 'All historical rounds are preserved with cryptographic hashes.', 'info')}
+                    onClick={() => setModalOpen(true)}
                     className="text-xs font-semibold text-primary hover:underline flex items-center gap-1"
                   >
-                    View Full Score Archive
-                    <span className="material-symbols-outlined text-sm">arrow_forward</span>
+                    Add Another Score
+                    <span className="material-symbols-outlined text-sm">add_circle</span>
                   </button>
                 </div>
               </div>
@@ -721,32 +640,33 @@ export default function SubscriberDashboard() {
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
                         <span className="font-headline-sm text-base font-semibold text-on-surface leading-snug">
-                          St. Jude Children&apos;s Research Hospital
+                          {charityName || 'No charity selected'}
                         </span>
                       </div>
                       <span className="inline-flex items-center text-xs font-semibold text-secondary mt-0.5">
-                        501(c)(3) Tier 1 Partner
+                        Selected Charity
                       </span>
                     </div>
                   </div>
 
-                  {/* Mission Summary */}
-                  <p className="mt-4 font-body-sm text-body-sm text-on-surface-variant leading-relaxed">
-                    Advancing cures and prevention for pediatric catastrophic diseases through groundbreaking clinical research. Families never receive a bill for treatment, travel, housing, or food.
-                  </p>
+                  {!charityName && (
+                    <p className="mt-4 font-body-sm text-body-sm text-on-surface-variant leading-relaxed">
+                      You haven&apos;t selected a charity yet. Visit your subscription settings to choose a cause.
+                    </p>
+                  )}
 
-                  {/* Progress / Impact Visual Meter */}
+                  {/* Charity Allocation Visual */}
                   <div className="mt-6 p-4 rounded-xl bg-surface-container-low border border-outline-variant/30">
                     <div className="flex items-center justify-between text-xs font-semibold text-on-surface">
-                      <span>Year-to-Date Impact Milestone</span>
-                      <span className="text-primary font-bold">$384.50 / $500.00 Goal</span>
+                      <span>Your Charity Allocation</span>
+                      <span className="text-primary font-bold">{charityPercent}% of subscription fee</span>
                     </div>
                     <div className="w-full bg-[#E8EFEA] h-2.5 rounded-full overflow-hidden mt-2.5">
-                      <div className="bg-primary-container h-full rounded-full" style={{ width: "76.9%" }}></div>
+                      <div className="bg-primary-container h-full rounded-full" style={{ width: `${charityPercent}%` }}></div>
                     </div>
                     <div className="flex items-center justify-between text-[11px] text-outline mt-2">
-                      <span>76.9% reached</span>
-                      <span>Direct patient-care grant</span>
+                      <span>Min 10%</span>
+                      <span>Max 100%</span>
                     </div>
                   </div>
 
@@ -784,101 +704,120 @@ export default function SubscriberDashboard() {
 
           {/* ================= 7. ACTIVE DRAW & WINNINGS ================= */}
           <section className="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-6" id="draws-section">
-            {/* Oct Draw Eligibility Card (Span 6) */}
+            {/* Monthly Draw Eligibility Card (Span 6) */}
             <div className="lg:col-span-6 bg-surface-container-lowest border border-outline-variant/40 rounded-2xl p-6 shadow-xs flex flex-col justify-between">
               <div>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <span className="material-symbols-outlined text-secondary text-2xl">confirmation_number</span>
                     <h3 className="font-headline-sm text-headline-sm font-semibold text-on-surface">
-                      October Monthly Performance Draw
+                      Monthly Draw Participation
                     </h3>
                   </div>
-                  <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-[#E8EFEA] text-[#2E5A44]">
-                    Eligible
+                  <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold ${scores.length === 5 ? 'bg-[#E8EFEA] text-[#2E5A44]' : 'bg-surface-container text-outline'}`}>
+                    {scores.length === 5 ? 'Qualified' : `${scores.length}/5 Scores`}
                   </span>
                 </div>
                 <p className="font-body-sm text-body-sm text-on-surface-variant mt-2">
-                  Based on your rolling attested scores, you hold {scores.length} fully certified entries for Draw #29.
+                  You need 5 active scores to qualify for the monthly draw. Each score must be a valid Stableford value (1–45).
                 </p>
 
                 {/* Draw Checklist */}
                 <div className="mt-5 space-y-2.5">
                   <div className="flex items-center justify-between p-3 rounded-xl bg-surface-container-low border border-outline-variant/20">
                     <div className="flex items-center gap-2.5">
-                      <span className="material-symbols-outlined text-primary text-lg">check_circle</span>
-                      <span className="text-body-sm text-on-surface font-medium">{scores.length} of 5 Scores Attested</span>
+                      <span className={`material-symbols-outlined text-lg ${scores.length === 5 ? 'text-primary' : 'text-outline'}`}>
+                        {scores.length === 5 ? 'check_circle' : 'radio_button_unchecked'}
+                      </span>
+                      <span className="text-body-sm text-on-surface font-medium">{scores.length} of 5 Scores Active</span>
                     </div>
-                    <span className="text-xs font-bold text-primary">Requirement Met</span>
+                    <span className={`text-xs font-bold ${scores.length === 5 ? 'text-primary' : 'text-outline'}`}>
+                      {scores.length === 5 ? 'Qualified' : 'Needs More Scores'}
+                    </span>
                   </div>
                   <div className="flex items-center justify-between p-3 rounded-xl bg-surface-container-low border border-outline-variant/20">
                     <div className="flex items-center gap-2.5">
-                      <span className="material-symbols-outlined text-primary text-lg">check_circle</span>
-                      <span className="text-body-sm text-on-surface font-medium">Stableford Average Tier</span>
+                      <span className="material-symbols-outlined text-primary text-lg">emoji_events</span>
+                      <span className="text-body-sm text-on-surface font-medium">Prize Pool Tiers</span>
                     </div>
-                    <span className="text-xs font-bold text-on-surface">Championship Flight (36+)</span>
+                    <span className="text-xs font-bold text-on-surface">40% / 35% / 25%</span>
                   </div>
                   <div className="flex items-center justify-between p-3 rounded-xl bg-surface-container-low border border-outline-variant/20">
                     <div className="flex items-center gap-2.5">
-                      <span className="material-symbols-outlined text-secondary text-lg">schedule</span>
-                      <span className="text-body-sm text-on-surface font-medium">Automated Draw Execution</span>
+                      <span className="material-symbols-outlined text-secondary text-lg">refresh</span>
+                      <span className="text-body-sm text-on-surface font-medium">Jackpot Rollover</span>
                     </div>
-                    <span className="text-xs font-bold text-secondary">Oct 31 • 23:59 PT</span>
+                    <span className="text-xs font-bold text-secondary">5-Number Match Only</span>
                   </div>
                 </div>
               </div>
 
               <div className="mt-6 pt-4 border-t border-surface-container flex items-center justify-between text-xs text-outline">
-                <span>Skill-based transparent seed algorithm: SHA-256</span>
-                <button onClick={() => showToast('Draw Rules', 'Draw seeds are verified on-chain via SHA-256 deterministic hashes.', 'info')} className="text-primary font-semibold hover:underline">
-                  View Draw Rules
-                </button>
+                <span>5-match (40%), 4-match (35%), 3-match (25%) prize allocation</span>
+                <Link href="/how-it-works" className="text-primary font-semibold hover:underline">
+                  How It Works
+                </Link>
               </div>
             </div>
 
-            {/* Latest Winnings Notification Card (Span 6) */}
+            {/* Winnings Section (Span 6) */}
             <div
-              className="lg:col-span-6 bg-gradient-to-br from-surface-container-lowest to-[#FAF7EE] border-2 border-secondary-container/80 rounded-2xl p-6 shadow-sm flex flex-col justify-between relative overflow-hidden"
+              className="lg:col-span-6 bg-surface-container-lowest border border-outline-variant/40 rounded-2xl p-6 shadow-xs flex flex-col justify-between"
               id="winnings-section"
             >
-              <div className="absolute top-0 right-0 w-32 h-32 bg-secondary-fixed/30 rounded-bl-full pointer-events-none"></div>
               <div>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <span className="material-symbols-outlined text-secondary text-2xl">trophy</span>
-                    <span className="text-xs font-bold uppercase tracking-wider text-secondary">Winnings Notification</span>
+                    <h3 className="font-headline-sm text-headline-sm font-semibold text-on-surface">My Winnings</h3>
                   </div>
-                  <span className="bg-secondary text-on-secondary px-2.5 py-0.5 rounded-full text-xs font-bold">
-                    Draw #28
-                  </span>
+                  {winners.length > 0 && (
+                    <span className="bg-secondary text-on-secondary px-2.5 py-0.5 rounded-full text-xs font-bold">
+                      {winners.length} Win{winners.length > 1 ? 's' : ''}
+                    </span>
+                  )}
                 </div>
-                <div className="mt-4">
-                  <h3 className="font-headline-md text-headline-md font-bold text-on-surface">Match 4 Tier Winner</h3>
-                  <div className="flex items-baseline gap-2 mt-1">
-                    <span className="font-headline-lg text-headline-lg font-bold text-secondary tracking-tight">$1,250.00</span>
-                    <span className="font-label-md text-label-md text-on-surface-variant">USD Pending Verification</span>
+
+                {winners.length === 0 ? (
+                  <div className="mt-6 text-center py-8">
+                    <span className="material-symbols-outlined text-4xl text-outline mb-3 block">emoji_events</span>
+                    <p className="font-label-lg text-label-lg text-on-surface-variant">No winnings yet.</p>
+                    <p className="text-xs text-outline mt-1">Qualify for the monthly draw with 5 active scores.</p>
                   </div>
-                </div>
-                <p className="font-body-sm text-body-sm text-on-surface-variant mt-2 leading-relaxed">
-                  Congratulations {userName.split(' ')[0]}! Your attested score of 41 points on Oct 04 matched the winning seed range in Draw #28. Complete score verification to release funds to your connected bank account or allocate a bonus to St. Jude.
-                </p>
+                ) : (
+                  <div className="mt-4 space-y-3">
+                    {winners.slice(0, 2).map((w: any) => (
+                      <div key={w.id} className="p-4 rounded-xl bg-surface-container-low border border-outline-variant/20">
+                        <div className="flex items-center justify-between">
+                          <span className="font-label-md text-label-md font-semibold text-on-surface">
+                            {w.match_count}-Number Match
+                          </span>
+                          <span className="font-headline-sm text-headline-sm font-bold text-secondary">
+                            ${Number(w.prize_amount).toLocaleString()}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between mt-1">
+                          <span className="text-xs text-on-surface-variant">
+                            {w.proof_status === 'approved' ? 'Verified' : w.proof_status === 'submitted' ? 'Under Review' : w.proof_status === 'rejected' ? 'Proof Rejected' : 'Awaiting Proof'}
+                          </span>
+                          <span className={`text-xs font-bold ${w.payout_status === 'paid' ? 'text-primary' : 'text-outline'}`}>
+                            {w.payout_status === 'paid' ? 'Paid' : 'Pending'}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
-              {/* CTAs */}
-              <div className="mt-6 pt-4 border-t border-secondary-container/40 flex flex-col sm:flex-row items-center gap-3">
-                <button
-                  onClick={() => showToast('Verification Portal', 'Scorecard verification portal opened. Upload your signed physical card or marker attestation.', 'info')}
-                  className="w-full sm:w-auto flex-1 bg-secondary hover:bg-on-secondary-container text-on-secondary py-3 px-5 rounded-xl font-label-lg text-label-lg font-bold flex items-center justify-center gap-2 transition-transform duration-150 active:scale-[0.98] shadow-sm"
+              <div className="mt-6 pt-4 border-t border-surface-container">
+                <Link
+                  href="/dashboard/winners"
+                  className="w-full py-2.5 px-4 rounded-xl border border-outline-variant/50 hover:bg-surface-container text-on-surface font-label-md text-label-md transition-colors text-center flex items-center justify-center gap-2"
                 >
-                  <span className="material-symbols-outlined text-lg">file_upload</span>
-                  <span>Verify Your Win / Upload Scorecard</span>
-                </button>
-                <button
-                  onClick={() => showToast('Draw #28 Details', 'Matched 4 of 5 holes within +1 / -1 differential range.', 'info')}
-                  className="w-full sm:w-auto px-4 py-3 border border-outline-variant rounded-xl text-on-surface hover:bg-surface-container font-label-md text-label-md transition-colors"
-                >
-                  Details
-                </button>
+                  <span className="material-symbols-outlined text-base">open_in_new</span>
+                  View All Winnings & Upload Proof
+                </Link>
               </div>
             </div>
           </section>
@@ -933,67 +872,30 @@ export default function SubscriberDashboard() {
             {/* Form inside modal */}
             <form onSubmit={handleModalSubmit} className="space-y-4">
               <div>
-                <label className="block font-label-md text-label-md text-on-surface mb-1 font-medium">Golf Course</label>
+                <label className="block font-label-md text-label-md text-on-surface mb-1 font-medium">Date Played</label>
                 <input
-                  type="text"
+                  type="date"
                   required
-                  value={modalCourse}
-                  onChange={(e) => setModalCourse(e.target.value)}
-                  placeholder="e.g. Olympic Club (Lake Course)"
-                  className="w-full h-11 px-3.5 bg-surface rounded-xl border border-outline-variant/60 font-body-sm text-on-surface focus:outline-none focus:border-primary-container focus:ring-1 focus:ring-primary-container"
+                  max={today}
+                  value={modalDate}
+                  onChange={(e) => setModalDate(e.target.value)}
+                  className="w-full h-11 px-3 bg-surface rounded-xl border border-outline-variant/60 font-body-sm text-on-surface focus:outline-none focus:border-primary-container"
                 />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block font-label-md text-label-md text-on-surface mb-1 font-medium">Date Played</label>
-                  <input
-                    type="date"
-                    required
-                    value={modalDate}
-                    onChange={(e) => setModalDate(e.target.value)}
-                    className="w-full h-11 px-3 bg-surface rounded-xl border border-outline-variant/60 font-body-sm text-on-surface focus:outline-none focus:border-primary-container"
-                  />
-                </div>
-                <div>
-                  <label className="block font-label-md text-label-md text-on-surface mb-1 font-medium">Stableford Score</label>
-                  <input
-                    type="number"
-                    min="1"
-                    max="45"
-                    required
-                    value={modalPoints}
-                    onChange={(e) => setModalPoints(e.target.value)}
-                    placeholder="e.g. 38"
-                    className="w-full h-11 px-3.5 bg-surface rounded-xl border border-outline-variant/60 font-body-sm text-on-surface focus:outline-none focus:border-primary-container"
-                  />
-                </div>
               </div>
 
               <div>
-                <label className="block font-label-md text-label-md text-on-surface mb-1 font-medium">Peer Marker Email</label>
+                <label className="block font-label-md text-label-md text-on-surface mb-1 font-medium">Stableford Score (1–45)</label>
                 <input
-                  type="email"
+                  type="number"
+                  min="1"
+                  max="45"
                   required
-                  value={modalEmail}
-                  onChange={(e) => setModalEmail(e.target.value)}
-                  placeholder="fellow.golfer@domain.com"
+                  value={modalPoints}
+                  onChange={(e) => setModalPoints(e.target.value)}
+                  placeholder="e.g. 38"
                   className="w-full h-11 px-3.5 bg-surface rounded-xl border border-outline-variant/60 font-body-sm text-on-surface focus:outline-none focus:border-primary-container"
                 />
-                <span className="text-[11px] text-outline mt-1 block">A secure verification token will be sent to the marker.</span>
-              </div>
-
-              <div className="p-3.5 rounded-xl bg-surface-container-low border border-outline-variant/30 flex items-start gap-2.5">
-                <input
-                  type="checkbox"
-                  id="modal-charity-boost"
-                  checked={modalBoost}
-                  onChange={(e) => setModalBoost(e.target.checked)}
-                  className="mt-0.5 rounded border-outline-variant text-primary focus:ring-primary"
-                />
-                <label htmlFor="modal-charity-boost" className="text-xs text-on-surface-variant cursor-pointer">
-                  Include <strong className="text-on-surface font-semibold">$5.00 Micro-Boost</strong> to St. Jude Children&apos;s Research Hospital with this verified score entry.
-                </label>
+                <span className="text-[11px] text-outline mt-1 block">Valid range: 1–45. One score per date. Duplicate dates will be rejected.</span>
               </div>
 
               <div className="pt-3 flex items-center justify-end gap-3">
@@ -1008,7 +910,7 @@ export default function SubscriberDashboard() {
                   type="submit"
                   className="px-6 py-2.5 bg-primary-container hover:bg-primary text-on-primary font-label-md text-label-md rounded-xl transition-all duration-150 active:scale-[0.98] shadow-sm font-semibold"
                 >
-                  Submit Score for Verification
+                  Save Score
                 </button>
               </div>
             </form>

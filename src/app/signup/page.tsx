@@ -19,6 +19,8 @@ export default function SignupPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
+  const [selectedCharity, setSelectedCharity] = useState('c1000000-0000-0000-0000-000000000001');
+
   const supabase = createClient();
 
   const handleSignup = async (e: React.FormEvent) => {
@@ -44,6 +46,7 @@ export default function SignupPage() {
           data: {
             full_name: fullName,
             role: 'user',
+            charity_id: selectedCharity,
           },
         },
       });
@@ -52,7 +55,7 @@ export default function SignupPage() {
         setErrorMessage(error.message);
         showToast('Registration Failed', error.message, 'error');
       } else if (data.user) {
-        // Explicitly sync profile table just in case DB trigger is offline in local dev mode
+        // Explicitly sync profile table
         await supabase.from('profiles').upsert({
           id: data.user.id,
           email: email,
@@ -60,8 +63,18 @@ export default function SignupPage() {
           role: 'user',
         });
 
+        // Initialize subscription record with chosen charity if not exists
+        await supabase.from('subscriptions').upsert({
+          user_id: data.user.id,
+          stripe_customer_id: `cus_new_${data.user.id.substring(0, 8)}`,
+          status: 'incomplete',
+          plan_type: 'monthly',
+          charity_id: selectedCharity,
+          voluntary_charity_percent: 10.00,
+        }, { onConflict: 'user_id' });
+
         showToast('Account Created!', 'Welcome to FairwayKind.', 'success');
-        router.push('/dashboard');
+        router.push(`/subscribe?charity=${selectedCharity}`);
         router.refresh();
       }
     } catch (err: any) {
@@ -119,6 +132,23 @@ export default function SignupPage() {
             required
           />
 
+          {/* Charity Selection during Signup (PRD §08.1) */}
+          <div className="space-y-1.5 text-left">
+            <label className="block text-xs font-semibold text-on-surface">
+              Select Your Charity Cause (Min 10% Contribution)
+            </label>
+            <select
+              value={selectedCharity}
+              onChange={(e) => setSelectedCharity(e.target.value)}
+              className="w-full px-3.5 py-2.5 rounded-xl bg-surface-container-low border border-outline-variant/40 text-on-surface text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+            >
+              <option value="c1000000-0000-0000-0000-000000000001">Youth on Course Foundation (Youth &amp; Sports Access)</option>
+              <option value="c2000000-0000-0000-0000-000000000002">Clean Oceans &amp; Coastal Wetlands (Environment)</option>
+              <option value="c3000000-0000-0000-0000-000000000003">St. Jude Children’s Research Hospital (Pediatric Health)</option>
+              <option value="c4000000-0000-0000-0000-000000000004">PGA REACH Military Rehabilitation (Veteran Welfare)</option>
+            </select>
+          </div>
+
           <Button
             type="submit"
             variant="primary"
@@ -126,7 +156,7 @@ export default function SignupPage() {
             isLoading={isLoading}
             rightIcon={<ArrowRight className="w-4 h-4" />}
           >
-            Create Account & Continue
+            Create Account &amp; Continue
           </Button>
         </form>
 
