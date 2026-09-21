@@ -251,20 +251,35 @@ FOR EACH ROW EXECUTE FUNCTION maintain_top_5_scores();
 -- 15. Profile Auto-Creation Trigger on Auth Signup
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
+DECLARE
+  parsed_role public.user_role := 'user';
 BEGIN
+  IF NEW.raw_user_meta_data IS NOT NULL AND NEW.raw_user_meta_data->>'role' = 'admin' THEN
+    parsed_role := 'admin'::public.user_role;
+  ELSE
+    parsed_role := 'user'::public.user_role;
+  END IF;
+
   INSERT INTO public.profiles (id, email, full_name, role)
   VALUES (
     NEW.id,
-    NEW.email,
+    COALESCE(NEW.email, ''),
     COALESCE(NEW.raw_user_meta_data->>'full_name', 'Golfer Hero'),
-    COALESCE((NEW.raw_user_meta_data->>'role')::user_role, 'user'::user_role)
+    parsed_role
   )
   ON CONFLICT (id) DO UPDATE SET
     email = EXCLUDED.email,
     full_name = EXCLUDED.full_name;
   RETURN NEW;
+EXCEPTION
+  WHEN OTHERS THEN
+    -- Fallback insertion to guarantee user registration never fails
+    INSERT INTO public.profiles (id, email, full_name, role)
+    VALUES (NEW.id, COALESCE(NEW.email, ''), 'Golfer Hero', 'user'::public.user_role)
+    ON CONFLICT (id) DO NOTHING;
+    RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
