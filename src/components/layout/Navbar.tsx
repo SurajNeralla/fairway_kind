@@ -37,7 +37,7 @@ export const Navbar: React.FC = () => {
           href="/" 
           className="flex items-center gap-3 active:scale-[0.98] transition-transform duration-150 group"
         >
-          <FairwayKindLogo className="h-10 w-auto" />
+          <FairwayKindLogo className="h-14 w-auto" />
           <span className="sr-only">FairwayKind</span>
         </Link>
 

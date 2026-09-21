@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
-import { Heart, Plus, Edit3, Trash2, Shield, Search, RefreshCw, CheckCircle2 } from 'lucide-react';
+import Link from 'next/link';
+import { Heart, Plus, Edit3, Trash2, Shield, Search, RefreshCw, CheckCircle2, ArrowLeft } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -130,7 +131,17 @@ export default function AdminCharitiesPage() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-6">
+      <div>
+        <Link
+          href="/admin"
+          className="inline-flex items-center gap-2 text-sm font-medium text-slate-400 hover:text-white transition-colors duration-150 py-1"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span>Back to Admin Console</span>
+        </Link>
+      </div>
+
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 p-6 rounded-3xl bg-slate-900/80 border border-slate-800">
         <div className="space-y-1">

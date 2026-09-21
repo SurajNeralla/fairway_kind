@@ -1,9 +1,10 @@
 "use client";
 
 import React, { useEffect, useState, useRef } from 'react';
+import Link from 'next/link';
 import {
   Trophy, Upload, Clock, CheckCircle2, XCircle, Banknote,
-  FileText, AlertTriangle, Eye, RefreshCw, Shield
+  FileText, AlertTriangle, Eye, RefreshCw, Shield, ArrowLeft
 } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -167,7 +168,17 @@ export default function MyWinningsPage() {
 
   return (
     <div className="bg-background text-on-surface antialiased py-10">
-      <div className="max-w-6xl mx-auto px-6 md:px-12 space-y-10">
+      <div className="max-w-6xl mx-auto px-6 md:px-12 space-y-6">
+        <div>
+          <Link
+            href="/dashboard"
+            className="inline-flex items-center gap-2 text-sm font-medium text-on-surface-variant hover:text-primary transition-colors duration-150 py-1"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span>Back to Dashboard</span>
+          </Link>
+        </div>
+
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 p-6 md:p-8 rounded-3xl bg-surface-container-lowest border border-outline-variant/40 custom-card-shadow">
           <div className="space-y-1">

@@ -129,7 +129,7 @@ export default function AdminDashboardPage() {
           {/* Brand & Admin Pill */}
           <div className="flex items-center justify-between px-2 pt-2">
             <Link href="/" className="flex items-center gap-2">
-              <FairwayKindLogo className="h-8 w-auto" />
+              <FairwayKindLogo className="h-12 w-auto" />
             </Link>
             <span className="bg-secondary-container text-on-secondary-fixed font-label-sm text-label-sm px-2 py-0.5 rounded-full uppercase tracking-wider font-bold">
               ADMIN
@@ -1012,7 +1012,7 @@ export default function AdminDashboardPage() {
         <footer className="bg-surface-container border-t border-outline-variant/30 mt-auto">
           <div className="max-w-7xl mx-auto px-6 md:px-12 py-12 flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="flex items-center gap-3">
-              <FairwayKindLogo className="h-7 w-auto" />
+              <FairwayKindLogo className="h-10 w-auto" />
               <span className="text-on-surface-variant text-body-sm font-body-sm ml-2">Admin Control Environment</span>
             </div>
             <p className="font-body-sm text-body-sm text-on-surface-variant text-center md:text-left max-w-xl">

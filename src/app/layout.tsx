@@ -5,6 +5,7 @@ import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { ToastProvider } from '@/components/ui/Toast';
 import { AuthProvider } from '@/lib/auth/auth-context';
+import { PageTransition } from '@/components/layout/PageTransition';
 
 const outfit = Outfit({
   subsets: ['latin'],
@@ -39,7 +40,9 @@ export default function RootLayout({
         <ToastProvider>
           <AuthProvider>
             <Navbar />
-            <main className="flex-1">{children}</main>
+            <main className="flex-1 flex flex-col">
+              <PageTransition>{children}</PageTransition>
+            </main>
             <Footer />
           </AuthProvider>
         </ToastProvider>

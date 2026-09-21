@@ -1,9 +1,10 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
+import Link from 'next/link';
 import {
   Trophy, Eye, CheckCircle2, XCircle, Banknote, Shield, RefreshCw,
-  AlertCircle, FileText, ChevronDown, ChevronUp, Search, Filter, Clock
+  AlertCircle, FileText, ChevronDown, ChevronUp, Search, Filter, Clock, ArrowLeft
 } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -191,7 +192,17 @@ export default function AdminWinnersPage() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-6">
+      <div>
+        <Link
+          href="/admin"
+          className="inline-flex items-center gap-2 text-sm font-medium text-slate-400 hover:text-white transition-colors duration-150 py-1"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span>Back to Admin Console</span>
+        </Link>
+      </div>
+
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 p-6 rounded-3xl bg-slate-900/80 border border-amber-500/30">
         <div className="space-y-1">

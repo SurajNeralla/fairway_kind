@@ -245,7 +245,7 @@ export default function SubscriberDashboard() {
             {/* Logo Area */}
             <div className="px-2 pt-2 pb-1 flex items-center justify-between">
               <Link href="/">
-                <FairwayKindLogo className="h-9 w-auto" />
+                <FairwayKindLogo className="h-12 w-auto" />
               </Link>
             </div>
 
