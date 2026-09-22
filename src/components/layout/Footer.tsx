@@ -73,14 +73,20 @@ export const Footer: React.FC = () => {
           </div>
           <ul className="space-y-2">
             <li>
-              <span className="text-label-sm font-label-sm text-on-surface-variant dark:text-on-tertiary-container hover:text-primary dark:hover:text-inverse-primary transition-colors cursor-pointer">
+              <Link 
+                href="/terms"
+                className="text-label-sm font-label-sm text-on-surface-variant dark:text-on-tertiary-container hover:text-primary dark:hover:text-inverse-primary transition-colors"
+              >
                 Terms of Service
-              </span>
+              </Link>
             </li>
             <li>
-              <span className="text-label-sm font-label-sm text-on-surface-variant dark:text-on-tertiary-container hover:text-primary dark:hover:text-inverse-primary transition-colors cursor-pointer">
+              <Link 
+                href="/privacy"
+                className="text-label-sm font-label-sm text-on-surface-variant dark:text-on-tertiary-container hover:text-primary dark:hover:text-inverse-primary transition-colors"
+              >
                 Privacy Policy
-              </span>
+              </Link>
             </li>
             <li>
               <Link 
@@ -91,9 +97,12 @@ export const Footer: React.FC = () => {
               </Link>
             </li>
             <li>
-              <span className="text-label-sm font-label-sm text-on-surface-variant dark:text-on-tertiary-container hover:text-primary dark:hover:text-inverse-primary transition-colors cursor-pointer">
+              <Link 
+                href="/responsible-play"
+                className="text-label-sm font-label-sm text-on-surface-variant dark:text-on-tertiary-container hover:text-primary dark:hover:text-inverse-primary transition-colors"
+              >
                 Responsible Play
-              </span>
+              </Link>
             </li>
           </ul>
         </div>
@@ -113,14 +122,20 @@ export const Footer: React.FC = () => {
               </a>
             </li>
             <li>
-              <span className="text-label-sm font-label-sm text-on-surface-variant dark:text-on-tertiary-container hover:text-primary dark:hover:text-inverse-primary transition-colors cursor-pointer">
+              <Link 
+                href="/verification"
+                className="text-label-sm font-label-sm text-on-surface-variant dark:text-on-tertiary-container hover:text-primary dark:hover:text-inverse-primary transition-colors"
+              >
                 Winner Verification Process
-              </span>
+              </Link>
             </li>
             <li>
-              <span className="text-label-sm font-label-sm text-on-surface-variant dark:text-on-tertiary-container hover:text-primary dark:hover:text-inverse-primary transition-colors cursor-pointer">
+              <Link 
+                href="/charity-inquiries"
+                className="text-label-sm font-label-sm text-on-surface-variant dark:text-on-tertiary-container hover:text-primary dark:hover:text-inverse-primary transition-colors"
+              >
                 501(c)(3) Inquiries
-              </span>
+              </Link>
             </li>
           </ul>
         </div>
