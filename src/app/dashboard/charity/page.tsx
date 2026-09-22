@@ -153,8 +153,8 @@ export default function MyCharityPage() {
           `Now allocating ${voluntaryPercent}% of your membership to ${chosen.name}.`,
           'success'
         );
-        // Update subscription state locally — don't re-fetch which resets to first charity
         setSubscription(prev => prev ? { ...prev, charity_id: chosen.id } : prev);
+        await loadCharityData();
       } else {
         // Revert on failure
         showToast('Update Notice', data.error || 'Could not update charity.', 'error');

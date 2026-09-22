@@ -45,7 +45,9 @@ function SubscriptionManager() {
 
         if (subData) {
           setSubscription(subData as Subscription);
-          setSelectedCharityId(prev => prev || subData.charity_id || '');
+          if (subData.charity_id) {
+            setSelectedCharityId(subData.charity_id);
+          }
           setVoluntaryPercent(subData.voluntary_charity_percent || 10);
         }
 
@@ -57,7 +59,9 @@ function SubscriptionManager() {
 
         if (charitiesData && charitiesData.length > 0) {
           setCharities(charitiesData as Charity[]);
-          setSelectedCharityId(prev => prev || charitiesData[0].id);
+          if (!subData?.charity_id) {
+            setSelectedCharityId(charitiesData[0].id);
+          }
         }
       }
     } catch (err: any) {
