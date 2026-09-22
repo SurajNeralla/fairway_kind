@@ -44,31 +44,87 @@ export async function middleware(request: NextRequest) {
   const isDashboardRoute = pathname.startsWith('/dashboard');
   const isAdminRoute = pathname.startsWith('/admin');
 
-  // If user is logged in and trying to access login/signup pages, redirect to dashboard
+  // 1. Authenticated users attempting to visit /login or /signup
   if (user && isAuthPage) {
-    return NextResponse.redirect(new URL('/dashboard', request.url));
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .maybeSingle();
+
+    if (profile?.role === 'admin') {
+      return NextResponse.redirect(new URL('/admin', request.url));
+    }
+
+    const { data: sub } = await supabase
+      .from('subscriptions')
+      .select('status')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    const isSubscribed = sub?.status === 'active' || sub?.status === 'trialing';
+    if (isSubscribed) {
+      return NextResponse.redirect(new URL('/dashboard', request.url));
+    } else {
+      return NextResponse.redirect(new URL('/subscribe', request.url));
+    }
   }
 
-  // If unauthenticated user tries to access protected dashboard or admin routes
+  // 2. Unauthenticated user trying to access protected dashboard or admin routes
   if (!user && (isDashboardRoute || isAdminRoute)) {
     const redirectUrl = new URL('/login', request.url);
     redirectUrl.searchParams.set('next', pathname);
     return NextResponse.redirect(redirectUrl);
   }
 
-  // Server-side Admin Role Verification for /admin/* routes
+  // 3. Server-side Admin Role Verification for /admin/* routes
   if (user && isAdminRoute) {
     const { data: profile } = await supabase
       .from('profiles')
       .select('role')
       .eq('id', user.id)
-      .single();
+      .maybeSingle();
 
-    // Security guard: Only trust authoritative database profiles.role, never client metadata
-    const userRole = profile?.role;
-
-    if (userRole !== 'admin') {
+    if (profile?.role !== 'admin') {
       return NextResponse.redirect(new URL('/unauthorized', request.url));
+    }
+  }
+
+  // 4. Server-side Subscription Verification for /dashboard/* routes
+  if (user && isDashboardRoute) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .maybeSingle();
+
+    // Admins have their own portal at /admin
+    if (profile?.role === 'admin') {
+      return NextResponse.redirect(new URL('/admin', request.url));
+    }
+
+    // Check authoritative database subscription status
+    const { data: sub } = await supabase
+      .from('subscriptions')
+      .select('status')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    const isSubscribed = sub?.status === 'active' || sub?.status === 'trialing';
+
+    // Allow checkout success return flow to reach confirmation page
+    const hasCheckoutSession =
+      pathname === '/dashboard/subscription' &&
+      (request.nextUrl.searchParams.has('session_id') ||
+        request.nextUrl.searchParams.get('status') === 'success');
+
+    if (!isSubscribed && !hasCheckoutSession) {
+      // Unsubscribed user is gated from subscriber dashboard
+      return NextResponse.redirect(new URL('/subscribe', request.url));
     }
   }
 

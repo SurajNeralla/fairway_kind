@@ -35,18 +35,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .limit(1)
         .maybeSingle();
 
-      if (error) {
-        console.warn('Profile fetch warning:', error.message);
-        // Fallback profile if DB trigger delay
+      if (error || !data) {
         setProfile({
           id: userId,
           email: emailFallback || '',
-          full_name: (metaFallback?.full_name as string) || 'Fairway Golfer',
+          full_name: (metaFallback?.full_name as string) || emailFallback?.split('@')[0] || 'Member',
           role: ((metaFallback?.role as UserRole) || 'user'),
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         });
-      } else if (data) {
+      } else {
         setProfile(data as UserProfile);
       }
     } catch (err) {
@@ -105,11 +103,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signOut = async () => {
     setIsLoading(true);
-    await supabase.auth.signOut();
-    setUser(null);
-    setSession(null);
-    setProfile(null);
-    setIsLoading(false);
+    try {
+      await supabase.auth.signOut();
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('latest_submitted_proof');
+        sessionStorage.clear();
+      }
+    } finally {
+      setUser(null);
+      setSession(null);
+      setProfile(null);
+      setIsLoading(false);
+    }
   };
 
   const refreshProfile = async () => {

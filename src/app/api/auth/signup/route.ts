@@ -32,7 +32,7 @@ export async function POST(request: Request) {
       user_metadata: {
         full_name: fullName.trim(),
         role: 'user',
-        charity_id: charityId || 'c1000000-0000-0000-0000-000000000001',
+        charity_id: charityId || null,
       },
     });
 
@@ -60,13 +60,13 @@ export async function POST(request: Request) {
       role: 'user',
     }, { onConflict: 'id' });
 
-    // 3. Initialize default subscription record
+    // 3. Initialize default subscription record with inactive status
     await adminSupabase.from('subscriptions').upsert({
       user_id: userId,
       stripe_customer_id: `cus_new_${userId.substring(0, 8)}`,
-      status: 'incomplete',
+      status: 'inactive',
       plan_type: 'monthly',
-      charity_id: charityId || 'c1000000-0000-0000-0000-000000000001',
+      charity_id: charityId || null,
       voluntary_charity_percent: 10.00,
     }, { onConflict: 'user_id' });
 

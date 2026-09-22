@@ -44,7 +44,10 @@ export default function MyCharityPage() {
     setIsLoading(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      if (!user) {
+        window.location.href = '/login?next=/dashboard/charity';
+        return;
+      }
 
       // 1. Fetch user subscription
       const { data: subData } = await supabase
@@ -55,10 +58,14 @@ export default function MyCharityPage() {
         .limit(1)
         .maybeSingle();
 
-      if (subData) {
-        setSubscription(subData as Subscription);
-        setVoluntaryPercent(subData.voluntary_charity_percent || 10);
+      if (!subData || (subData.status !== 'active' && subData.status !== 'trialing')) {
+        showToast('Subscription Required', 'Active subscription needed to manage charity allocations.', 'info');
+        window.location.href = '/subscribe';
+        return;
       }
+
+      setSubscription(subData as Subscription);
+      setVoluntaryPercent(subData.voluntary_charity_percent || 10);
 
       // 2. Fetch active charities
       const { data: charitiesData } = await supabase
@@ -69,9 +76,12 @@ export default function MyCharityPage() {
 
       if (charitiesData && charitiesData.length > 0) {
         setAllCharities(charitiesData as Charity[]);
-        const activeCharityId = subData?.charity_id || charitiesData[0].id;
-        const matched = charitiesData.find((c: any) => c.id === activeCharityId) || charitiesData[0];
-        setSelectedCharity(matched as Charity);
+        if (subData.charity_id) {
+          const matched = charitiesData.find((c: any) => c.id === subData.charity_id) || null;
+          setSelectedCharity(matched as Charity | null);
+        } else {
+          setSelectedCharity(null);
+        }
       }
 
       // 3. Fetch past contributions log

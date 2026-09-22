@@ -53,8 +53,20 @@ export default function SubscriberDashboard() {
   const loadDashboardSummary = async () => {
     try {
       const res = await fetch('/api/dashboard/summary');
+      if (res.status === 401) {
+        router.push('/login?next=/dashboard');
+        return;
+      }
+      if (res.status === 403) {
+        showToast('Subscription Required', 'Choose a FairwayKind plan to unlock your dashboard.', 'info');
+        router.push('/subscribe');
+        return;
+      }
       const data = await res.json();
-      if (res.ok && data) {
+      if (!res.ok || data.subscriptionRequired || !data.stats?.isSubscriptionActive) {
+        router.push('/subscribe');
+        return;
+      }
         if (data.subscription?.charity_id) {
           setCharityId(data.subscription.charity_id);
         }
@@ -101,7 +113,6 @@ export default function SubscriberDashboard() {
         if (data.publishedDraws && data.publishedDraws.length > 0) {
           setDrawInfo(data.publishedDraws[0]);
         }
-      }
     } catch (err) {
       console.error('Failed to load dashboard summary:', err);
     }

@@ -7,13 +7,35 @@ import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { Select } from '@/components/ui/Select';
 import { useToast } from '@/components/ui/Toast';
+import { useAuth } from '@/lib/auth/auth-context';
+import { createClient } from '@/lib/supabase/client';
 
 export default function SubscribePage() {
   const { showToast } = useToast();
+  const { user } = useAuth();
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
   const [charityPercent, setCharityPercent] = useState<number>(10);
   const [selectedCharity, setSelectedCharity] = useState('c1000000-0000-0000-0000-000000000001');
   const [isLoading, setIsLoading] = useState(false);
+
+  React.useEffect(() => {
+    async function checkSub() {
+      if (!user) return;
+      const supabase = createClient();
+      const { data: sub } = await supabase
+        .from('subscriptions')
+        .select('status')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (sub?.status === 'active' || sub?.status === 'trialing') {
+        window.location.href = '/dashboard';
+      }
+    }
+    checkSub();
+  }, [user]);
 
   const price = billingCycle === 'monthly' ? 29 : 290;
   const charityAmount = (price * (charityPercent / 100)).toFixed(2);

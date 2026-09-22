@@ -93,6 +93,18 @@ export async function GET() {
     // Compute derived stats
     const activeScores = allScores.filter((s) => s.is_active !== false).slice(0, 5);
     const isSubscriptionActive = subscription?.status === 'active' || subscription?.status === 'trialing';
+
+    if (!isSubscriptionActive) {
+      return NextResponse.json({
+        error: 'Active subscription required to access dashboard.',
+        subscriptionRequired: true,
+        stats: {
+          isSubscriptionActive: false,
+          status: subscription?.status || 'inactive',
+        }
+      }, { status: 403 });
+    }
+
     const drawsEntered = drawEntries.length;
     const totalWon = winners
       .filter((w) => w.payout_status === 'paid')

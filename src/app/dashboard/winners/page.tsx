@@ -114,29 +114,23 @@ export default function MyWinningsPage() {
   const fetchWinners = async () => {
     setIsLoading(true);
     try {
-      // Load stored proofs from localStorage
-      const loadedDocs: Record<string, ProofDoc> = {};
-      if (typeof window !== 'undefined') {
-        try {
-          const latest = localStorage.getItem('latest_submitted_proof');
-          if (latest) {
-            const parsed = JSON.parse(latest);
-            if (parsed.winnerId) loadedDocs[parsed.winnerId] = parsed;
-          }
-
-        } catch (e) {
-          console.error('Error loading stored proofs:', e);
-        }
-      }
-      setUploadedDocs(loadedDocs);
-
       const res = await fetch('/api/winners');
+      if (res.status === 401) {
+        window.location.href = '/login?next=/dashboard/winners';
+        return;
+      }
+      if (res.status === 403) {
+        showToast('Subscription Required', 'Active subscription needed to view winnings.', 'info');
+        window.location.href = '/subscribe';
+        return;
+      }
       const data = await res.json();
+      const loadedDocs: Record<string, ProofDoc> = {};
+
       if (res.ok && data.winners?.length > 0) {
         const mapped = data.winners.map((w: WinnerRecord) => {
-          const storedStatus = typeof window !== 'undefined' ? localStorage.getItem(`proof_status_${w.id}`) : null;
           // Check if proof URL exists in backend proofs
-          if (w.winner_proofs?.[0]?.proof_file_url && !loadedDocs[w.id]) {
+          if (w.winner_proofs?.[0]?.proof_file_url) {
             loadedDocs[w.id] = {
               winnerId: w.id,
               fileName: w.winner_proofs[0].file_name || 'scorecard_proof.jpg',
@@ -145,15 +139,17 @@ export default function MyWinningsPage() {
               status: w.winner_proofs[0].status || w.proof_status,
             };
           }
-          return storedStatus ? { ...w, proof_status: storedStatus as ProofStatus } : w;
+          return w;
         });
+        setUploadedDocs(loadedDocs);
         setWinners(mapped);
-        setUploadedDocs(prev => ({ ...prev, ...loadedDocs }));
       } else {
         setWinners([]);
+        setUploadedDocs({});
       }
     } catch (err: any) {
-      console.error('Fetch winners error:', err);
+      console.error('Error fetching winners:', err);
+      setWinners([]);
     } finally {
       setIsLoading(false);
     }

@@ -7,6 +7,7 @@ const testSuites = [
   { name: 'Winner Verification & Payout Unit Tests', file: 'src/lib/winners/winner-engine.test.ts' },
   { name: 'Phase 11 Integration & Engineering Audit', file: 'src/lib/tests/integration-audit.test.ts' },
   { name: 'PRD Flows A-H & Edge Cases End-to-End Suite', file: 'test/e2e-prd-flows.test.ts' },
+  { name: 'Authentication, User Isolation & Gating Tests', file: 'test/auth-isolation-gating.test.ts' },
 ];
 
 console.log('================================================================');

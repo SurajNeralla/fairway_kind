@@ -35,20 +35,24 @@ export default function GolfScoresPage() {
   const fetchScores = async () => {
     try {
       const res = await fetch('/api/scores');
+      if (res.status === 401) {
+        window.location.href = '/login?next=/dashboard/scores';
+        return;
+      }
+      if (res.status === 403) {
+        showToast('Subscription Required', 'Active subscription required to access scores.', 'info');
+        window.location.href = '/subscribe';
+        return;
+      }
       const data = await res.json();
       if (res.ok) {
         setScores(data.scores || []);
       } else {
-        setScores([
-          { id: '1', user_id: 'u1', score: 39, played_on: '2024-10-22', is_active: true, created_at: '2024-10-22T00:00:00Z' },
-          { id: '2', user_id: 'u1', score: 36, played_on: '2024-10-14', is_active: true, created_at: '2024-10-14T00:00:00Z' },
-          { id: '3', user_id: 'u1', score: 41, played_on: '2024-10-04', is_active: true, created_at: '2024-10-04T00:00:00Z' },
-          { id: '4', user_id: 'u1', score: 34, played_on: '2024-09-28', is_active: true, created_at: '2024-09-28T00:00:00Z' },
-          { id: '5', user_id: 'u1', score: 38, played_on: '2024-09-18', is_active: true, created_at: '2024-09-18T00:00:00Z' },
-        ]);
+        setScores([]);
       }
     } catch (err) {
       console.error('Fetch scores error:', err);
+      setScores([]);
     } finally {
       setIsLoading(false);
     }
