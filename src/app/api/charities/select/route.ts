@@ -21,11 +21,13 @@ export async function POST(request: Request) {
     // Server-side enforcement of 10% minimum percentage
     const sanitizedPercent = sanitizeCharityPercentage(Number(voluntaryPercent));
 
-    // Fetch existing user subscription
+    // Fetch existing user subscription (latest active/created)
     const { data: subscription } = await supabase
       .from('subscriptions')
       .select('*')
       .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(1)
       .maybeSingle();
 
     if (!subscription) {
@@ -35,7 +37,7 @@ export async function POST(request: Request) {
     // Calculate exact dollar contribution based on plan type and percentage
     const calc = calculateCharityContribution(subscription.plan_type, sanitizedPercent);
 
-    // Update user subscription record with selected charity and percentage
+    // Update user subscription record with selected charity and percentage by primary key
     const { data: updatedSub, error: updateErr } = await supabase
       .from('subscriptions')
       .update({
@@ -43,9 +45,10 @@ export async function POST(request: Request) {
         voluntary_charity_percent: sanitizedPercent,
         updated_at: new Date().toISOString(),
       })
-      .eq('user_id', user.id)
+      .eq('id', subscription.id)
       .select()
-      .single();
+      .limit(1)
+      .maybeSingle();
 
     if (updateErr) {
       return NextResponse.json({ error: updateErr.message }, { status: 400 });

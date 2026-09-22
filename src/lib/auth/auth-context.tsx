@@ -32,7 +32,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .from('profiles')
         .select('*')
         .eq('id', userId)
-        .single();
+        .limit(1)
+        .maybeSingle();
 
       if (error) {
         console.warn('Profile fetch warning:', error.message);

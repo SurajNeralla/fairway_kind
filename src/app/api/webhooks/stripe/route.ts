@@ -41,6 +41,7 @@ export async function POST(request: Request) {
     .select('id')
     .eq('entity_type', 'stripe_event')
     .eq('action', event.id)
+    .limit(1)
     .maybeSingle();
 
   if (existingEvent) {
@@ -91,6 +92,8 @@ export async function POST(request: Request) {
             .from('subscriptions')
             .select('id, user_id, plan_type')
             .eq('stripe_customer_id', customerId)
+            .order('created_at', { ascending: false })
+            .limit(1)
             .maybeSingle();
 
           if (sub) {

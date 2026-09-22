@@ -28,12 +28,15 @@ export async function POST(request: Request) {
       .from('profiles')
       .select('*')
       .eq('id', user.id)
-      .single();
+      .limit(1)
+      .maybeSingle();
 
     const { data: existingSub } = await supabase
       .from('subscriptions')
       .select('stripe_customer_id')
       .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(1)
       .maybeSingle();
 
     let customerId = existingSub?.stripe_customer_id;

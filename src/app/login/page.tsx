@@ -50,7 +50,8 @@ function LoginForm() {
           .from('profiles')
           .select('role')
           .eq('id', data.user.id)
-          .single();
+          .limit(1)
+          .maybeSingle();
 
         const role = profile?.role || data.user.user_metadata?.role;
         const targetPath = next !== '/dashboard' ? next : (role === 'admin' ? '/admin' : '/dashboard');

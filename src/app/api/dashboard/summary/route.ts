@@ -32,13 +32,16 @@ export async function GET() {
         .from('profiles')
         .select('id, email, full_name, role, created_at')
         .eq('id', user.id)
-        .single(),
+        .limit(1)
+        .maybeSingle(),
 
       // Subscription + charity join
       supabase
         .from('subscriptions')
         .select('*, charities(id, name, category, logo_url, total_raised, is_active)')
         .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
         .maybeSingle(),
 
       // Active scores newest first

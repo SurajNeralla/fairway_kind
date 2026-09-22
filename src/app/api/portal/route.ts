@@ -14,8 +14,10 @@ export async function POST(request: Request) {
 
     const { data: subscription } = await supabase
       .from('subscriptions')
-      .select('stripe_customer_id')
+      .select('stripe_customer_id, id')
       .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(1)
       .maybeSingle();
 
     if (!subscription?.stripe_customer_id) {
@@ -37,8 +39,9 @@ export async function POST(request: Request) {
     const { data: currentSub } = await supabase
       .from('subscriptions')
       .select('cancel_at_period_end')
-      .eq('user_id', user.id)
-      .single();
+      .eq('id', subscription.id)
+      .limit(1)
+      .maybeSingle();
 
     const newCancelState = !currentSub?.cancel_at_period_end;
 

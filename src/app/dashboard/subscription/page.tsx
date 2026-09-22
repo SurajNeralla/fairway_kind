@@ -37,6 +37,8 @@ function SubscriptionManager() {
           .from('subscriptions')
           .select('*')
           .eq('user_id', user.id)
+          .order('created_at', { ascending: false })
+          .limit(1)
           .maybeSingle();
 
         if (subData) {
@@ -77,14 +79,19 @@ function SubscriptionManager() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { error } = await supabase
-        .from('subscriptions')
-        .update({
-          charity_id: selectedCharityId || null,
-          voluntary_charity_percent: voluntaryPercent,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('user_id', user.id);
+      const updateQuery = subscription?.id
+        ? supabase.from('subscriptions').update({
+            charity_id: selectedCharityId || null,
+            voluntary_charity_percent: voluntaryPercent,
+            updated_at: new Date().toISOString(),
+          }).eq('id', subscription.id)
+        : supabase.from('subscriptions').update({
+            charity_id: selectedCharityId || null,
+            voluntary_charity_percent: voluntaryPercent,
+            updated_at: new Date().toISOString(),
+          }).eq('user_id', user.id);
+
+      const { error } = await updateQuery;
 
       if (error) {
         showToast('Update Failed', error.message, 'error');
