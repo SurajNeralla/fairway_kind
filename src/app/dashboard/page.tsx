@@ -31,6 +31,12 @@ export default function SubscriberDashboard() {
   const [winners, setWinners] = useState<any[]>([]);
   const [drawInfo, setDrawInfo] = useState<any>(null);
 
+  const [charityId, setCharityId] = useState<string>('');
+  const [editingScore, setEditingScore] = useState<ScoreItem | null>(null);
+  const [editScorePoints, setEditScorePoints] = useState('');
+  const [editScoreDate, setEditScoreDate] = useState('');
+  const [isEditingScore, setIsEditingScore] = useState(false);
+
   // Inline form state
   const today = new Date().toISOString().split('T')[0];
   const [inlineDate, setInlineDate] = useState(today);
@@ -40,13 +46,16 @@ export default function SubscriberDashboard() {
   const [modalDate, setModalDate] = useState(today);
   const [modalPoints, setModalPoints] = useState('');
 
-  const userName = profile?.full_name || 'Marcus Vance';
+  const userName = profile?.full_name || user?.email?.split('@')[0] || 'Fairway Golfer';
 
   const loadDashboardSummary = async () => {
     try {
       const res = await fetch('/api/dashboard/summary');
       const data = await res.json();
       if (res.ok && data) {
+        if (data.subscription?.charity_id) {
+          setCharityId(data.subscription.charity_id);
+        }
         if (data.activeScores && data.activeScores.length > 0) {
           const mappedScores: ScoreItem[] = data.activeScores.map((s: any) => ({
             id: s.id,
@@ -192,10 +201,75 @@ export default function SubscriberDashboard() {
     }
   };
 
-  const handleIncreaseCharity = () => {
+  const handleIncreaseCharity = async () => {
     const next = charityPercent >= 50 ? 10 : charityPercent + 5;
     setCharityPercent(next);
-    showToast('Charity Allocation Updated', `Your monthly contribution has been updated to ${next}%.`, 'success');
+    if (charityId) {
+      try {
+        const res = await fetch('/api/charities/select', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ charityId, voluntaryPercent: next }),
+        });
+        if (res.ok) {
+          showToast('Charity Allocation Updated', `Your monthly contribution has been updated to ${next}%.`, 'success');
+          await loadDashboardSummary();
+        } else {
+          const errData = await res.json();
+          showToast('Notice', errData.error || 'Failed to persist charity allocation.', 'error');
+        }
+      } catch (err: any) {
+        showToast('Error', err.message || 'Update failed', 'error');
+      }
+    } else {
+      showToast('Charity Allocation Updated', `Your monthly contribution has been updated to ${next}%.`, 'success');
+    }
+  };
+
+  const handleOpenEditModal = (score: ScoreItem) => {
+    setEditingScore(score);
+    setEditScorePoints(score.score.toString());
+    setEditScoreDate(score.played_on);
+  };
+
+  const handleEditScore = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingScore) return;
+    const pts = parseInt(editScorePoints, 10);
+    if (isNaN(pts) || pts < 1 || pts > 45) {
+      showToast('Invalid Score', 'Stableford points must be between 1 and 45.', 'error');
+      return;
+    }
+    if (!editScoreDate) {
+      showToast('Date Required', 'Please enter round date.', 'error');
+      return;
+    }
+
+    setIsEditingScore(true);
+    try {
+      const res = await fetch('/api/scores', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: editingScore.id,
+          score: pts,
+          played_on: editScoreDate,
+        }),
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        showToast('Score Updated!', 'Score modified in your rolling 5 entries.', 'success');
+        setEditingScore(null);
+        await loadDashboardSummary();
+      } else {
+        showToast('Error', data.error || 'Failed to update score.', 'error');
+      }
+    } catch (err: any) {
+      showToast('Error', err.message || 'Score update error', 'error');
+    } finally {
+      setIsEditingScore(false);
+    }
   };
 
   return (
@@ -595,6 +669,13 @@ export default function SubscriberDashboard() {
                           <td className="py-4 px-5 text-right">
                             <div className="inline-flex items-center gap-1 text-on-surface-variant">
                               <button
+                                onClick={() => handleOpenEditModal(s)}
+                                className="p-1.5 hover:text-primary hover:bg-surface-container rounded-lg transition-colors"
+                                title="Edit Score"
+                              >
+                                <span className="material-symbols-outlined text-base">edit</span>
+                              </button>
+                              <button
                                 onClick={() => handleDeleteScore(s.id)}
                                 className="p-1.5 hover:text-error hover:bg-error-container/30 rounded-lg transition-colors"
                                 title="Delete Score"
@@ -911,6 +992,74 @@ export default function SubscriberDashboard() {
                   className="px-6 py-2.5 bg-primary-container hover:bg-primary text-on-primary font-label-md text-label-md rounded-xl transition-all duration-150 active:scale-[0.98] shadow-sm font-semibold"
                 >
                   Save Score
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ================= EDIT SCORE MODAL PANEL ================= */}
+      {editingScore && (
+        <div className="fixed inset-0 z-50 bg-inverse-surface/40 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-surface-container-lowest border border-outline-variant/60 rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl relative transform transition-all">
+            <button
+              onClick={() => setEditingScore(null)}
+              className="absolute top-5 right-5 text-outline hover:text-on-surface p-2 rounded-full hover:bg-surface-container transition-colors"
+            >
+              <span className="material-symbols-outlined text-xl">close</span>
+            </button>
+
+            <div className="flex items-center gap-3 mb-5">
+              <div className="w-10 h-10 rounded-xl bg-[#E8EFEA] text-[#2E5A44] flex items-center justify-center">
+                <span className="material-symbols-outlined text-2xl">edit</span>
+              </div>
+              <div>
+                <h3 className="font-headline-sm text-headline-sm font-semibold text-on-surface">Edit Attested Score</h3>
+                <p className="font-body-sm text-xs text-on-surface-variant">Update score or date played for this round</p>
+              </div>
+            </div>
+
+            <form onSubmit={handleEditScore} className="space-y-4">
+              <div>
+                <label className="block font-label-md text-label-md text-on-surface mb-1 font-medium">Date Played</label>
+                <input
+                  type="date"
+                  required
+                  max={today}
+                  value={editScoreDate}
+                  onChange={(e) => setEditScoreDate(e.target.value)}
+                  className="w-full h-11 px-3 bg-surface rounded-xl border border-outline-variant/60 font-body-sm text-on-surface focus:outline-none focus:border-primary-container"
+                />
+              </div>
+
+              <div>
+                <label className="block font-label-md text-label-md text-on-surface mb-1 font-medium">Stableford Score (1–45)</label>
+                <input
+                  type="number"
+                  min="1"
+                  max="45"
+                  required
+                  value={editScorePoints}
+                  onChange={(e) => setEditScorePoints(e.target.value)}
+                  className="w-full h-11 px-3.5 bg-surface rounded-xl border border-outline-variant/60 font-body-sm text-on-surface focus:outline-none focus:border-primary-container"
+                />
+              </div>
+
+              <div className="pt-3 flex items-center justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setEditingScore(null)}
+                  className="px-4 py-2.5 text-on-surface-variant hover:text-on-surface font-label-md text-label-md"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isEditingScore}
+                  className="px-6 py-2.5 bg-primary hover:bg-primary-container text-on-primary font-label-md text-label-md rounded-xl transition-all duration-150 active:scale-[0.98] shadow-sm font-semibold"
+                >
+                  {isEditingScore ? 'Updating...' : 'Update Score'}
                 </button>
               </div>
             </form>

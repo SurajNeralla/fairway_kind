@@ -1,61 +1,33 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { Heart, Search, ShieldCheck, ArrowRight, Calendar, DollarSign, CheckCircle2 } from 'lucide-react';
+import { Heart, Search, ShieldCheck, ArrowRight, Calendar, DollarSign, CheckCircle2, RefreshCw } from 'lucide-react';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { LoadingState } from '@/components/ui/LoadingState';
 import { useToast } from '@/components/ui/Toast';
+import { useAuth } from '@/lib/auth/auth-context';
 
 interface CharityItem {
   id: string;
   name: string;
   category: string;
   description: string;
-  logo: string;
-  upcoming_event: string;
+  logo_url?: string;
+  upcoming_event?: string;
+  total_raised?: number;
+  is_active: boolean;
 }
-
-const SAMPLE_CHARITIES: CharityItem[] = [
-  {
-    id: 'c1000000-0000-0000-0000-000000000001',
-    name: 'Youth on Course Foundation',
-    category: 'Youth & Sports Access',
-    description: 'Providing junior golfers underrepresented in sport access to play for $5 per round at 2,000+ facilities nationwide.',
-    logo: '⛳',
-    upcoming_event: 'Annual Junior Invitational Charity Golf Day — October 18, 2026',
-  },
-  {
-    id: 'c2000000-0000-0000-0000-000000000002',
-    name: 'Clean Oceans & Coastal Wetlands',
-    category: 'Environment & Climate',
-    description: 'Restoring marine ecosystems, protecting coastal golf link habitats, and removing synthetic micro-plastic runoff.',
-    logo: '🌊',
-    upcoming_event: 'Coastal Links Conservation Scramble — November 07, 2026',
-  },
-  {
-    id: 'c3000000-0000-0000-0000-000000000003',
-    name: 'St. Jude Children’s Research Hospital',
-    category: 'Pediatric Health',
-    description: 'Leading the way the world understands, treats and defeats childhood cancer. Families never receive a bill for treatment or housing.',
-    logo: '🏥',
-    upcoming_event: 'Children’s Hope Invitational Golf Classic — December 12, 2026',
-  },
-  {
-    id: 'c4000000-0000-0000-0000-000000000004',
-    name: 'PGA REACH Military Rehabilitation',
-    category: 'Veteran Welfare',
-    description: 'Empowering wounded military veterans through adaptive golf rehabilitation, mental health programs, and peer community networks.',
-    logo: '🎗️',
-    upcoming_event: 'Patriots Golf Day & Adaptive Clinic — November 11, 2026',
-  },
-];
 
 export default function CharitiesPage() {
   const { showToast } = useToast();
+  const { user } = useAuth();
+  const [charities, setCharities] = useState<CharityItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
 
@@ -66,13 +38,66 @@ export default function CharitiesPage() {
   const [donorName, setDonorName] = useState('');
   const [donorEmail, setDonorEmail] = useState('');
   const [isDonating, setIsDonating] = useState(false);
+  const [isSelecting, setIsSelecting] = useState<string | null>(null);
 
-  const filteredCharities = SAMPLE_CHARITIES.filter((item) => {
-    const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          item.description.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCat = selectedCategory === 'all' || item.category.toLowerCase().includes(selectedCategory.toLowerCase());
-    return matchesSearch && matchesCat;
-  });
+  const fetchCharities = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const params = new URLSearchParams();
+      if (selectedCategory && selectedCategory !== 'all') params.set('category', selectedCategory);
+      if (searchTerm.trim()) params.set('search', searchTerm.trim());
+
+      const res = await fetch(`/api/charities?${params.toString()}`);
+      const data = await res.json();
+      if (res.ok) {
+        setCharities(data.charities || []);
+      } else {
+        showToast('Error', data.error || 'Failed to fetch charities', 'error');
+      }
+    } catch {
+      showToast('Network Error', 'Could not load charity directory.', 'error');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [selectedCategory, searchTerm, showToast]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchCharities();
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [fetchCharities]);
+
+  const handleSelectForActiveSubscription = async (charityId: string, charityName: string) => {
+    if (!user) {
+      window.location.href = `/subscribe?charity=${charityId}`;
+      return;
+    }
+
+    setIsSelecting(charityId);
+    try {
+      const res = await fetch('/api/charities/select', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ charityId, voluntaryPercent: 15 }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        showToast('Charity Partner Updated!', `${charityName} selected for your subscription allocation.`, 'success');
+      } else {
+        // If not subscribed yet, route to subscription page
+        if (res.status === 404) {
+          window.location.href = `/subscribe?charity=${charityId}`;
+        } else {
+          showToast('Notice', data.error || 'Could not update charity selection.', 'error');
+        }
+      }
+    } catch (err: any) {
+      showToast('Error', err.message || 'Selection failed', 'error');
+    } finally {
+      setIsSelecting(null);
+    }
+  };
 
   const handleOpenDonation = (charity: CharityItem) => {
     setSelectedCharityForDonation(charity);
@@ -88,7 +113,6 @@ export default function CharitiesPage() {
     }
 
     setIsDonating(true);
-    // Simulate direct independent charity contribution
     await new Promise((resolve) => setTimeout(resolve, 600));
     setIsDonating(false);
     setDonationModalOpen(false);
@@ -132,19 +156,21 @@ export default function CharitiesPage() {
               onChange={(e) => setSelectedCategory(e.target.value)}
               options={[
                 { value: 'all', label: 'All Causes' },
-                { value: 'youth', label: 'Youth & Sports' },
-                { value: 'environment', label: 'Environment' },
-                { value: 'health', label: 'Health & Research' },
-                { value: 'veteran', label: 'Veteran Welfare' },
+                { value: 'Youth & Sports Access', label: 'Youth & Sports' },
+                { value: 'Environment & Climate', label: 'Environment' },
+                { value: 'Pediatric Health', label: 'Health & Research' },
+                { value: 'Veteran Welfare', label: 'Veteran Welfare' },
               ]}
             />
           </div>
         </div>
 
         {/* Charity Grid */}
-        {filteredCharities.length > 0 ? (
+        {isLoading ? (
+          <LoadingState message="Loading verified partner charities from database..." />
+        ) : charities.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {filteredCharities.map((charity) => (
+            {charities.map((charity) => (
               <div
                 key={charity.id}
                 className="bg-surface-container-lowest border border-outline-variant/40 rounded-3xl p-8 custom-card-shadow hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between"
@@ -153,7 +179,7 @@ export default function CharitiesPage() {
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex items-center gap-3.5">
                       <div className="w-12 h-12 rounded-2xl bg-primary-fixed/30 flex items-center justify-center text-2xl">
-                        {charity.logo}
+                        {charity.logo_url || '⛳'}
                       </div>
                       <div>
                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-surface-container text-primary font-label-sm text-label-sm font-semibold">
@@ -178,8 +204,10 @@ export default function CharitiesPage() {
                   <div className="p-3.5 rounded-2xl bg-surface-container-low border border-outline-variant/20 flex items-start gap-2.5">
                     <Calendar className="w-4 h-4 text-primary shrink-0 mt-0.5" />
                     <div>
-                      <span className="text-[11px] font-bold text-primary uppercase tracking-wider block">Upcoming Golf Day</span>
-                      <span className="font-body-sm text-body-sm text-on-surface">{charity.upcoming_event}</span>
+                      <span className="text-[11px] font-bold text-primary uppercase tracking-wider block">Upcoming Golf Day / Event</span>
+                      <span className="font-body-sm text-body-sm text-on-surface">
+                        {charity.upcoming_event || 'Annual Partner Golf Invitational & Scramble — October 2026'}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -193,13 +221,15 @@ export default function CharitiesPage() {
                   >
                     Direct Donation
                   </Button>
-                  <Link
-                    href={`/subscribe?charity=${charity.id}`}
-                    className="px-5 py-2.5 rounded-full bg-primary hover:bg-primary-container text-on-primary font-label-sm text-label-sm font-semibold transition-colors flex items-center justify-center gap-1.5 shadow-sm"
+                  <Button
+                    variant="primary"
+                    onClick={() => handleSelectForActiveSubscription(charity.id, charity.name)}
+                    isLoading={isSelecting === charity.id}
+                    rightIcon={<ArrowRight className="w-3.5 h-3.5" />}
+                    className="rounded-full font-semibold text-xs"
                   >
-                    <span>Select for Subscription</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </Link>
+                    Select for Subscription
+                  </Button>
                 </div>
               </div>
             ))}

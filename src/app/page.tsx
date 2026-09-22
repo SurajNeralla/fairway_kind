@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth/auth-context';
 import { useToast } from '@/components/ui/Toast';
+import { ArrowRight, Play, TrendingUp, Heart, Users } from 'lucide-react';
 
 export default function HomePage() {
   const router = useRouter();
@@ -24,144 +25,86 @@ export default function HomePage() {
   return (
     <div className="bg-background text-on-surface antialiased selection:bg-primary-fixed selection:text-primary">
       {/* 2. HERO SECTION */}
-      <section className="relative pt-12 pb-24 md:pt-20 md:pb-32 overflow-hidden">
-        {/* Ambient subtle background glow */}
-        <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-[700px] h-[350px] bg-primary-fixed/20 rounded-full blur-3xl pointer-events-none -z-10"></div>
-        <div className="max-w-7xl mx-auto px-6 md:px-12">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
-            {/* Left Column: Copy & CTAs (7 cols) */}
-            <div className="lg:col-span-7 flex flex-col items-start space-y-6">
-              {/* Editorial Pill Badge */}
-              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-surface-container border border-outline-variant/50 text-tertiary font-label-sm text-label-sm uppercase tracking-wider">
-                <span className="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
-                Purpose-Driven Performance Rewards
-              </div>
+      <section className="relative pt-12 pb-16 md:pt-20 md:pb-24 overflow-hidden bg-[#FAF9F5]">
+        <div className="max-w-4xl mx-auto px-6 text-center flex flex-col items-center">
+          {/* Editorial Pill Badge */}
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#ECECE5] text-[#3A3F3C] font-semibold text-xs tracking-wider uppercase mb-8">
+            <span className="w-2 h-2 rounded-full bg-[#1B4332]"></span>
+            <span>PURPOSE-DRIVEN PERFORMANCE REWARDS</span>
+          </div>
 
-              {/* Main Headline */}
-              <h1 className="font-headline-lg-mobile md:font-display text-headline-lg-mobile md:text-display text-on-background tracking-tight leading-tight">
-                Play. Win.<br />
-                <span className="text-primary-container font-headline-lg md:font-display italic font-medium">
-                  Give Back.
-                </span>
-              </h1>
+          {/* Main Headline */}
+          <h1 className="text-6xl sm:text-7xl md:text-8xl font-extrabold text-[#191C1A] tracking-tight leading-[1.05] mb-6">
+            Play. Win.<br />
+            <span className="text-[#1B4332] font-serif italic font-bold">
+              Give Back.
+            </span>
+          </h1>
 
-              {/* Subtitle with warm tone */}
-              <p className="font-body-lg text-body-lg text-on-surface-variant max-w-xl leading-relaxed">
-                The modern performance platform where your golf rounds unlock monthly community rewards while directly funding causes you care about. A minimum 10% of every membership is donated to your chosen charity.
-              </p>
+          {/* Subtitle */}
+          <p className="text-base sm:text-lg md:text-xl text-[#525954] max-w-2xl mx-auto leading-relaxed mb-10">
+            The modern performance platform where your golf rounds unlock monthly community rewards while directly funding causes you care about. A minimum 10% of every membership is donated to your chosen charity.
+          </p>
 
-              {/* Actions Cluster */}
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 pt-2 w-full sm:w-auto">
-                <Link
-                  href={user ? "/dashboard" : "/subscribe"}
-                  className="inline-flex justify-center items-center gap-2 px-8 py-4 rounded-full bg-primary hover:bg-primary-container text-on-primary font-label-lg text-label-lg transition-all active:scale-[0.98] shadow-sm"
-                >
-                  <span>{user ? "Go to Dashboard" : "Subscribe to FairwayKind"}</span>
-                  <span className="material-symbols-outlined text-lg">arrow_forward</span>
-                </Link>
-                <a
-                  href="#how-it-works"
-                  className="inline-flex justify-center items-center gap-2 px-6 py-4 rounded-full bg-surface-container-low hover:bg-surface-container text-tertiary border border-outline-variant/40 font-label-lg text-label-lg transition-all active:scale-[0.98]"
-                >
-                  <span className="material-symbols-outlined text-lg text-primary">play_circle</span>
-                  <span>See How It Works</span>
-                </a>
-              </div>
+          {/* Actions Cluster */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 w-full sm:w-auto mb-12">
+            <Link
+              href={user ? "/dashboard" : "/subscribe"}
+              className="w-full sm:w-auto inline-flex justify-center items-center gap-2 px-8 py-4 rounded-full bg-[#1B4332] hover:bg-[#143326] text-white font-medium text-base transition-all duration-150 active:scale-[0.98] shadow-sm"
+            >
+              <span>{user ? "Go to Dashboard" : "Subscribe to FairwayKind"}</span>
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+            <a
+              href="#how-it-works"
+              className="w-full sm:w-auto inline-flex justify-center items-center gap-2 px-7 py-4 rounded-full bg-[#EAECE5] hover:bg-[#DFE2DA] text-[#191C1A] font-medium text-base transition-all duration-150 active:scale-[0.98]"
+            >
+              <span className="w-5 h-5 rounded-full border border-[#1B4332] flex items-center justify-center text-[#1B4332]">
+                <Play className="w-2.5 h-2.5 fill-[#1B4332] ml-0.5" />
+              </span>
+              <span>See How It Works</span>
+            </a>
+          </div>
 
-              {/* Micro Trust Note */}
-              <div className="flex items-center gap-6 pt-4 text-on-surface-variant font-label-md text-label-md">
-                <div className="flex items-center gap-1.5">
-                  <span className="material-symbols-outlined text-primary text-base">verified_user</span>
-                  <span>Stableford Scoring (1–45)</span>
-                </div>
-                <div className="w-1 h-1 rounded-full bg-outline-variant"></div>
-                <div className="flex items-center gap-1.5">
-                  <span className="material-symbols-outlined text-secondary text-base">handshake</span>
-                  <span>10%+ Direct Charity Giving</span>
-                </div>
+          {/* 3-Column Feature Highlight Row */}
+          <div className="flex flex-wrap items-center justify-center gap-8 md:gap-14 text-left border-t border-transparent pt-2 mb-12">
+            {/* Feature 1 */}
+            <div className="flex items-center gap-3">
+              <TrendingUp className="w-6 h-6 text-[#1B4332]" />
+              <div>
+                <div className="text-xs md:text-sm font-semibold text-[#191C1A] leading-tight">Stableford Scoring</div>
+                <div className="text-xs text-[#6B7280]">(1–45)</div>
               </div>
             </div>
 
-            {/* Right Column: Interactive Multi-Layer Preview Card (5 cols) */}
-            <div className="lg:col-span-5 relative">
-              {/* Outer Elevated Container */}
-              <div className="bg-surface-container-lowest border border-outline-variant/40 rounded-3xl p-6 md:p-8 custom-floating-shadow relative">
-                {/* Card Header */}
-                <div className="flex items-center justify-between pb-6 border-b border-surface-container">
-                  <div className="flex items-center gap-3">
-                    <div className="w-11 h-11 rounded-full bg-primary-fixed/40 flex items-center justify-center text-primary font-bold">
-                      <span className="material-symbols-outlined text-xl">person</span>
-                    </div>
-                    <div>
-                      <div className="font-headline-sm text-headline-sm text-on-background font-semibold">David K. Miller</div>
-                      <div className="font-label-sm text-label-sm text-on-surface-variant">Active Member • Monthly Draw Entrant</div>
-                    </div>
-                  </div>
-                  <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-surface-container text-primary font-label-sm text-label-sm font-semibold">
-                    Rolling 5 Scores Active
-                  </span>
-                </div>
+            <div className="hidden sm:block w-px h-8 bg-[#E2E4DC]"></div>
 
-                {/* Key Metrics Grid */}
-                <div className="grid grid-cols-2 gap-4 py-6">
-                  {/* Stableford Metric */}
-                  <div className="bg-surface-container-low rounded-2xl p-4 border border-outline-variant/20">
-                    <div className="text-on-surface-variant font-label-sm text-label-sm tracking-wide uppercase">Latest Score</div>
-                    <div className="font-headline-lg text-headline-lg text-primary mt-1 tabular-nums font-semibold">
-                      38 <span className="font-body-sm text-body-sm text-on-surface-variant font-normal">pts</span>
-                    </div>
-                    <div className="flex items-center gap-1 mt-2 text-primary font-label-sm text-label-sm">
-                      <span className="material-symbols-outlined text-sm">check_circle</span>
-                      <span>Stableford Format</span>
-                    </div>
-                  </div>
-
-                  {/* Monthly Draw Pool Entry */}
-                  <div className="bg-surface-container-low rounded-2xl p-4 border border-outline-variant/20">
-                    <div className="text-on-surface-variant font-label-sm text-label-sm tracking-wide uppercase">Monthly Draw</div>
-                    <div className="font-headline-lg text-headline-lg text-secondary mt-1 tabular-nums font-semibold">5 Numbers</div>
-                    <div className="flex items-center gap-1 mt-2 text-on-surface-variant font-label-sm text-label-sm">
-                      <span className="material-symbols-outlined text-sm text-secondary">verified</span>
-                      <span>40% / 35% / 25% Pools</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Dynamic Charity Tracker Card Inset */}
-                <div className="bg-surface-container/60 rounded-2xl p-4 border border-outline-variant/30 mt-2">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <span className="material-symbols-outlined text-primary text-base">volunteer_activism</span>
-                      <span className="font-label-md text-label-md text-on-surface font-medium">Youth on Course</span>
-                    </div>
-                    <span className="font-headline-sm text-headline-sm text-primary font-semibold tabular-nums">15% Grant</span>
-                  </div>
-                  {/* Progress Bar */}
-                  <div className="w-full bg-surface-variant rounded-full h-2 overflow-hidden mt-1">
-                    <div className="bg-primary-container h-full rounded-full w-4/5"></div>
-                  </div>
-                  <div className="flex justify-between text-on-surface-variant font-label-sm text-label-sm mt-2">
-                    <span>Selected Charity Partner</span>
-                    <span className="text-primary font-semibold">Min 10% Enforced</span>
-                  </div>
-                </div>
-
-                {/* Subtle Live Verification Stamp */}
-                <div className="mt-6 pt-4 border-t border-surface-container flex items-center justify-between text-on-surface-variant font-label-sm text-label-sm">
-                  <span className="flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-secondary animate-pulse"></span>
-                    Monthly Draw Active
-                  </span>
-                  <span className="text-tertiary">Jackpot Rollover Enabled</span>
-                </div>
-              </div>
-
-              {/* Floating Subtle Accent Tag */}
-              <div className="hidden sm:flex absolute -bottom-5 -left-5 bg-primary text-on-primary px-4 py-2.5 rounded-2xl shadow-lg items-center gap-2 text-label-sm font-label-sm border border-primary-fixed/20">
-                <span className="material-symbols-outlined text-secondary-fixed text-base">stars</span>
-                <span>Feel, Not Fairway</span>
+            {/* Feature 2 */}
+            <div className="flex items-center gap-3">
+              <Heart className="w-6 h-6 text-[#A06C18] fill-[#A06C18]/15" />
+              <div>
+                <div className="text-xs md:text-sm font-semibold text-[#191C1A] leading-tight">10%+ Direct</div>
+                <div className="text-xs text-[#6B7280]">Charity Giving</div>
               </div>
             </div>
+
+            <div className="hidden sm:block w-px h-8 bg-[#E2E4DC]"></div>
+
+            {/* Feature 3 */}
+            <div className="flex items-center gap-3">
+              <Users className="w-6 h-6 text-[#1B4332]" />
+              <div>
+                <div className="text-xs md:text-sm font-semibold text-[#191C1A] leading-tight">Monthly</div>
+                <div className="text-xs text-[#6B7280]">5-Number Draw</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Tagline Divider */}
+          <div className="w-full flex items-center justify-center gap-4 text-xs font-semibold tracking-[0.2em] text-[#9CA3AF] uppercase">
+            <span className="w-16 sm:w-24 h-px bg-[#E2E4DC]"></span>
+            <span>FEEL, NOT FAIRWAY.</span>
+            <span className="w-16 sm:w-24 h-px bg-[#E2E4DC]"></span>
           </div>
         </div>
       </section>

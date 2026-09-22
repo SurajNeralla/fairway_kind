@@ -101,15 +101,16 @@ export const Navbar: React.FC = () => {
             <>
               <Link
                 href="/login"
-                className="hidden sm:inline-flex text-label-lg font-label-lg text-primary hover:text-primary-container px-4 py-2 transition-colors active:scale-[0.98]"
+                className="hidden sm:inline-flex text-label-lg font-label-lg text-[#191C1A] hover:text-primary px-4 py-2 transition-colors active:scale-[0.98] font-medium"
               >
                 Sign In
               </Link>
               <Link
                 href="/subscribe"
-                className="bg-primary hover:bg-primary-container text-on-primary font-label-lg text-label-lg px-6 py-2.5 rounded-full transition-all duration-200 active:scale-[0.98] shadow-sm hover:shadow"
+                className="bg-[#1B4332] hover:bg-[#143326] text-white font-medium text-sm md:text-base px-6 py-2.5 rounded-full transition-all duration-200 active:scale-[0.98] shadow-sm hover:shadow inline-flex items-center gap-2"
               >
-                Subscribe
+                <span>Subscribe</span>
+                <span className="text-base">&rarr;</span>
               </Link>
             </>
           )}

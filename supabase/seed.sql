@@ -216,6 +216,11 @@ RETURNS TRIGGER AS $$
 DECLARE
   target_user_id UUID;
 BEGIN
+  -- Prevent infinite recursion
+  IF pg_trigger_depth() > 1 THEN
+    RETURN COALESCE(NEW, OLD);
+  END IF;
+
   IF TG_OP = 'DELETE' THEN
     target_user_id := OLD.user_id;
   ELSE
