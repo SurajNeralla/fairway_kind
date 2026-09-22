@@ -162,7 +162,7 @@ export default function CharitiesPage() {
         throw new Error(data.error || 'Failed to initialize Stripe payment screen');
       }
 
-      showToast('Redirecting to Stripe...', 'Transferring to secure Stripe Checkout payment screen...', 'info');
+      showToast('Redirecting to Checkout...', 'Transferring to secure checkout payment screen...', 'info');
       window.location.href = data.url;
     } catch (err: any) {
       showToast('Donation Error', err.message || 'Payment initialization failed', 'error');
@@ -375,7 +375,7 @@ export default function CharitiesPage() {
               isLoading={isDonating}
               leftIcon={<Heart className="w-4 h-4" />}
             >
-              Proceed to Stripe Checkout &rarr;
+              Proceed to Checkout &rarr;
             </Button>
           </div>
         </form>
