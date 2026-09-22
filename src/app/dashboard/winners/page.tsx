@@ -138,15 +138,29 @@ export default function MyWinningsPage() {
     try {
       const formData = new FormData();
       formData.append('file', file);
+      formData.append('proof', file);
       formData.append('winner_id', winnerId);
 
-      const res = await fetch('/api/winners/proof', {
+      const res = await fetch(`/api/winners/${winnerId}/proof`, {
         method: 'POST',
         body: formData,
       });
 
-      const data = await res.json();
+      let data: any = {};
+      const contentType = res.headers.get('content-type') || '';
+      if (contentType.includes('application/json')) {
+        data = await res.json();
+      } else {
+        const text = await res.text();
+        throw new Error(text.slice(0, 100) || `Upload failed (${res.status})`);
+      }
+
       if (res.ok) {
+        setWinners(prev =>
+          prev.map(w =>
+            w.id === winnerId ? { ...w, proof_status: 'submitted' } : w
+          )
+        );
         showToast('Proof Submitted!', 'Your scorecard has been uploaded for compliance review.', 'success');
         await fetchWinners();
       } else {
