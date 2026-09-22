@@ -4,11 +4,16 @@ export const APP_CONFIG = {
   url: process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
   supabase: {
     // Support both standard names and Vercel-generated Supabase integration names
-    url: process.env.NEXT_PUBLIC_SUPABASE_URL || '',
+    url:
+      process.env.NEXT_PUBLIC_SUPABASE_URL ||
+      process.env.SUPABASE_URL ||
+      'https://placeholder.supabase.co',
     anonKey:
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
       process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
-      '',
+      process.env.SUPABASE_ANON_KEY ||
+      process.env.SUPABASE_PUBLISHABLE_KEY ||
+      'placeholder-anon-key',
   },
   stripe: {
     publishableKey:

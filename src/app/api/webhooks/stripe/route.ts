@@ -2,16 +2,11 @@ import { NextResponse } from 'next/server';
 import { headers } from 'next/headers';
 import Stripe from 'stripe';
 import { stripe } from '@/lib/stripe/client';
-import { createClient } from '@supabase/supabase-js';
+import { createAdminClient } from '@/lib/supabase/server';
 import { APP_CONFIG } from '@/lib/config';
 
-// Initialize Supabase admin service role client for secure server webhook updates
-const supabaseAdmin = createClient(
-  APP_CONFIG.supabase.url,
-  process.env.SUPABASE_SERVICE_ROLE_KEY || APP_CONFIG.supabase.anonKey
-);
-
 export async function POST(request: Request) {
+  const supabaseAdmin = createAdminClient();
   if (!process.env.SUPABASE_SERVICE_ROLE_KEY && process.env.NODE_ENV === 'production') {
     console.error('SUPABASE_SERVICE_ROLE_KEY is required for webhook processing in production.');
     return NextResponse.json({ error: 'Server configuration error: missing service role key' }, { status: 500 });
