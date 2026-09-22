@@ -8,6 +8,8 @@ import { useToast } from '@/components/ui/Toast';
 export default function CharityInquiriesPage() {
   const { showToast } = useToast();
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [refNumber, setRefNumber] = useState<string>('');
   const [formData, setFormData] = useState({
     charityName: '',
     ein: '',
@@ -17,14 +19,31 @@ export default function CharityInquiriesPage() {
     mission: ''
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitted(true);
-    showToast(
-      'Inquiry Received',
-      'Thank you! Our philanthropic partnerships committee will review your non-profit application within 3 business days.',
-      'success'
-    );
+    setSubmitting(true);
+    try {
+      const res = await fetch('/api/charities/inquire', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Submission failed');
+      }
+      setRefNumber(data.referenceNumber || 'APP-' + Date.now().toString(36).toUpperCase());
+      setSubmitted(true);
+      showToast(
+        'Inquiry Received',
+        'Thank you! Your non-profit partnership application has been registered for evaluation.',
+        'success'
+      );
+    } catch (err: any) {
+      showToast('Submission Error', err.message || 'Failed to submit application', 'error');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -89,20 +108,29 @@ export default function CharityInquiriesPage() {
         {/* Inquiry Form */}
         <div className="bg-surface-container-lowest border border-outline-variant/40 rounded-3xl p-8 md:p-12 custom-card-shadow">
           {submitted ? (
-            <div className="text-center py-12 space-y-4">
+            <div className="text-center py-12 space-y-5">
               <div className="w-16 h-16 rounded-full bg-primary-fixed/40 text-primary mx-auto flex items-center justify-center">
                 <CheckCircle2 className="w-8 h-8" />
               </div>
-              <h2 className="text-2xl font-bold text-on-surface">Inquiry Successfully Submitted</h2>
+              <div className="space-y-1">
+                <h2 className="text-2xl font-bold text-on-surface">Inquiry Successfully Submitted</h2>
+                {refNumber && (
+                  <div className="text-xs font-mono text-primary font-semibold tracking-wider">
+                    Application Reference: {refNumber}
+                  </div>
+                )}
+              </div>
               <p className="text-on-surface-variant text-sm max-w-md mx-auto leading-relaxed">
-                Thank you for applying to partner with FairwayKind. Our team will verify your organization&apos;s credentials and get in touch within 3 business days.
+                Thank you for applying to partner with FairwayKind. Our philanthropic partnerships committee will verify your organization&apos;s 501(c)(3) standing and get in touch within 3 business days.
               </p>
-              <Link 
-                href="/charities" 
-                className="inline-block mt-4 px-6 py-2.5 rounded-full bg-primary hover:bg-primary-container text-on-primary text-sm font-semibold transition-colors"
-              >
-                Browse Current Charity Directory
-              </Link>
+              <div className="pt-2">
+                <Link 
+                  href="/charities" 
+                  className="inline-block px-6 py-2.5 rounded-full bg-primary hover:bg-primary-container text-on-primary text-sm font-semibold transition-colors"
+                >
+                  Browse Current Charity Directory
+                </Link>
+              </div>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-6">
@@ -188,10 +216,11 @@ export default function CharityInquiriesPage() {
 
               <button
                 type="submit"
-                className="w-full py-3.5 rounded-full bg-primary hover:bg-primary-container text-on-primary font-semibold text-sm transition-all duration-150 active:scale-[0.98] shadow-sm flex items-center justify-center gap-2"
+                disabled={submitting}
+                className="w-full py-3.5 rounded-full bg-primary hover:bg-primary-container disabled:opacity-60 text-on-primary font-semibold text-sm transition-all duration-150 active:scale-[0.98] shadow-sm flex items-center justify-center gap-2 cursor-pointer disabled:cursor-not-allowed"
               >
-                <Send className="w-4 h-4" />
-                <span>Submit Non-Profit Application</span>
+                <Send className={`w-4 h-4 ${submitting ? 'animate-pulse' : ''}`} />
+                <span>{submitting ? 'Submitting Application...' : 'Submit Non-Profit Application'}</span>
               </button>
             </form>
           )}
