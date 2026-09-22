@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createClient, createAdminClient } from '@/lib/supabase/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -22,7 +22,9 @@ export async function GET() {
       return NextResponse.json({ error: 'Forbidden: Admin only' }, { status: 403 });
     }
 
-    // Parallel data fetches for reporting analytics
+    const adminClient = createAdminClient();
+
+    // Parallel data fetches for reporting analytics using service role client
     const [
       profilesRes,
       subsRes,
@@ -32,13 +34,13 @@ export async function GET() {
       charitiesRes,
       contributionsRes,
     ] = await Promise.all([
-      supabase.from('profiles').select('id, role, created_at'),
-      supabase.from('subscriptions').select('id, user_id, plan_type, status, voluntary_charity_percent, created_at'),
-      supabase.from('draws').select('*').order('draw_date', { ascending: false }),
-      supabase.from('draw_entries').select('id, match_count, prize_tier, prize_amount'),
-      supabase.from('winners').select('*'),
-      supabase.from('charities').select('*'),
-      supabase.from('charity_contributions').select('amount, percentage, created_at'),
+      adminClient.from('profiles').select('id, role, created_at'),
+      adminClient.from('subscriptions').select('id, user_id, plan_type, status, voluntary_charity_percent, created_at'),
+      adminClient.from('draws').select('*').order('draw_date', { ascending: false }),
+      adminClient.from('draw_entries').select('id, match_count, prize_tier, prize_amount'),
+      adminClient.from('winners').select('*'),
+      adminClient.from('charities').select('*'),
+      adminClient.from('charity_contributions').select('amount, percentage, created_at'),
     ]);
 
     const profiles = profilesRes.data || [];

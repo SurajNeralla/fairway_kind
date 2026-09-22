@@ -1,15 +1,19 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createClientFromRequest, createAdminClient } from '@/lib/supabase/server';
+
+export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
 
 // GET /api/admin/users — List users with search, filters, pagination, scores, subscription, and wins
 export async function GET(request: Request) {
   try {
-    const supabase = createClient();
+    const supabase = createClientFromRequest(request);
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const { data: profile } = await supabase
+    const adminClient = createAdminClient();
+    const { data: profile } = await adminClient
       .from('profiles')
       .select('role')
       .eq('id', user.id)
@@ -28,8 +32,8 @@ export async function GET(request: Request) {
     const page = parseInt(searchParams.get('page') || '1', 10);
     const limit = parseInt(searchParams.get('limit') || '50', 10);
 
-    // Fetch all profiles
-    let query = supabase
+    // Fetch all profiles using service role client
+    let query = adminClient
       .from('profiles')
       .select('id, email, full_name, role, created_at');
 
@@ -46,25 +50,28 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: profilesErr.message }, { status: 400 });
     }
 
-    // Fetch subscriptions for all users
-    const { data: subscriptions } = await supabase
-      .from('subscriptions')
-      .select('user_id, plan_type, status, charity_id, voluntary_charity_percent, current_period_end, created_at');
+    // Parallel fetch subscriptions, scores, and winners
+    const [
+      { data: subscriptions, error: subsErr },
+      { data: scores, error: scoresErr },
+      { data: winners, error: winnersErr }
+    ] = await Promise.all([
+      adminClient.from('subscriptions').select('*'),
+      adminClient.from('scores').select('id, user_id, score, played_on, is_active').order('played_on', { ascending: false }),
+      adminClient.from('winners').select('id, user_id, prize_amount, prize_tier, payout_status, proof_status, created_at')
+    ]);
 
-    // Fetch scores per user
-    const { data: scores } = await supabase
-      .from('scores')
-      .select('id, user_id, score, played_on, is_active')
-      .order('played_on', { ascending: false });
-
-    // Fetch winners per user
-    const { data: winners } = await supabase
-      .from('winners')
-      .select('id, user_id, prize_amount, prize_tier, payout_status, proof_status, created_at');
+    if (subsErr) console.error('Admin users API subs error:', subsErr);
+    if (scoresErr) console.error('Admin users API scores error:', scoresErr);
+    if (winnersErr) console.error('Admin users API winners error:', winnersErr);
 
     // Map into enriched user records
     const subMap: Record<string, any> = {};
-    (subscriptions || []).forEach((s) => { subMap[s.user_id] = s; });
+    (subscriptions || []).forEach((s) => {
+      if (!subMap[s.user_id] || s.status === 'active') {
+        subMap[s.user_id] = s;
+      }
+    });
 
     const scoreMap: Record<string, any[]> = {};
     (scores || []).forEach((s) => {
@@ -123,12 +130,13 @@ export async function GET(request: Request) {
 // PATCH /api/admin/users — Update user profile (role, full_name) with audit logging
 export async function PATCH(request: Request) {
   try {
-    const supabase = createClient();
+    const supabase = createClientFromRequest(request);
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const { data: profile } = await supabase
+    const adminClient = createAdminClient();
+    const { data: profile } = await adminClient
       .from('profiles')
       .select('role')
       .eq('id', user.id)
@@ -162,7 +170,7 @@ export async function PATCH(request: Request) {
       updatePayload.full_name = fullName.trim();
     }
 
-    const { error: updateErr } = await supabase
+    const { error: updateErr } = await adminClient
       .from('profiles')
       .update(updatePayload)
       .eq('id', userId);
@@ -172,7 +180,7 @@ export async function PATCH(request: Request) {
     }
 
     // Audit log
-    await supabase.from('audit_logs').insert({
+    await adminClient.from('audit_logs').insert({
       actor_id: user.id,
       action: 'admin_update_user_profile',
       entity_type: 'profile',

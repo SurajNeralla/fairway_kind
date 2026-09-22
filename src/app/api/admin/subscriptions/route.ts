@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createClient, createAdminClient } from '@/lib/supabase/server';
+
+export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
 
 export async function GET(request: Request) {
   try {
@@ -18,13 +21,15 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Forbidden: Admin only' }, { status: 403 });
     }
 
+    const adminClient = createAdminClient();
+
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status') || '';
     const plan = searchParams.get('plan') || '';
     const search = searchParams.get('search') || '';
 
-    // Fetch subscriptions with profile and charity joined
-    let query = supabase
+    // Fetch subscriptions with profile and charity joined using service role client
+    let query = adminClient
       .from('subscriptions')
       .select(`
         *,

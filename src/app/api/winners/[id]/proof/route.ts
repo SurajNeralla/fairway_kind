@@ -26,6 +26,12 @@ export async function POST(
       return NextResponse.json({ error: validation.error }, { status: 400 });
     }
 
+    // Read file buffer once
+    const fileBuffer = await file.arrayBuffer();
+    const base64Str = Buffer.from(fileBuffer).toString('base64');
+    const mimeType = file.type || 'image/jpeg';
+    const fallbackDataUrl = `data:${mimeType};base64,${base64Str}`;
+
     // If demo winner w1 or testing without DB winner record, allow graceful demo submission
     if (winnerId === 'w1' || !user) {
       return NextResponse.json({
@@ -36,6 +42,7 @@ export async function POST(
           status: 'submitted',
           file_name: file.name,
           file_size_bytes: file.size,
+          proof_file_url: fallbackDataUrl,
           created_at: new Date().toISOString(),
         },
       });
@@ -59,6 +66,7 @@ export async function POST(
           status: 'submitted',
           file_name: file.name,
           file_size_bytes: file.size,
+          proof_file_url: fallbackDataUrl,
           created_at: new Date().toISOString(),
         },
       });
@@ -82,7 +90,6 @@ export async function POST(
     let signedUrl = '';
 
     try {
-      const fileBuffer = await file.arrayBuffer();
       const { error: uploadErr } = await supabase.storage
         .from('winner-proofs')
         .upload(storagePath, fileBuffer, {
@@ -103,6 +110,8 @@ export async function POST(
       console.warn('Storage operation notice:', e.message);
     }
 
+    const finalProofUrl = signedUrl || fallbackDataUrl;
+
     // Insert winner_proofs record if storage or DB available
     try {
       await supabase
@@ -110,7 +119,7 @@ export async function POST(
         .insert({
           winner_id: winnerId,
           user_id: user.id,
-          proof_file_url: signedUrl || `local://${storagePath}`,
+          proof_file_url: finalProofUrl,
           file_name: file.name,
           file_size_bytes: file.size,
           status: 'submitted',
@@ -140,6 +149,7 @@ export async function POST(
         status: 'submitted',
         file_name: file.name,
         file_size_bytes: file.size,
+        proof_file_url: finalProofUrl,
       },
     });
   } catch (err: any) {

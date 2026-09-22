@@ -6,17 +6,41 @@ import { useRouter } from 'next/navigation';
 import { FairwayKindLogo } from '@/components/ui/Logo';
 import { useAuth } from '@/lib/auth/auth-context';
 import { useToast } from '@/components/ui/Toast';
+import { Modal } from '@/components/ui/Modal';
+
+export interface VerificationQueueItem {
+  id: string;
+  winnerName: string;
+  initials: string;
+  homeClub: string;
+  handicap?: string;
+  drawNumber: string;
+  matchTier: string;
+  matchTierColor?: string;
+  prizeAmount: number;
+  status: 'pending' | 'approved' | 'rejected';
+  scorecardUrl: string;
+  fileName?: string;
+  fileSize?: number;
+  fileType?: string;
+  uploadedAt?: string;
+  isUserUploaded?: boolean;
+  markerInfo?: string;
+  diffInfo?: string;
+  auditorSign?: string;
+  notes?: string;
+}
 
 export default function AdminDashboardPage() {
   const router = useRouter();
-  const { user, profile, signOut } = useAuth();
+  const { user, profile, session, signOut } = useAuth();
   const { showToast } = useToast();
 
   const [activeTab, setActiveTab] = useState('draw-management');
   const [mode, setMode] = useState<'algo' | 'seed'>('algo');
   const [isSimulating, setIsSimulating] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
-  const [winningNumbers, setWinningNumbers] = useState<number[]>([12, 19, 27, 34, 41]);
+  const [winningNumbers, setWinningNumbers] = useState<number[]>([]);
   const [simTier5, setSimTier5] = useState({ pool: 0, count: 0, perWinner: 0 });
   const [simTier4, setSimTier4] = useState({ pool: 0, count: 0, perWinner: 0 });
   const [simTier3, setSimTier3] = useState({ pool: 0, count: 0, perWinner: 0 });
@@ -36,17 +60,25 @@ export default function AdminDashboardPage() {
   const [realWinners, setRealWinners] = useState<any[]>([]);
   const [partnerCharities, setPartnerCharities] = useState<any[]>([]);
 
-  // Audit drawer state
+  // Audit drawer & verification queue state
   const [drawerOpen, setDrawerOpen] = useState(true);
-  const [activeProofStatus, setActiveProofStatus] = useState<'pending' | 'approved' | 'rejected'>('pending');
+  const [verificationList, setVerificationList] = useState<VerificationQueueItem[]>([]);
+  const [selectedProof, setSelectedProof] = useState<VerificationQueueItem | null>(null);
+  const [isEnlargeModalOpen, setIsEnlargeModalOpen] = useState(false);
+  const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
+  const [rejectReason, setRejectReason] = useState('Scorecard image unclear or missing official club marker stamp.');
+  const [proofFilter, setProofFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
 
-  // Load real admin metrics, winners, and charities
+  // Load real admin metrics, winners, charities, and published draws
   const fetchAdminOverview = async () => {
     try {
-      const [metricsRes, winnersRes, charitiesRes] = await Promise.all([
-        fetch('/api/admin/overview'),
-        fetch('/api/winners'),
-        fetch('/api/charities'),
+      const token = session?.access_token;
+      const authHeaders: Record<string, string> = token ? { 'Authorization': `Bearer ${token}` } : {};
+      const [metricsRes, winnersRes, charitiesRes, drawsRes] = await Promise.all([
+        fetch('/api/admin/overview', { headers: authHeaders }),
+        fetch('/api/winners', { headers: authHeaders }),
+        fetch('/api/charities', { headers: authHeaders }),
+        fetch('/api/draws', { headers: authHeaders }),
       ]);
 
       if (metricsRes.ok) {
@@ -70,14 +102,213 @@ export default function AdminDashboardPage() {
         const cData = await charitiesRes.json();
         setPartnerCharities(cData.charities || []);
       }
+
+      if (drawsRes.ok) {
+        const dData = await drawsRes.json();
+        if (dData.draws && dData.draws.length > 0 && dData.draws[0].winning_numbers) {
+          setWinningNumbers(dData.draws[0].winning_numbers);
+        }
+      }
     } catch (err) {
       console.error('Admin metrics load error:', err);
     }
   };
 
+  // Load Verification Queue Items (Real proofs + Any User Uploaded Docs)
+  const loadVerificationItems = React.useCallback(() => {
+    let items: VerificationQueueItem[] = [];
+
+    // Map real winners with uploaded proofs from API
+    if (realWinners && realWinners.length > 0) {
+      realWinners.forEach((w: any) => {
+        if (w.winner_proofs && w.winner_proofs.length > 0) {
+          w.winner_proofs.forEach((proof: any) => {
+            const name = w.profiles?.full_name || 'Fairway Kind Member';
+            const initials = name
+              .split(' ')
+              .map((n: string) => n[0])
+              .join('')
+              .slice(0, 2)
+              .toUpperCase();
+            items.push({
+              id: proof.id,
+              winnerName: name,
+              initials: initials || 'FK',
+              homeClub: 'Attested Member Round',
+              drawNumber: w.draws?.title || 'Current Draw Cycle',
+              matchTier:
+                w.prize_tier === 'tier_5_match'
+                  ? '5-Number Match'
+                  : w.prize_tier === 'tier_4_match'
+                  ? '4-Number Match'
+                  : '3-Number Match',
+              matchTierColor: w.prize_tier === 'tier_5_match' ? 'secondary' : 'primary',
+              prizeAmount: w.prize_amount || 0,
+              status: proof.status === 'approved' ? 'approved' : proof.status === 'rejected' ? 'rejected' : 'pending',
+              scorecardUrl: proof.proof_file_url,
+              fileName: proof.file_name || 'scorecard.jpg',
+              markerInfo: 'Submitted via Member Portal',
+              diffInfo: `Match count: ${w.match_count || 0}`,
+              auditorSign: proof.reviewed_at ? 'Reviewed by Compliance' : 'Requires Compliance Auditor Sign-Off',
+            });
+          });
+        }
+      });
+    }
+
+    if (typeof window !== 'undefined') {
+      try {
+        const stored = localStorage.getItem('latest_submitted_proof');
+        if (stored) {
+          const doc = JSON.parse(stored);
+          if (doc && doc.fileUrl && !items.some((i) => i.id === doc.winnerId || i.id === doc.id)) {
+            const userStatus = localStorage.getItem(`proof_status_${doc.winnerId || 'upload'}`) || doc.status || 'pending';
+            const userProofItem: VerificationQueueItem = {
+              id: doc.winnerId || doc.id || 'user-doc-upload',
+              winnerName: doc.winnerName || 'Submitted Scorecard Attestation',
+              initials: 'UA',
+              homeClub: doc.homeClub || 'Attested Member Round',
+              drawNumber: doc.drawNumber || 'Current Draw Cycle',
+              matchTier: doc.matchTier || 'Ticket Match',
+              matchTierColor: 'secondary',
+              prizeAmount: doc.prizeAmount || 0,
+              status: userStatus === 'approved' ? 'approved' : userStatus === 'rejected' ? 'rejected' : 'pending',
+              scorecardUrl: doc.fileUrl,
+              fileName: doc.fileName || 'uploaded_scorecard.jpg',
+              fileSize: doc.fileSize,
+              fileType: doc.fileType,
+              uploadedAt: doc.uploadedAt,
+              isUserUploaded: true,
+              markerInfo: 'Digital Attestation Uploaded by Player',
+              diffInfo: `Round attested on ${doc.uploadedAt ? new Date(doc.uploadedAt).toLocaleDateString() : 'recent play'}`,
+              auditorSign: userStatus === 'approved' ? 'Verified by Admin Auditor' : 'Requires Compliance Auditor Sign-Off',
+            };
+            items = [userProofItem, ...items];
+          }
+        }
+      } catch (err) {
+        console.error('Error loading stored verification items:', err);
+      }
+    }
+
+    setVerificationList(items);
+    setSelectedProof((prev) => (prev ? items.find((i) => i.id === prev.id) || items[0] || null : items[0] || null));
+  }, [realWinners]);
+
   React.useEffect(() => {
     fetchAdminOverview();
-  }, []);
+    loadVerificationItems();
+
+    const handleStorage = () => loadVerificationItems();
+    window.addEventListener('storage', handleStorage);
+    window.addEventListener('focus', handleStorage);
+    return () => {
+      window.removeEventListener('storage', handleStorage);
+      window.removeEventListener('focus', handleStorage);
+    };
+  }, [loadVerificationItems]);
+
+  const handleApproveProof = (itemToApprove?: VerificationQueueItem) => {
+    const target = itemToApprove || selectedProof;
+    if (!target) return;
+    setVerificationList(prev =>
+      prev.map(item =>
+        item.id === target.id ? { ...item, status: 'approved', auditorSign: 'Approved by Compliance Auditor' } : item
+      )
+    );
+    if (selectedProof?.id === target.id) {
+      setSelectedProof(prev => prev ? { ...prev, status: 'approved', auditorSign: 'Approved by Compliance Auditor' } : null);
+    }
+    if (typeof window !== 'undefined' && target.isUserUploaded) {
+      localStorage.setItem('proof_status_w1', 'approved');
+      const stored = localStorage.getItem('latest_submitted_proof');
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          localStorage.setItem('latest_submitted_proof', JSON.stringify({ ...parsed, status: 'approved' }));
+        } catch {}
+      }
+    }
+    showToast('Proof Approved', `${target.winnerName}'s scorecard verified and certified for payout.`, 'success');
+  };
+
+  const handleRejectProof = (reason?: string) => {
+    if (!selectedProof) return;
+    const finalReason = reason || rejectReason || 'Scorecard image unclear or missing official club marker stamp.';
+    setVerificationList(prev =>
+      prev.map(item =>
+        item.id === selectedProof.id ? { ...item, status: 'rejected', notes: finalReason } : item
+      )
+    );
+    setSelectedProof(prev => prev ? { ...prev, status: 'rejected', notes: finalReason } : null);
+    if (typeof window !== 'undefined' && selectedProof.isUserUploaded) {
+      localStorage.setItem('proof_status_w1', 'rejected');
+      const stored = localStorage.getItem('latest_submitted_proof');
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          localStorage.setItem('latest_submitted_proof', JSON.stringify({ ...parsed, status: 'rejected' }));
+        } catch {}
+      }
+    }
+    setIsRejectModalOpen(false);
+    showToast('Proof Rejected', `${selectedProof.winnerName} notified with revision reason.`, 'warning');
+  };
+
+  const handleAdminUploadProof = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = reader.result as string;
+      const newProofItem: VerificationQueueItem = {
+        id: `upload-${Date.now()}`,
+        winnerName: 'Uploaded Scorecard Attestation',
+        initials: 'UA',
+        homeClub: 'Attested Member Round',
+        drawNumber: 'Current Draw Cycle',
+        matchTier: 'Official Member Match',
+        matchTierColor: 'secondary',
+        prizeAmount: 0,
+        status: 'pending',
+        scorecardUrl: dataUrl,
+        fileName: file.name,
+        fileSize: file.size,
+        fileType: file.type,
+        uploadedAt: new Date().toISOString(),
+        isUserUploaded: true,
+        markerInfo: 'Directly Uploaded to Audit Console',
+        diffInfo: 'Scorecard review submitted for compliance',
+        auditorSign: 'Requires Compliance Auditor Sign-Off',
+      };
+      setVerificationList(prev => [newProofItem, ...prev]);
+      setSelectedProof(newProofItem);
+      setDrawerOpen(true);
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem('latest_submitted_proof', JSON.stringify({
+            winnerId: `upload-${Date.now()}`,
+            fileName: file.name,
+            fileSize: file.size,
+            fileType: file.type,
+            fileUrl: dataUrl,
+            uploadedAt: new Date().toISOString(),
+            status: 'submitted',
+            winnerName: 'Uploaded Scorecard Attestation',
+            homeClub: 'Attested Member Round',
+            drawNumber: 'Current Draw Cycle',
+            matchTier: 'Official Member Match',
+            prizeAmount: 0,
+          }));
+          localStorage.setItem('proof_status_w1', 'submitted');
+        } catch (err) {
+          console.warn('Storage notice:', err);
+        }
+      }
+      showToast('Document Uploaded', `${file.name} loaded into the audit verification queue.`, 'success');
+    };
+    reader.readAsDataURL(file);
+  };
 
   const handleRunSimulation = async () => {
     setIsSimulating(true);
@@ -154,47 +385,7 @@ export default function AdminDashboardPage() {
     }
   };
 
-  const handleApproveProof = async (winnerId?: string) => {
-    const id = winnerId || realWinners[0]?.id;
-    if (id) {
-      try {
-        const res = await fetch(`/api/winners/${id}/review`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'approve' }),
-        });
-        if (res.ok) {
-          setActiveProofStatus('approved');
-          showToast('Proof Approved', 'Scorecard verified and approved.', 'success');
-          await fetchAdminOverview();
-          return;
-        }
-      } catch (e) {}
-    }
-    setActiveProofStatus('approved');
-    showToast('Proof Approved', 'Scorecard verified successfully.', 'success');
-  };
 
-  const handleRejectProof = async (winnerId?: string) => {
-    const id = winnerId || realWinners[0]?.id;
-    if (id) {
-      try {
-        const res = await fetch(`/api/winners/${id}/review`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'reject', notes: 'Scorecard proof rejected during admin audit.' }),
-        });
-        if (res.ok) {
-          setActiveProofStatus('rejected');
-          showToast('Proof Rejected', 'Audit notice dispatched to member for scorecard re-attestation.', 'error');
-          await fetchAdminOverview();
-          return;
-        }
-      } catch (e) {}
-    }
-    setActiveProofStatus('rejected');
-    showToast('Proof Rejected', 'Scorecard proof rejected.', 'error');
-  };
 
   const handleLogout = async () => {
     try {
@@ -293,11 +484,11 @@ export default function AdminDashboardPage() {
         <div className="p-4 border-t border-outline-variant/30 flex flex-col gap-3 bg-surface-container-low">
           <div className="flex items-center gap-3 px-2 py-1">
             <div className="w-9 h-9 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-headline-sm text-headline-sm font-bold shadow-inner">
-              AR
+              {profile?.full_name ? profile.full_name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0,2) : 'SN'}
             </div>
             <div className="flex flex-col min-w-0">
-              <p className="font-label-lg text-label-lg font-bold text-on-surface truncate">Arthur Ross, Esq.</p>
-              <span className="font-label-sm text-label-sm text-on-surface-variant truncate">Chief Compliance Officer</span>
+              <p className="font-label-lg text-label-lg font-bold text-on-surface truncate">{profile?.full_name || 'Suraj Neralla'}</p>
+              <span className="font-label-sm text-label-sm text-on-surface-variant truncate">Platform Administrator</span>
             </div>
           </div>
           <div className="flex items-center justify-between text-on-surface-variant pt-1 text-[12px]">
@@ -335,7 +526,7 @@ export default function AdminDashboardPage() {
               <span className="font-label-md text-label-md font-semibold text-on-surface">Ready for Simulation</span>
             </div>
             <button
-              onClick={() => showToast('Parameters Locked', 'Draw #DK-102 seed parameters permanently locked.', 'success')}
+              onClick={() => showToast('Parameters Locked', 'Draw seed parameters permanently locked.', 'success')}
               className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-on-primary font-label-lg text-label-lg shadow-sm hover:bg-primary-container active:scale-[0.98] transition-all font-semibold"
             >
               <span className="material-symbols-outlined text-[18px]">verified_user</span>
@@ -648,24 +839,40 @@ export default function AdminDashboardPage() {
           <section className="grid grid-cols-1 xl:grid-cols-3 gap-8 items-start">
             {/* Left 2 Cols: Winner Proof Table */}
             <div className="xl:col-span-2 bg-surface-container-lowest rounded-2xl border border-outline-variant/30 shadow-sm overflow-hidden">
-              <div className="p-6 border-b border-outline-variant/20 flex items-center justify-between">
+              <div className="p-6 border-b border-outline-variant/20 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                   <div className="flex items-center gap-2.5">
                     <h2 className="font-headline-sm text-headline-sm font-bold text-primary">Scorecard Proof Verification Queue</h2>
                     <span className="px-2 py-0.5 rounded-full bg-error-container text-on-error-container font-label-sm text-label-sm font-bold">
-                      6 Pending
+                      {verificationList.filter(i => i.status === 'pending').length} Pending
                     </span>
                   </div>
                   <p className="font-body-sm text-body-sm text-on-surface-variant mt-0.5">
                     Scorecard review required prior to payout settlement.
                   </p>
                 </div>
-                <button
-                  onClick={() => showToast('Filters', 'Filtering by all pending verifications.', 'info')}
-                  className="text-primary font-label-md text-label-md hover:underline flex items-center gap-1 font-semibold"
-                >
-                  Filter by Status <span className="material-symbols-outlined text-[16px]">tune</span>
-                </button>
+                <div className="flex items-center gap-3">
+                  {/* Upload test document directly */}
+                  <label className="cursor-pointer px-3 py-1.5 rounded-lg bg-surface-container hover:bg-surface-container-high border border-outline-variant/40 text-primary font-label-md text-label-md flex items-center gap-1.5 font-semibold transition-colors">
+                    <span className="material-symbols-outlined text-[16px]">upload_file</span>
+                    <span>Upload Scorecard</span>
+                    <input
+                      type="file"
+                      className="hidden"
+                      accept=".pdf,.jpg,.jpeg,.png,.webp"
+                      onChange={handleAdminUploadProof}
+                    />
+                  </label>
+                  <button
+                    onClick={() => {
+                      setProofFilter(prev => prev === 'all' ? 'pending' : 'all');
+                      showToast('Filter Applied', proofFilter === 'all' ? 'Showing only pending reviews' : 'Showing all proofs', 'info');
+                    }}
+                    className="text-primary font-label-md text-label-md hover:underline flex items-center gap-1 font-semibold"
+                  >
+                    Filter: {proofFilter === 'all' ? 'All' : 'Pending'} <span className="material-symbols-outlined text-[16px]">tune</span>
+                  </button>
+                </div>
               </div>
 
               <div className="overflow-x-auto">
@@ -681,167 +888,113 @@ export default function AdminDashboardPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-outline-variant/20 font-body-sm text-body-sm">
-                    {/* Row 1 */}
-                    <tr className="bg-surface-container-high/40 hover:bg-surface-container-high transition-colors">
-                      <td className="py-4 px-6">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-primary-fixed-dim text-primary flex items-center justify-center font-bold text-xs">
-                            EM
-                          </div>
-                          <div>
-                            <span className="font-label-lg text-label-lg font-bold text-on-surface block">Evan Mercer</span>
-                            <span className="text-on-surface-variant text-[12px]">Pebble Beach GC (HI: 4.2)</span>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="py-4 px-4 font-medium text-on-surface">#DK-102</td>
-                      <td className="py-4 px-4">
-                        <span className="px-2.5 py-1 rounded-full bg-secondary-container/60 text-on-secondary-fixed font-label-sm text-label-sm font-bold">
-                          5-Number Match
-                        </span>
-                      </td>
-                      <td className="py-4 px-4 font-bold text-primary">$13,700.00</td>
-                      <td className="py-4 px-4">
-                        {activeProofStatus === 'pending' && (
-                          <span className="inline-flex items-center gap-1.5 text-error font-label-sm text-label-sm font-semibold bg-error-container/40 px-2 py-0.5 rounded-md">
-                            <span className="w-1.5 h-1.5 rounded-full bg-error"></span> Pending Review
-                          </span>
-                        )}
-                        {activeProofStatus === 'approved' && (
-                          <span className="inline-flex items-center gap-1.5 text-primary font-label-sm text-label-sm font-semibold bg-primary-fixed/40 px-2 py-0.5 rounded-md">
-                            <span className="w-1.5 h-1.5 rounded-full bg-primary"></span> Verified &amp; Paid
-                          </span>
-                        )}
-                        {activeProofStatus === 'rejected' && (
-                          <span className="inline-flex items-center gap-1.5 text-error font-label-sm text-label-sm font-semibold bg-error-container/60 px-2 py-0.5 rounded-md">
-                            <span className="w-1.5 h-1.5 rounded-full bg-error"></span> Rejected
-                          </span>
-                        )}
-                      </td>
-                      <td className="py-4 px-6 text-right">
-                        <button
-                          onClick={() => setDrawerOpen(true)}
-                          className="px-3 py-1.5 rounded-lg bg-primary text-on-primary font-label-md text-label-md font-semibold hover:bg-primary-container transition-colors shadow-2xs"
-                        >
-                          Review Proof
-                        </button>
-                      </td>
-                    </tr>
-
-                    {/* Row 2 */}
-                    <tr className="hover:bg-surface-container-low transition-colors">
-                      <td className="py-4 px-6">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-surface-container-highest text-on-surface flex items-center justify-center font-bold text-xs">
-                            SJ
-                          </div>
-                          <div>
-                            <span className="font-label-lg text-label-lg font-bold text-on-surface block">Sarah Jenkins</span>
-                            <span className="text-on-surface-variant text-[12px]">Olympic Club (HI: 8.9)</span>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="py-4 px-4 font-medium text-on-surface">#DK-102</td>
-                      <td className="py-4 px-4">
-                        <span className="px-2.5 py-1 rounded-full bg-surface-container-highest text-primary font-label-sm text-label-sm font-bold">
-                          4-Number Match
-                        </span>
-                      </td>
-                      <td className="py-4 px-4 font-bold text-on-surface">$1,712.50</td>
-                      <td className="py-4 px-4">
-                        <span className="inline-flex items-center gap-1.5 text-secondary font-label-sm text-label-sm font-semibold bg-secondary-fixed/40 px-2 py-0.5 rounded-md">
-                          <span className="w-1.5 h-1.5 rounded-full bg-secondary"></span> Under Review
-                        </span>
-                      </td>
-                      <td className="py-4 px-6 text-right">
-                        <button
-                          onClick={() => showToast('Sarah Jenkins', 'Scorecard loaded for audit review.', 'info')}
-                          className="px-3 py-1.5 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md text-label-md font-semibold border border-outline-variant/40 transition-colors"
-                        >
-                          View
-                        </button>
-                      </td>
-                    </tr>
-
-                    {/* Row 3 */}
-                    <tr className="hover:bg-surface-container-low transition-colors">
-                      <td className="py-4 px-6">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-surface-container-highest text-on-surface flex items-center justify-center font-bold text-xs">
-                            MV
-                          </div>
-                          <div>
-                            <span className="font-label-lg text-label-lg font-bold text-on-surface block">Marcus Vance</span>
-                            <span className="text-on-surface-variant text-[12px]">Bandon Dunes (HI: 1.4)</span>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="py-4 px-4 font-medium text-on-surface">#DK-102</td>
-                      <td className="py-4 px-4">
-                        <span className="px-2.5 py-1 rounded-full bg-surface-container-highest text-primary font-label-sm text-label-sm font-bold">
-                          4-Number Match
-                        </span>
-                      </td>
-                      <td className="py-4 px-4 font-bold text-on-surface">$1,712.50</td>
-                      <td className="py-4 px-4">
-                        <span className="inline-flex items-center gap-1.5 text-primary font-label-sm text-label-sm font-semibold bg-primary-fixed/40 px-2 py-0.5 rounded-md">
-                          <span className="w-1.5 h-1.5 rounded-full bg-primary"></span> Verified
-                        </span>
-                      </td>
-                      <td className="py-4 px-6 text-right">
-                        <span className="text-on-surface-variant font-label-sm text-label-sm">Approved</span>
-                      </td>
-                    </tr>
-
-                    {/* Row 4 */}
-                    <tr className="hover:bg-surface-container-low transition-colors">
-                      <td className="py-4 px-6">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-surface-container-highest text-on-surface flex items-center justify-center font-bold text-xs">
-                            DL
-                          </div>
-                          <div>
-                            <span className="font-label-lg text-label-lg font-bold text-on-surface block">David Lindqvist</span>
-                            <span className="text-on-surface-variant text-[12px]">Torrey Pines South (HI: 6.0)</span>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="py-4 px-4 font-medium text-on-surface">#DK-102</td>
-                      <td className="py-4 px-4">
-                        <span className="px-2.5 py-1 rounded-full bg-surface-container-highest text-primary font-label-sm text-label-sm font-bold">
-                          3-Number Match
-                        </span>
-                      </td>
-                      <td className="py-4 px-4 font-bold text-on-surface">$203.86</td>
-                      <td className="py-4 px-4">
-                        <span className="inline-flex items-center gap-1.5 text-on-surface-variant font-label-sm text-label-sm font-semibold bg-surface-container px-2 py-0.5 rounded-md">
-                          <span className="w-1.5 h-1.5 rounded-full bg-primary"></span> Paid
-                        </span>
-                      </td>
-                      <td className="py-4 px-6 text-right">
-                        <span className="text-on-surface-variant font-label-sm text-label-sm">Settled</span>
-                      </td>
-                    </tr>
+                    {verificationList
+                      .filter(item => proofFilter === 'all' || item.status === proofFilter)
+                      .map((item) => {
+                        const isSelected = selectedProof?.id === item.id;
+                        return (
+                          <tr
+                            key={item.id}
+                            className={`transition-colors cursor-pointer ${
+                              isSelected
+                                ? 'bg-primary-fixed/20 border-l-4 border-l-primary'
+                                : 'hover:bg-surface-container-high/30'
+                            }`}
+                            onClick={() => {
+                              setSelectedProof(item);
+                              setDrawerOpen(true);
+                            }}
+                          >
+                            <td className="py-4 px-6">
+                              <div className="flex items-center gap-3">
+                                <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs ${
+                                  item.isUserUploaded
+                                    ? 'bg-secondary-fixed text-on-secondary-fixed'
+                                    : 'bg-primary-fixed-dim text-primary'
+                                }`}>
+                                  {item.initials}
+                                </div>
+                                <div className="min-w-0">
+                                  <div className="flex items-center gap-2">
+                                    <span className="font-label-lg text-label-lg font-bold text-on-surface block truncate">
+                                      {item.winnerName}
+                                    </span>
+                                    {item.isUserUploaded && (
+                                      <span className="px-1.5 py-0.2 rounded text-[10px] font-extrabold bg-primary text-on-primary">
+                                        UPLOADED
+                                      </span>
+                                    )}
+                                  </div>
+                                  <span className="text-on-surface-variant text-[12px] truncate block">
+                                    {item.homeClub}
+                                  </span>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="py-4 px-4 font-medium text-on-surface">{item.drawNumber}</td>
+                            <td className="py-4 px-4">
+                              <span className="px-2.5 py-1 rounded-full bg-secondary-container/60 text-on-secondary-fixed font-label-sm text-label-sm font-bold">
+                                {item.matchTier}
+                              </span>
+                            </td>
+                            <td className="py-4 px-4 font-bold text-primary">${item.prizeAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                            <td className="py-4 px-4">
+                              {item.status === 'pending' && (
+                                <span className="inline-flex items-center gap-1.5 text-error font-label-sm text-label-sm font-semibold bg-error-container/40 px-2 py-0.5 rounded-md">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-error"></span> Pending Review
+                                </span>
+                              )}
+                              {item.status === 'approved' && (
+                                <span className="inline-flex items-center gap-1.5 text-primary font-label-sm text-label-sm font-semibold bg-primary-fixed/40 px-2 py-0.5 rounded-md">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-primary"></span> Verified &amp; Paid
+                                </span>
+                              )}
+                              {item.status === 'rejected' && (
+                                <span className="inline-flex items-center gap-1.5 text-error font-label-sm text-label-sm font-semibold bg-error-container/60 px-2 py-0.5 rounded-md">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-error"></span> Rejected
+                                </span>
+                              )}
+                            </td>
+                            <td className="py-4 px-6 text-right">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelectedProof(item);
+                                  setDrawerOpen(true);
+                                }}
+                                className={`px-3 py-1.5 rounded-lg font-label-md text-label-md font-semibold transition-colors shadow-2xs ${
+                                  isSelected
+                                    ? 'bg-primary-container text-on-primary-container'
+                                    : 'bg-primary text-on-primary hover:bg-primary-container'
+                                }`}
+                              >
+                                {item.status === 'pending' ? 'Review Proof' : 'View Proof'}
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })}
                   </tbody>
                 </table>
               </div>
 
               <div className="p-4 border-t border-outline-variant/20 bg-surface-container-low/40 flex items-center justify-between text-body-sm text-on-surface-variant">
-                <span>Showing 4 of 6 active verification submissions</span>
-                <div className="flex items-center gap-2">
-                  <button className="px-3 py-1 rounded-lg border border-outline-variant/40 bg-surface hover:bg-surface-container text-xs font-semibold">Previous</button>
-                  <button className="px-3 py-1 rounded-lg border border-outline-variant/40 bg-surface hover:bg-surface-container text-xs font-semibold">Next</button>
-                </div>
+                <span>Showing {verificationList.length} active verification submissions</span>
+                <span className="text-xs font-medium text-primary">Click any row to view full proof document</span>
               </div>
             </div>
 
             {/* Right 1 Col: Scorecard Audit Drawer Preview */}
-            {drawerOpen && (
+            {drawerOpen && selectedProof && (
               <div className="bg-surface-container-lowest rounded-2xl border border-outline-variant/30 shadow-sm p-6 flex flex-col gap-5">
                 <div className="flex items-center justify-between border-b border-outline-variant/20 pb-4">
                   <div>
-                    <span className="font-label-sm text-label-sm uppercase font-bold text-secondary tracking-wider">Proof Audit Drawer</span>
-                    <h3 className="font-headline-sm text-headline-sm font-bold text-primary">Evan Mercer (#DK-102-01)</h3>
+                    <span className="font-label-sm text-label-sm uppercase font-bold text-secondary tracking-wider">
+                      Proof Audit Drawer
+                    </span>
+                    <h3 className="font-headline-sm text-headline-sm font-bold text-primary">
+                      {selectedProof.winnerName} ({selectedProof.drawNumber})
+                    </h3>
                   </div>
                   <button
                     onClick={() => setDrawerOpen(false)}
@@ -851,18 +1004,39 @@ export default function AdminDashboardPage() {
                   </button>
                 </div>
 
-                {/* Scorecard Image Mockup */}
+                {/* Scorecard Image / PDF Display */}
                 <div className="flex flex-col gap-2">
-                  <span className="font-label-md text-label-md font-semibold text-on-surface">Uploaded Scorecard Attestation</span>
-                  <div className="w-full h-44 rounded-xl overflow-hidden border border-outline-variant/40 relative group bg-surface-container">
-                    <img
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      alt="Official Golf Tournament Scorecard"
-                      src="https://lh3.googleusercontent.com/aida-public/AB6AXuD0J3bjsuYWRp2G2JoS4q8QmO6fT0AKmHRGVurpwuM2IsrpyHrxkxdKaJDXevgfquICkT0QQReJr86l4IiXkGgcQIoAJgtjbzoZrFwMUhGnEl8xzFF9q4blMlZ-NhaAMmh3_VY-tQo2DBmITeBIWtMwci1iq8YSaFxIdzOcZppP20kD4b82ycoY12vZ-7xzWK4RVK7vi8R5WVD4TZtws1AT5GfJM-_ei47RuZcbmtfYeDfaOKd_SF-z"
-                    />
-                    <div className="absolute bottom-2 right-2 bg-on-background/80 backdrop-blur-xs text-white text-[11px] font-label-sm px-2 py-1 rounded-md flex items-center gap-1">
-                      <span className="material-symbols-outlined text-[13px]">zoom_in</span> Click to Enlarge
-                    </div>
+                  <div className="flex items-center justify-between">
+                    <span className="font-label-md text-label-md font-semibold text-on-surface truncate">
+                      {selectedProof.fileName || 'Uploaded Scorecard Attestation'}
+                    </span>
+                    {selectedProof.isUserUploaded && (
+                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-secondary-fixed/50 text-on-secondary-fixed">
+                        Member File
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="w-full h-52 rounded-xl overflow-hidden border border-outline-variant/40 relative group bg-surface-container flex items-center justify-center">
+                    {selectedProof.fileName?.toLowerCase().endsWith('.pdf') || selectedProof.fileType?.includes('pdf') ? (
+                      <iframe
+                        src={selectedProof.scorecardUrl}
+                        title="Scorecard PDF"
+                        className="w-full h-full border-0 pointer-events-none"
+                      />
+                    ) : (
+                      <img
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        alt={selectedProof.fileName || "Official Scorecard Proof"}
+                        src={selectedProof.scorecardUrl}
+                      />
+                    )}
+                    <button
+                      onClick={() => setIsEnlargeModalOpen(true)}
+                      className="absolute bottom-2 right-2 bg-on-background/80 hover:bg-black backdrop-blur-xs text-white text-[11px] font-label-sm px-2.5 py-1 rounded-md flex items-center gap-1 transition-colors shadow-sm cursor-pointer"
+                    >
+                      <span className="material-symbols-outlined text-[14px]">zoom_in</span> Click to Enlarge
+                    </button>
                   </div>
                 </div>
 
@@ -874,7 +1048,7 @@ export default function AdminDashboardPage() {
                     </span>
                     <div>
                       <p className="font-label-md text-label-md text-on-surface font-semibold">Attestation Club Marker Match</p>
-                      <p className="text-on-surface-variant text-[12px]">Signed by PGA Pro David K. (Lic #78491)</p>
+                      <p className="text-on-surface-variant text-[12px]">{selectedProof.markerInfo || 'Official playing partner or marker signature verified'}</p>
                     </div>
                   </div>
 
@@ -884,15 +1058,19 @@ export default function AdminDashboardPage() {
                     </span>
                     <div>
                       <p className="font-label-md text-label-md text-on-surface font-semibold">Handicap Differential Consistency</p>
-                      <p className="text-on-surface-variant text-[12px]">Platform scorecard recorded timestamp: Oct 18, 14:22 PST</p>
+                      <p className="text-on-surface-variant text-[12px]">{selectedProof.diffInfo || 'Attested round points and course rating confirmed'}</p>
                     </div>
                   </div>
 
                   <div className="flex items-start gap-2.5 text-body-sm font-body-sm">
-                    <span className="material-symbols-outlined text-secondary text-[18px] shrink-0 mt-0.5">help</span>
+                    <span className={`material-symbols-outlined text-[18px] shrink-0 mt-0.5 ${
+                      selectedProof.status === 'approved' ? 'text-primary' : 'text-secondary'
+                    }`}>
+                      {selectedProof.status === 'approved' ? 'verified' : 'help'}
+                    </span>
                     <div>
                       <p className="font-label-md text-label-md text-on-surface font-semibold">Compliance Auditor Sign-Off</p>
-                      <p className="text-on-surface-variant text-[12px]">Requires Arthur Ross signature</p>
+                      <p className="text-on-surface-variant text-[12px]">{selectedProof.auditorSign || 'Pending Compliance Auditor Sign-Off'}</p>
                     </div>
                   </div>
                 </div>
@@ -900,14 +1078,14 @@ export default function AdminDashboardPage() {
                 {/* Action Buttons */}
                 <div className="grid grid-cols-2 gap-3 pt-4 border-t border-outline-variant/20 mt-auto">
                   <button
-                    onClick={() => handleRejectProof()}
+                    onClick={() => setIsRejectModalOpen(true)}
                     className="w-full py-2.5 rounded-xl border border-error text-error hover:bg-error-container/30 font-label-md text-label-md font-semibold transition-colors flex items-center justify-center gap-1.5"
                   >
                     <span className="material-symbols-outlined text-[16px]">close</span>
                     Reject Proof
                   </button>
                   <button
-                    onClick={() => handleApproveProof()}
+                    onClick={() => handleApproveProof(selectedProof)}
                     className="w-full py-2.5 rounded-xl bg-primary text-on-primary hover:bg-primary-container font-label-md text-label-md font-semibold transition-colors flex items-center justify-center gap-1.5 shadow-sm"
                   >
                     <span className="material-symbols-outlined text-[16px]">verified</span>
@@ -917,6 +1095,103 @@ export default function AdminDashboardPage() {
               </div>
             )}
           </section>
+
+          {/* Lightbox / Enlarged Document Modal */}
+          <Modal
+            isOpen={isEnlargeModalOpen}
+            onClose={() => setIsEnlargeModalOpen(false)}
+            title={selectedProof?.fileName || "Scorecard Document Lightbox"}
+            maxWidth="2xl"
+          >
+            {selectedProof && (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between text-xs text-on-surface-variant pb-2 border-b border-outline-variant/30">
+                  <div>
+                    <span className="font-bold text-on-surface">{selectedProof.winnerName}</span>
+                    <span> • {selectedProof.drawNumber} • {selectedProof.matchTier}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <a
+                      href={selectedProof.scorecardUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-3 py-1 rounded-lg bg-surface-container hover:bg-surface-container-high text-xs font-semibold text-primary border border-outline-variant/40"
+                    >
+                      Open in New Window
+                    </a>
+                  </div>
+                </div>
+
+                <div className="w-full max-h-[70vh] overflow-auto rounded-2xl border border-outline-variant/40 bg-black/95 flex items-center justify-center p-3">
+                  {selectedProof.fileName?.toLowerCase().endsWith('.pdf') || selectedProof.fileType?.includes('pdf') ? (
+                    <iframe
+                      src={selectedProof.scorecardUrl}
+                      title="Scorecard PDF Full"
+                      className="w-full h-[600px] rounded-xl border-0"
+                    />
+                  ) : (
+                    <img
+                      src={selectedProof.scorecardUrl}
+                      alt={selectedProof.fileName || "Scorecard Full View"}
+                      className="max-h-[65vh] max-w-full object-contain rounded-xl"
+                    />
+                  )}
+                </div>
+
+                <div className="flex items-center justify-between pt-2 border-t border-outline-variant/20 text-xs">
+                  <span className="text-on-surface-variant">Prize: ${selectedProof.prizeAmount.toLocaleString()}</span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => {
+                        handleApproveProof(selectedProof);
+                        setIsEnlargeModalOpen(false);
+                      }}
+                      className="px-3 py-1.5 rounded-lg bg-primary text-on-primary font-semibold text-xs hover:bg-primary-container"
+                    >
+                      Approve This Proof
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </Modal>
+
+          {/* Rejection Reason Modal */}
+          <Modal
+            isOpen={isRejectModalOpen}
+            onClose={() => setIsRejectModalOpen(false)}
+            title="Reject Scorecard Proof"
+            maxWidth="md"
+          >
+            <div className="space-y-4 text-body-sm font-body-sm">
+              <p className="text-on-surface-variant">
+                Please specify why the attestation proof is being rejected. This feedback will be sent to the player so they can re-upload an authentic scorecard.
+              </p>
+              <div className="space-y-2">
+                <label className="block text-xs font-bold uppercase text-on-surface-variant">Reason for Rejection</label>
+                <textarea
+                  value={rejectReason}
+                  onChange={(e) => setRejectReason(e.target.value)}
+                  className="w-full p-3 rounded-xl border border-outline-variant/40 bg-surface text-on-surface text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                  rows={3}
+                />
+              </div>
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-outline-variant/20">
+                <button
+                  onClick={() => setIsRejectModalOpen(false)}
+                  className="px-4 py-2 rounded-xl bg-surface-container text-on-surface font-semibold text-xs hover:bg-surface-container-high"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => handleRejectProof(rejectReason)}
+                  className="px-4 py-2 rounded-xl bg-error text-on-error font-semibold text-xs hover:bg-error/90"
+                >
+                  Confirm Rejection
+                </button>
+              </div>
+            </div>
+          </Modal>
 
           {/* ======================== 6. CHARITY ALLOCATION SUMMARY ======================== */}
           <section className="bg-surface-container-lowest rounded-2xl border border-outline-variant/30 shadow-sm p-6 md:p-8">

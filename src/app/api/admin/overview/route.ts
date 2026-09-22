@@ -1,18 +1,19 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createClientFromRequest, createAdminClient } from '@/lib/supabase/server';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const supabase = createClient();
+    const supabase = createClientFromRequest(request);
     const { data: { user }, error: authErr } = await supabase.auth.getUser();
 
     if (authErr || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { data: profile } = await supabase
+    const adminClient = createAdminClient();
+    const { data: profile } = await adminClient
       .from('profiles')
       .select('role')
       .eq('id', user.id)
@@ -22,7 +23,7 @@ export async function GET() {
       return NextResponse.json({ error: 'Forbidden: Admin role required' }, { status: 403 });
     }
 
-    // Run parallel queries for aggregate stats
+    // Run parallel queries for aggregate stats using service role client to bypass user-only RLS
     const [
       profilesResult,
       subscriptionsResult,
@@ -32,22 +33,22 @@ export async function GET() {
       auditLogsResult,
     ] = await Promise.all([
       // Total registered users
-      supabase.from('profiles').select('id, role', { count: 'exact' }),
+      adminClient.from('profiles').select('id, role', { count: 'exact' }),
 
       // Subscriptions by status
-      supabase.from('subscriptions').select('id, status, plan_type, voluntary_charity_percent'),
+      adminClient.from('subscriptions').select('id, status, plan_type, voluntary_charity_percent'),
 
       // Draws
-      supabase.from('draws').select('id, total_prize_pool, rollover_amount, status, created_at'),
+      adminClient.from('draws').select('id, total_prize_pool, rollover_amount, status, created_at'),
 
       // Winners & payouts
-      supabase.from('winners').select('id, prize_amount, payout_status, proof_status'),
+      adminClient.from('winners').select('id, prize_amount, payout_status, proof_status'),
 
       // Charities total raised
-      supabase.from('charities').select('id, name, total_raised, is_active'),
+      adminClient.from('charities').select('id, name, total_raised, is_active'),
 
       // Recent audit logs
-      supabase.from('audit_logs').select('*').order('created_at', { ascending: false }).limit(10),
+      adminClient.from('audit_logs').select('*').order('created_at', { ascending: false }).limit(10),
     ]);
 
     const totalUsers = profilesResult.count || 0;

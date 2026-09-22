@@ -24,6 +24,7 @@ export default function SubscriberDashboard() {
   const [charityPercent, setCharityPercent] = useState(10);
   const [charityName, setCharityName] = useState('');
   const [subStatus, setSubStatus] = useState('');
+  const [subscriptionRawStatus, setSubscriptionRawStatus] = useState<string>('inactive');
   const [renewalDate, setRenewalDate] = useState<string | null>(null);
   const [cancelAtPeriodEnd, setCancelAtPeriodEnd] = useState(false);
   const [totalWonAmount, setTotalWonAmount] = useState(0);
@@ -75,6 +76,7 @@ export default function SubscriberDashboard() {
           setCharityName(charityDisplayName);
         }
         if (data.subscription?.status) {
+          setSubscriptionRawStatus(data.subscription.status);
           const planLabel = data.subscription.plan_type === 'yearly' ? 'Yearly' : 'Monthly';
           const statusLabel = data.subscription.status === 'active' ? 'Active'
             : data.subscription.status === 'past_due' ? 'Past Due'
@@ -84,6 +86,10 @@ export default function SubscriberDashboard() {
           setSubStatus(`${planLabel} Plan — ${statusLabel}`);
           setCancelAtPeriodEnd(data.subscription.cancel_at_period_end || false);
           setRenewalDate(data.subscription.current_period_end || null);
+        } else {
+          setSubscriptionRawStatus('inactive');
+          setSubStatus('No Active Plan');
+          setRenewalDate(null);
         }
         if (data.stats?.totalWon !== undefined) {
           setTotalWonAmount(data.stats.totalWon);
@@ -455,11 +461,29 @@ export default function SubscriberDashboard() {
               </div>
               <div className="mt-4">
                 <div className="flex items-center gap-2">
-                  <span className="inline-block w-2.5 h-2.5 rounded-full bg-primary-fixed-dim ring-4 ring-primary-fixed/30"></span>
-                  <span className="font-headline-sm text-headline-sm font-semibold text-primary">ACTIVE</span>
+                  <span className={`inline-block w-2.5 h-2.5 rounded-full ${
+                    subscriptionRawStatus === 'active'
+                      ? 'bg-primary ring-4 ring-primary-fixed/30'
+                      : subscriptionRawStatus === 'past_due'
+                      ? 'bg-amber-500 ring-4 ring-amber-500/20'
+                      : subscriptionRawStatus === 'canceled'
+                      ? 'bg-rose-500 ring-4 ring-rose-500/20'
+                      : 'bg-outline ring-4 ring-outline/20'
+                  }`}></span>
+                  <span className={`font-headline-sm text-headline-sm font-semibold uppercase ${
+                    subscriptionRawStatus === 'active'
+                      ? 'text-primary'
+                      : subscriptionRawStatus === 'past_due'
+                      ? 'text-amber-600 dark:text-amber-400'
+                      : subscriptionRawStatus === 'canceled'
+                      ? 'text-rose-600 dark:text-rose-400'
+                      : 'text-outline'
+                  }`}>
+                    {subscriptionRawStatus === 'active' ? 'ACTIVE' : subscriptionRawStatus === 'past_due' ? 'PAST DUE' : subscriptionRawStatus === 'canceled' ? 'CANCELLED' : 'INACTIVE'}
+                  </span>
                 </div>
                 <p className="font-label-md text-label-md text-on-surface-variant mt-1">
-                  {subStatus}
+                  {subStatus || 'No Active Plan'}
                 </p>
               </div>
               <div className="mt-4 pt-3 border-t border-surface-container flex items-center justify-between text-body-sm text-on-surface-variant">
@@ -535,7 +559,7 @@ export default function SubscriberDashboard() {
                   <span className="font-label-md text-label-md text-on-surface-variant">pts / round</span>
                 </div>
                 <p className="font-label-md text-label-md text-[#2E5A44] font-medium mt-1">
-                  Index 8.2 • 100% Verified Attestations
+                  {scores.length > 0 ? '100% Verified Attestations' : 'No scores yet'}
                 </p>
               </div>
               <div className="mt-4 pt-3 border-t border-surface-container flex items-center justify-between text-body-sm text-on-surface-variant">
@@ -640,7 +664,7 @@ export default function SubscriberDashboard() {
                       <span className="material-symbols-outlined text-2xl">celebration</span>
                     </div>
                     <span className="bg-secondary-fixed text-on-secondary-fixed font-label-sm text-xs px-3 py-1 rounded-full font-bold">
-                      4d Remaining
+                      End of Month
                     </span>
                   </div>
                   <div>

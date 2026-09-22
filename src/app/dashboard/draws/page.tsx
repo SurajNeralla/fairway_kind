@@ -2,8 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Trophy, Calendar, Sparkles, CheckCircle2, ShieldCheck, ArrowLeft } from 'lucide-react';
-import { Badge } from '@/components/ui/Badge';
+import { Trophy } from 'lucide-react';
 import { LoadingState } from '@/components/ui/LoadingState';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { DashboardSubNav } from '@/components/dashboard/DashboardSubNav';
@@ -21,25 +20,7 @@ export default function UserDrawHistoryPage() {
         if (res.ok && data.draws?.length > 0) {
           setDraws(data.draws);
         } else {
-          setDraws([
-            {
-              id: 'd1',
-              title: 'FairwayKind Monthly Draw #28 — October 2024',
-              period_month: 10,
-              period_year: 2024,
-              draw_date: '2024-10-31T23:59:59Z',
-              status: 'published',
-              mode: 'random',
-              winning_numbers: [34, 36, 38, 39, 41],
-              total_prize_pool: 32500,
-              tier_5_pool: 13000,
-              tier_4_pool: 11375,
-              tier_3_pool: 8125,
-              rollover_amount: 0,
-              created_at: '2024-10-31T23:59:59Z',
-              updated_at: '2024-10-31T23:59:59Z',
-            },
-          ]);
+          setDraws([]);
         }
       } catch (err) {
         console.error('Fetch draws error:', err);
@@ -51,7 +32,6 @@ export default function UserDrawHistoryPage() {
     fetchDraws();
   }, []);
 
-  const mockUserTicket = [34, 36, 38, 41, 35]; // 4 matches
 
   return (
     <div className="bg-background text-on-surface antialiased py-10">
@@ -81,8 +61,6 @@ export default function UserDrawHistoryPage() {
         ) : draws.length > 0 ? (
           <div className="space-y-6">
             {draws.map((d) => {
-              const winningSet = new Set(d.winning_numbers || []);
-
               return (
                 <div
                   key={d.id}
@@ -105,7 +83,7 @@ export default function UserDrawHistoryPage() {
                   <div className="space-y-2.5 text-center md:text-left">
                     <span className="font-label-sm text-label-sm uppercase font-bold text-on-surface-variant">Winning 5 Stroke Numbers</span>
                     <div className="flex flex-wrap items-center justify-center md:justify-start gap-3">
-                      {(d.winning_numbers || [34, 36, 38, 39, 41]).map((num, idx) => (
+                      {(d.winning_numbers || []).map((num, idx) => (
                         <div
                           key={idx}
                           className="w-12 h-12 rounded-xl bg-primary text-on-primary text-lg font-bold flex items-center justify-center shadow-xs"
@@ -113,33 +91,6 @@ export default function UserDrawHistoryPage() {
                           {num}
                         </div>
                       ))}
-                    </div>
-                  </div>
-
-                  {/* User Ticket Match Visualizer */}
-                  <div className="p-5 rounded-2xl bg-surface-container-low border border-outline-variant/30 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="font-label-md text-label-md font-semibold text-on-surface">Your Ticket Entry (Rolling 5 Scores)</span>
-                      <span className="bg-secondary-fixed text-on-secondary-fixed text-xs font-bold px-2.5 py-1 rounded-full">
-                        4 Matches — Tier 4 Winner ($1,250.00)
-                      </span>
-                    </div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      {mockUserTicket.map((num, idx) => {
-                        const isMatch = winningSet.has(num);
-                        return (
-                          <div
-                            key={idx}
-                            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold border transition-all ${
-                              isMatch
-                                ? 'bg-secondary text-on-secondary border-secondary shadow-xs'
-                                : 'bg-surface text-on-surface-variant border-outline-variant/50'
-                            }`}
-                          >
-                            {num} {isMatch ? '✓' : ''}
-                          </div>
-                        );
-                      })}
                     </div>
                   </div>
                 </div>

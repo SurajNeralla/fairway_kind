@@ -13,6 +13,7 @@ import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@
 import { LoadingState } from '@/components/ui/LoadingState';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { useToast } from '@/components/ui/Toast';
+import { useAuth } from '@/lib/auth/auth-context';
 
 interface AdminUserRecord {
   id: string;
@@ -35,6 +36,7 @@ interface AdminUserRecord {
 
 export default function AdminUsersPage() {
   const { showToast } = useToast();
+  const { session } = useAuth();
   const [users, setUsers] = useState<AdminUserRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -58,7 +60,15 @@ export default function AdminUsersPage() {
       if (roleFilter) params.set('role', roleFilter);
       if (statusFilter) params.set('status', statusFilter);
 
-      const res = await fetch(`/api/admin/users?${params.toString()}`);
+      params.set('_t', Date.now().toString());
+      const token = session?.access_token;
+      const res = await fetch(`/api/admin/users?${params.toString()}`, {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        }
+      });
       const data = await res.json();
       if (res.ok) {
         setUsers(data.users || []);

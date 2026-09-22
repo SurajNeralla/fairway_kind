@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createClient, createAdminClient } from '@/lib/supabase/server';
 
 export async function GET() {
   try {
@@ -17,11 +17,13 @@ export async function GET() {
       .single();
 
     const isAdmin = profile?.role === 'admin';
+    const client = isAdmin ? createAdminClient() : supabase;
 
-    let query = supabase.from('winners').select(`
+    let query = client.from('winners').select(`
       *,
       draws (title, period_month, period_year, draw_date),
-      winner_proofs (*)
+      winner_proofs (*),
+      profiles (full_name, email)
     `);
 
     if (!isAdmin) {

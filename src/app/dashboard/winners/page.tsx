@@ -4,7 +4,8 @@ import React, { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import {
   Trophy, Upload, Clock, CheckCircle2, XCircle, Banknote,
-  FileText, AlertTriangle, Eye, RefreshCw, Shield, ArrowLeft
+  FileText, AlertTriangle, Eye, RefreshCw, Shield, ArrowLeft,
+  ZoomIn, Download, ExternalLink, X
 } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -17,6 +18,17 @@ import { DashboardSubNav } from '@/components/dashboard/DashboardSubNav';
 
 type ProofStatus = 'pending_submission' | 'submitted' | 'approved' | 'rejected';
 type PayoutStatus = 'unpaid' | 'pending' | 'paid' | 'failed';
+
+export interface ProofDoc {
+  winnerId: string;
+  id?: string;
+  fileName: string;
+  fileSize?: number;
+  fileType?: string;
+  fileUrl: string;
+  uploadedAt: string;
+  status?: ProofStatus;
+}
 
 interface WinnerRecord {
   id: string;
@@ -38,6 +50,7 @@ interface WinnerRecord {
   winner_proofs?: Array<{
     id: string;
     file_name: string;
+    proof_file_url?: string;
     status: ProofStatus;
     rejection_reason?: string;
     reviewed_at?: string;
@@ -59,30 +72,30 @@ const PROOF_STATUS_CONFIG: Record<ProofStatus, { label: string; color: string; i
     description: 'Your scorecard has been submitted and is waiting for validation. Platform administrators are reviewing it.',
   },
   approved: {
-    label: 'Proof Validated & Certified',
+    label: 'Scorecard Verified',
     color: 'emerald',
-    icon: <CheckCircle2 className="w-4 h-4 text-primary" />,
-    description: 'Your score has been certified. Payout is scheduled for release.',
+    icon: <CheckCircle2 className="w-4 h-4 text-emerald-600" />,
+    description: 'Your scorecard attestation has been verified and approved. Payout settlement in progress.',
   },
   rejected: {
-    label: 'Proof Needs Revision',
+    label: 'Proof Rejected',
     color: 'rose',
-    icon: <XCircle className="w-4 h-4 text-error" />,
+    icon: <XCircle className="w-4 h-4 text-rose-500" />,
     description: 'Please review feedback below and re-upload your attested scorecard.',
   },
 };
 
 const PAYOUT_STATUS_CONFIG: Record<PayoutStatus, { label: string; color: string }> = {
-  unpaid: { label: 'Awaiting Validation', color: 'slate' },
-  pending: { label: 'Pending Payout', color: 'amber' },
-  paid: { label: 'Paid', color: 'emerald' },
-  failed: { label: 'Failed', color: 'rose' },
+  unpaid: { label: 'Unpaid', color: 'slate' },
+  pending: { label: 'Settlement Pending', color: 'amber' },
+  paid: { label: 'Paid Out', color: 'emerald' },
+  failed: { label: 'Payment Issue', color: 'rose' },
 };
 
 const TIER_LABELS: Record<string, string> = {
-  tier_5: '5-Number Match (Jackpot)',
-  tier_4: '4-Number Match',
-  tier_3: '3-Number Match',
+  tier_5: '5-Number Match 🏆',
+  tier_4: '4-Number Match 🥈',
+  tier_3: '3-Number Match 🥉',
 };
 
 export default function MyWinningsPage() {
@@ -92,40 +105,51 @@ export default function MyWinningsPage() {
   const [uploadingId, setUploadingId] = useState<string | null>(null);
   const [selectedWinner, setSelectedWinner] = useState<WinnerRecord | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [uploadedDocs, setUploadedDocs] = useState<Record<string, ProofDoc>>({});
+  const [previewDocModal, setPreviewDocModal] = useState<ProofDoc | null>(null);
+  const [isZoomed, setIsZoomed] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const fetchWinners = async () => {
     setIsLoading(true);
     try {
+      // Load stored proofs from localStorage
+      const loadedDocs: Record<string, ProofDoc> = {};
+      if (typeof window !== 'undefined') {
+        try {
+          const latest = localStorage.getItem('latest_submitted_proof');
+          if (latest) {
+            const parsed = JSON.parse(latest);
+            if (parsed.winnerId) loadedDocs[parsed.winnerId] = parsed;
+          }
+
+        } catch (e) {
+          console.error('Error loading stored proofs:', e);
+        }
+      }
+      setUploadedDocs(loadedDocs);
+
       const res = await fetch('/api/winners');
       const data = await res.json();
       if (res.ok && data.winners?.length > 0) {
         const mapped = data.winners.map((w: WinnerRecord) => {
-          const stored = typeof window !== 'undefined' ? localStorage.getItem(`proof_status_${w.id}`) : null;
-          return stored ? { ...w, proof_status: stored as ProofStatus } : w;
+          const storedStatus = typeof window !== 'undefined' ? localStorage.getItem(`proof_status_${w.id}`) : null;
+          // Check if proof URL exists in backend proofs
+          if (w.winner_proofs?.[0]?.proof_file_url && !loadedDocs[w.id]) {
+            loadedDocs[w.id] = {
+              winnerId: w.id,
+              fileName: w.winner_proofs[0].file_name || 'scorecard_proof.jpg',
+              fileUrl: w.winner_proofs[0].proof_file_url,
+              uploadedAt: w.winner_proofs[0].created_at || new Date().toISOString(),
+              status: w.winner_proofs[0].status || w.proof_status,
+            };
+          }
+          return storedStatus ? { ...w, proof_status: storedStatus as ProofStatus } : w;
         });
         setWinners(mapped);
+        setUploadedDocs(prev => ({ ...prev, ...loadedDocs }));
       } else {
-        const stored = typeof window !== 'undefined' ? localStorage.getItem('proof_status_w1') : null;
-        setWinners([
-          {
-            id: 'w1',
-            draw_id: 'd102',
-            match_count: 4,
-            prize_tier: 'tier_4',
-            prize_amount: 1250,
-            proof_status: (stored as ProofStatus) || 'pending_submission',
-            payout_status: 'unpaid',
-            created_at: '2024-10-31T23:59:59Z',
-            updated_at: '2024-10-31T23:59:59Z',
-            draws: {
-              title: 'FairwayKind Monthly Performance Draw #28',
-              period_month: 10,
-              period_year: 2024,
-              draw_date: '2024-10-31T23:59:59Z',
-            },
-          },
-        ]);
+        setWinners([]);
       }
     } catch (err: any) {
       console.error('Fetch winners error:', err);
@@ -141,6 +165,14 @@ export default function MyWinningsPage() {
   const handleFileUpload = async (winnerId: string, file: File) => {
     setUploadingId(winnerId);
     try {
+      // Read local file preview immediately so the user can always see their document
+      const fileDataUrl = await new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = () => resolve('');
+        reader.readAsDataURL(file);
+      });
+
       const formData = new FormData();
       formData.append('file', file);
       formData.append('proof', file);
@@ -161,15 +193,43 @@ export default function MyWinningsPage() {
       }
 
       if (res.ok) {
+        const proofUrl = data.proof?.proof_file_url || fileDataUrl;
+        const newDoc: ProofDoc = {
+          winnerId,
+          id: data.proof?.id || `proof-${Date.now()}`,
+          fileName: file.name,
+          fileSize: file.size,
+          fileType: file.type,
+          fileUrl: proofUrl,
+          uploadedAt: new Date().toISOString(),
+          status: 'submitted',
+        };
+
+        setUploadedDocs(prev => ({ ...prev, [winnerId]: newDoc }));
+
         if (typeof window !== 'undefined') {
-          localStorage.setItem(`proof_status_${winnerId}`, 'submitted');
+          try {
+            localStorage.setItem(`proof_status_${winnerId}`, 'submitted');
+            localStorage.setItem(`proof_doc_${winnerId}`, JSON.stringify(newDoc));
+            localStorage.setItem('latest_submitted_proof', JSON.stringify({
+              ...newDoc,
+              winnerName: 'Member Scorecard Attestation',
+              homeClub: 'Attested Round',
+              drawNumber: 'Active Cycle',
+              matchTier: 'Attestation Pending',
+              prizeAmount: 0,
+            }));
+          } catch (storageErr) {
+            console.warn('Storage notice:', storageErr);
+          }
         }
+
         setWinners(prev =>
           prev.map(w =>
             w.id === winnerId ? { ...w, proof_status: 'submitted' } : w
           )
         );
-        showToast('Proof Submitted!', 'Your scorecard has been uploaded. Status is now Waiting for Validation.', 'success');
+        showToast('Proof Submitted!', 'Your scorecard has been uploaded and is ready for review.', 'success');
       } else {
         showToast('Upload Failed', data.error || 'Could not upload proof.', 'error');
       }
@@ -303,6 +363,53 @@ export default function MyWinningsPage() {
                     </div>
                   </div>
 
+                  {/* Uploaded Proof Document Preview */}
+                  {uploadedDocs[winner.id] && (
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl bg-surface-container-low border border-outline-variant/30">
+                      <div className="flex items-center gap-3.5 min-w-0">
+                        <div className="w-12 h-12 rounded-xl bg-primary-fixed/30 text-primary flex items-center justify-center shrink-0">
+                          <FileText className="w-6 h-6" />
+                        </div>
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2">
+                            <p className="font-label-md text-label-md font-bold text-on-surface truncate">
+                              {uploadedDocs[winner.id].fileName}
+                            </p>
+                            <span className="px-2 py-0.5 rounded-md bg-secondary-fixed/40 text-on-secondary-fixed text-[10px] font-bold uppercase">
+                              Attached Proof
+                            </span>
+                          </div>
+                          <p className="text-xs text-on-surface-variant mt-0.5">
+                            {uploadedDocs[winner.id].fileSize ? `${(uploadedDocs[winner.id].fileSize! / 1024).toFixed(1)} KB • ` : ''}
+                            Submitted on {new Date(uploadedDocs[winner.id].uploadedAt).toLocaleDateString()}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <Button
+                          variant="gold"
+                          size="sm"
+                          leftIcon={<Eye className="w-4 h-4" />}
+                          onClick={() => {
+                            setPreviewDocModal(uploadedDocs[winner.id]);
+                            setIsZoomed(false);
+                          }}
+                        >
+                          View Uploaded Document
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            document.getElementById(`upload-${winner.id}`)?.click();
+                          }}
+                        >
+                          Replace
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
                   {/* Action Zone */}
                   <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-3 border-t border-surface-container">
                     <div className="flex items-center gap-3">
@@ -359,7 +466,7 @@ export default function MyWinningsPage() {
           </div>
         )}
 
-        {/* Detail Modal */}
+        {/* Winner Detail Modal */}
         <Modal
           isOpen={isDetailModalOpen}
           onClose={() => setIsDetailModalOpen(false)}
@@ -383,11 +490,115 @@ export default function MyWinningsPage() {
                 </div>
               </div>
 
-              <div className="flex items-start gap-2 p-3.5 rounded-xl bg-surface-container-low border border-outline-variant/30">
-                <Shield className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-                <p className="text-xs text-on-surface-variant">
-                  Your scorecard is reviewed by platform administrators. Payout status updates from Pending to Paid once verified.
-                </p>
+              {/* Uploaded Scorecard Section in Details Modal */}
+              {uploadedDocs[selectedWinner.id] ? (
+                <div className="p-4 rounded-2xl bg-surface-container-low border border-outline-variant/40 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="font-label-md text-label-md font-semibold text-on-surface">
+                      Attached Scorecard Proof
+                    </span>
+                    <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-primary-fixed/40 text-primary">
+                      Uploaded
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <FileText className="w-4 h-4 text-primary shrink-0" />
+                      <span className="text-xs font-mono text-on-surface truncate">
+                        {uploadedDocs[selectedWinner.id].fileName}
+                      </span>
+                    </div>
+                    <Button
+                      variant="gold"
+                      size="sm"
+                      leftIcon={<Eye className="w-3.5 h-3.5" />}
+                      onClick={() => {
+                        setPreviewDocModal(uploadedDocs[selectedWinner.id]);
+                        setIsDetailModalOpen(false);
+                      }}
+                    >
+                      Open Document
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-start gap-2 p-3.5 rounded-xl bg-surface-container-low border border-outline-variant/30">
+                  <Shield className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                  <p className="text-xs text-on-surface-variant">
+                    Your scorecard is reviewed by platform administrators. Payout status updates from Pending to Paid once verified.
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+        </Modal>
+
+        {/* Dedicated Document Viewer Modal */}
+        <Modal
+          isOpen={!!previewDocModal}
+          onClose={() => setPreviewDocModal(null)}
+          title={previewDocModal?.fileName || "Scorecard Document Preview"}
+          maxWidth="2xl"
+        >
+          {previewDocModal && (
+            <div className="space-y-4">
+              <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-outline-variant/30 text-xs text-on-surface-variant">
+                <div className="flex items-center gap-2">
+                  <FileText className="w-4 h-4 text-primary" />
+                  <span className="font-semibold text-on-surface">{previewDocModal.fileName}</span>
+                  {previewDocModal.fileSize && (
+                    <span>• {(previewDocModal.fileSize / 1024).toFixed(1)} KB</span>
+                  )}
+                </div>
+                <div className="flex items-center gap-2">
+                  <a
+                    href={previewDocModal.fileUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 px-3 py-1 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface font-semibold text-xs border border-outline-variant/40 transition-colors"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" />
+                    Open in Tab
+                  </a>
+                  <a
+                    href={previewDocModal.fileUrl}
+                    download={previewDocModal.fileName}
+                    className="inline-flex items-center gap-1 px-3 py-1 rounded-lg bg-primary text-on-primary hover:bg-primary-container font-semibold text-xs transition-colors shadow-2xs"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    Download
+                  </a>
+                </div>
+              </div>
+
+              {/* Viewer Window */}
+              <div className="w-full min-h-[350px] max-h-[70vh] rounded-2xl overflow-auto border border-outline-variant/40 bg-surface-container-low flex items-center justify-center relative p-2">
+                {previewDocModal.fileName.toLowerCase().endsWith('.pdf') || previewDocModal.fileType?.includes('pdf') ? (
+                  <iframe
+                    src={previewDocModal.fileUrl}
+                    title="Scorecard PDF Viewer"
+                    className="w-full h-[550px] rounded-xl border-0"
+                  />
+                ) : (
+                  <div className="relative group cursor-pointer" onClick={() => setIsZoomed(!isZoomed)}>
+                    <img
+                      src={previewDocModal.fileUrl}
+                      alt={previewDocModal.fileName}
+                      className={`max-w-full rounded-xl object-contain transition-all duration-300 ${
+                        isZoomed ? 'scale-125 cursor-zoom-out' : 'cursor-zoom-in max-h-[60vh]'
+                      }`}
+                    />
+                    <div className="absolute bottom-3 right-3 bg-black/75 backdrop-blur-xs text-white text-[11px] px-2.5 py-1 rounded-lg flex items-center gap-1 pointer-events-none">
+                      <ZoomIn className="w-3.5 h-3.5" />
+                      {isZoomed ? 'Click to Reduce' : 'Click to Zoom'}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex items-center justify-between text-xs text-on-surface-variant pt-2 border-t border-outline-variant/20">
+                <span>Submitted: {new Date(previewDocModal.uploadedAt).toLocaleString()}</span>
+                <span className="font-semibold text-primary">Compliance Verification Status: Pending Review</span>
               </div>
             </div>
           )}

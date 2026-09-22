@@ -17,6 +17,7 @@ import { DashboardSubNav } from '@/components/dashboard/DashboardSubNav';
 function SubscriptionManager() {
   const searchParams = useSearchParams();
   const statusQuery = searchParams.get('status');
+  const sessionId = searchParams.get('session_id');
   const { showToast } = useToast();
 
   const [subscription, setSubscription] = useState<Subscription | null>(null);
@@ -67,12 +68,34 @@ function SubscriptionManager() {
   }, [supabase]);
 
   useEffect(() => {
-    fetchData();
+    let isMounted = true;
 
-    if (statusQuery === 'success' || statusQuery === 'simulated_success') {
-      showToast('Subscription Active!', 'Thank you for supporting FairwayKind.', 'success');
-    }
-  }, [fetchData, statusQuery, showToast]);
+    const syncAndLoad = async () => {
+      if (statusQuery === 'success' || sessionId) {
+        try {
+          await fetch('/api/subscriptions/confirm', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ sessionId }),
+          });
+          if (isMounted) {
+            showToast('Subscription Active!', 'Thank you for supporting FairwayKind.', 'success');
+          }
+        } catch (e) {
+          console.error('Auto sync error:', e);
+        }
+      }
+      if (isMounted) {
+        await fetchData();
+      }
+    };
+
+    syncAndLoad();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [fetchData, statusQuery, sessionId, showToast]);
 
   const handleUpdateCharitySettings = async () => {
     setIsProcessing(true);
@@ -129,25 +152,20 @@ function SubscriptionManager() {
   const handleSimulateState = async (targetStatus: 'active' | 'past_due' | 'canceled') => {
     setIsProcessing(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const periodEnd = new Date();
-      periodEnd.setMonth(periodEnd.getMonth() + 1);
-
-      await supabase.from('subscriptions').upsert({
-        user_id: user.id,
-        stripe_customer_id: `cus_simulated_${user.id.substring(0, 6)}`,
-        stripe_subscription_id: `sub_simulated_${Date.now()}`,
-        plan_type: 'monthly',
-        status: targetStatus,
-        charity_id: selectedCharityId || null,
-        voluntary_charity_percent: voluntaryPercent,
-        current_period_start: new Date().toISOString(),
-        current_period_end: periodEnd.toISOString(),
-        cancel_at_period_end: targetStatus === 'canceled',
-        updated_at: new Date().toISOString(),
+      const res = await fetch('/api/subscriptions/confirm', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          status: targetStatus,
+          charityId: selectedCharityId || null,
+          voluntaryPercent,
+        }),
       });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to update simulation state');
+      }
 
       showToast('State Simulated', `Subscription status set to ${targetStatus.toUpperCase()}`, 'info');
       await fetchData();
