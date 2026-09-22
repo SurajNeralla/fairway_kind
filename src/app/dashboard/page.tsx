@@ -311,24 +311,24 @@ export default function SubscriberDashboard() {
                 <span className="font-label-md text-label-md">Overview</span>
               </button>
 
-              <a
-                href="#scores-section"
+              <Link
+                href="/dashboard/scores"
                 className="text-on-surface-variant hover:text-on-surface hover:bg-surface-container rounded-xl px-3 py-2.5 flex items-center gap-3 transition-colors duration-150 active:scale-[0.98]"
               >
                 <span className="material-symbols-outlined">golf_course</span>
                 <span className="font-label-md text-label-md">My Scores</span>
-              </a>
+              </Link>
 
-              <a
-                href="#charity-section"
+              <Link
+                href="/dashboard/charity"
                 className="text-on-surface-variant hover:text-on-surface hover:bg-surface-container rounded-xl px-3 py-2.5 flex items-center gap-3 transition-colors duration-150 active:scale-[0.98]"
               >
                 <span className="material-symbols-outlined">volunteer_activism</span>
                 <span className="font-label-md text-label-md">My Charity</span>
-              </a>
+              </Link>
 
-              <a
-                href="#draws-section"
+              <Link
+                href="/dashboard/draws"
                 className="text-on-surface-variant hover:text-on-surface hover:bg-surface-container rounded-xl px-3 py-2.5 flex items-center gap-3 transition-colors duration-150 active:scale-[0.98]"
               >
                 <span className="material-symbols-outlined">celebration</span>
@@ -336,16 +336,16 @@ export default function SubscriberDashboard() {
                 <span className="ml-auto bg-secondary-fixed text-on-secondary-fixed text-[10px] font-bold px-1.5 py-0.5 rounded-full">
                   4d
                 </span>
-              </a>
+              </Link>
 
-              <a
-                href="#winnings-section"
+              <Link
+                href="/dashboard/winnings"
                 className="text-on-surface-variant hover:text-on-surface hover:bg-surface-container rounded-xl px-3 py-2.5 flex items-center gap-3 transition-colors duration-150 active:scale-[0.98]"
               >
                 <span className="material-symbols-outlined">emoji_events</span>
                 <span className="font-label-md text-label-md">Winnings</span>
                 <span className="ml-auto w-2 h-2 rounded-full bg-secondary"></span>
-              </a>
+              </Link>
 
               <Link
                 href="/dashboard/subscription"
@@ -420,12 +420,15 @@ export default function SubscriberDashboard() {
           {/* Action Cluster */}
           <div className="flex items-center flex-wrap gap-3">
             {/* Charity Impact Pill */}
-            <div className="flex items-center gap-2 bg-[#FBF6E9] border border-[#E9DCB6] px-3.5 py-1.5 rounded-full text-secondary shadow-xs">
+            <Link
+              href="/dashboard/charity"
+              className="flex items-center gap-2 bg-[#FBF6E9] border border-[#E9DCB6] hover:bg-[#f5ebd2] px-3.5 py-1.5 rounded-full text-secondary shadow-xs transition-colors"
+            >
               <span className="material-symbols-outlined text-secondary text-base">volunteer_activism</span>
               <span className="font-label-md text-label-md text-on-secondary-fixed-variant font-medium">
                 Supporting {charityName} ({charityPercent}% allocation)
               </span>
-            </div>
+            </Link>
 
             {/* Add Score Trigger */}
             <button
@@ -693,13 +696,23 @@ export default function SubscriberDashboard() {
 
                 <div className="p-4 bg-surface-container-low/40 border-t border-outline-variant/20 flex flex-col sm:flex-row items-center justify-between text-body-sm text-on-surface-variant gap-2">
                   <span className="text-xs">{scores.length} of 5 active scores — newest scores replace oldest when limit is reached.</span>
-                  <button 
-                    onClick={() => setModalOpen(true)}
-                    className="text-xs font-semibold text-primary hover:underline flex items-center gap-1"
-                  >
-                    Add Another Score
-                    <span className="material-symbols-outlined text-sm">add_circle</span>
-                  </button>
+                  <div className="flex items-center gap-3">
+                    <button 
+                      onClick={() => setModalOpen(true)}
+                      className="text-xs font-semibold text-primary hover:underline flex items-center gap-1"
+                    >
+                      Quick Add
+                      <span className="material-symbols-outlined text-sm">add_circle</span>
+                    </button>
+                    <span className="text-outline">|</span>
+                    <Link
+                      href="/dashboard/scores"
+                      className="text-xs font-semibold text-primary hover:underline flex items-center gap-1"
+                    >
+                      Open Score Engine
+                      <span className="material-symbols-outlined text-sm">arrow_forward</span>
+                    </Link>
+                  </div>
                 </div>
               </div>
             </section>
@@ -766,17 +779,17 @@ export default function SubscriberDashboard() {
 
                 {/* Actions */}
                 <div className="flex flex-col gap-2.5 mt-6 pt-4 border-t border-surface-container">
-                  <button
-                    onClick={handleIncreaseCharity}
-                    className="w-full py-2.5 px-4 rounded-xl bg-[#E8EFEA] hover:bg-[#d8e4db] text-primary font-label-md text-label-md font-semibold transition-colors duration-150 active:scale-[0.98]"
+                  <Link
+                    href="/dashboard/charity"
+                    className="w-full py-2.5 px-4 rounded-xl bg-primary-container hover:bg-primary text-on-primary font-label-md text-label-md font-semibold transition-colors duration-150 active:scale-[0.98] text-center block"
                   >
-                    Increase Contribution % ({charityPercent}%)
-                  </button>
+                    Manage Charity Allocation ({charityPercent}%)
+                  </Link>
                   <Link
                     href="/charities"
                     className="w-full py-2 px-4 rounded-xl border border-outline-variant/50 hover:bg-surface-container text-on-surface font-label-md text-label-md transition-colors duration-150 text-center block"
                   >
-                    Change Charity
+                    Explore Partner Charities
                   </Link>
                 </div>
               </div>
@@ -834,8 +847,11 @@ export default function SubscriberDashboard() {
               </div>
 
               <div className="mt-6 pt-4 border-t border-surface-container flex items-center justify-between text-xs text-outline">
-                <span>5-match (40%), 4-match (35%), 3-match (25%) prize allocation</span>
-                <Link href="/how-it-works" className="text-primary font-semibold hover:underline">
+                <Link href="/dashboard/draws" className="text-primary font-semibold hover:underline flex items-center gap-1">
+                  View Draw Numbers &amp; Tickets
+                  <span className="material-symbols-outlined text-sm">arrow_forward</span>
+                </Link>
+                <Link href="/how-it-works" className="text-on-surface-variant hover:underline">
                   How It Works
                 </Link>
               </div>
