@@ -24,9 +24,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  const supabase = createClient();
+  const supabase = React.useMemo(() => createClient(), []);
 
-  const fetchProfile = useCallback(async (userId: string) => {
+  const fetchProfile = useCallback(async (userId: string, emailFallback?: string, metaFallback?: any) => {
     try {
       const { data, error } = await supabase
         .from('profiles')
@@ -39,9 +39,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // Fallback profile if DB trigger delay
         setProfile({
           id: userId,
-          email: user?.email || '',
-          full_name: (user?.user_metadata?.full_name as string) || 'Fairway Golfer',
-          role: ((user?.user_metadata?.role as UserRole) || 'user'),
+          email: emailFallback || '',
+          full_name: (metaFallback?.full_name as string) || 'Fairway Golfer',
+          role: ((metaFallback?.role as UserRole) || 'user'),
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         });
@@ -51,33 +51,45 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (err) {
       console.error('Error fetching profile:', err);
     }
-  }, [supabase, user]);
+  }, [supabase]);
 
   useEffect(() => {
+    let isMounted = true;
+
     const initializeAuth = async () => {
       try {
         const { data: { session: initialSession } } = await supabase.auth.getSession();
+        if (!isMounted) return;
         setSession(initialSession);
         setUser(initialSession?.user ?? null);
 
         if (initialSession?.user) {
-          await fetchProfile(initialSession.user.id);
+          await fetchProfile(
+            initialSession.user.id,
+            initialSession.user.email,
+            initialSession.user.user_metadata
+          );
         }
       } catch (err) {
         console.error('Auth initialization error:', err);
       } finally {
-        setIsLoading(false);
+        if (isMounted) setIsLoading(false);
       }
     };
 
     initializeAuth();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, newSession) => {
+      if (!isMounted) return;
       setSession(newSession);
       setUser(newSession?.user ?? null);
 
       if (newSession?.user) {
-        await fetchProfile(newSession.user.id);
+        await fetchProfile(
+          newSession.user.id,
+          newSession.user.email,
+          newSession.user.user_metadata
+        );
       } else {
         setProfile(null);
       }
@@ -85,6 +97,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
 
     return () => {
+      isMounted = false;
       subscription.unsubscribe();
     };
   }, [fetchProfile, supabase]);
@@ -100,7 +113,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const refreshProfile = async () => {
     if (user) {
-      await fetchProfile(user.id);
+      await fetchProfile(user.id, user.email, user.user_metadata);
     }
   };
 

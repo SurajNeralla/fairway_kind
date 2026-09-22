@@ -25,7 +25,7 @@ function SubscriptionManager() {
   const [isLoading, setIsLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const supabase = createClient();
+  const supabase = React.useMemo(() => createClient(), []);
 
   const fetchData = useCallback(async () => {
     setIsLoading(true);
@@ -41,7 +41,7 @@ function SubscriptionManager() {
 
         if (subData) {
           setSubscription(subData as Subscription);
-          setSelectedCharityId(subData.charity_id || '');
+          setSelectedCharityId(prev => prev || subData.charity_id || '');
           setVoluntaryPercent(subData.voluntary_charity_percent || 10);
         }
 
@@ -53,7 +53,7 @@ function SubscriptionManager() {
 
         if (charitiesData && charitiesData.length > 0) {
           setCharities(charitiesData as Charity[]);
-          if (!selectedCharityId) setSelectedCharityId(charitiesData[0].id);
+          setSelectedCharityId(prev => prev || charitiesData[0].id);
         }
       }
     } catch (err: any) {
@@ -61,7 +61,7 @@ function SubscriptionManager() {
     } finally {
       setIsLoading(false);
     }
-  }, [supabase, selectedCharityId]);
+  }, [supabase]);
 
   useEffect(() => {
     fetchData();
