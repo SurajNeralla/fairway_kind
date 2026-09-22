@@ -303,11 +303,30 @@ ALTER TABLE public.winner_proofs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.payouts ENABLE ROW LEVEL SECURITY;
 
 -- 17. Row Level Security Policies
+CREATE OR REPLACE FUNCTION public.prevent_user_role_escalation()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF NEW.role <> OLD.role AND NOT public.is_admin() THEN
+    RAISE EXCEPTION 'Privilege escalation forbidden: Only administrators can modify user roles.';
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
+
+DROP TRIGGER IF EXISTS trg_prevent_role_escalation ON public.profiles;
+CREATE TRIGGER trg_prevent_role_escalation
+  BEFORE UPDATE ON public.profiles
+  FOR EACH ROW EXECUTE FUNCTION public.prevent_user_role_escalation();
+
 DROP POLICY IF EXISTS "Public profiles reading" ON public.profiles;
 CREATE POLICY "Public profiles reading" ON public.profiles FOR SELECT USING (true);
 
 DROP POLICY IF EXISTS "Users update own profile" ON public.profiles;
-CREATE POLICY "Users update own profile" ON public.profiles FOR UPDATE USING (auth.uid() = id);
+CREATE POLICY "Users update own profile" ON public.profiles
+  FOR UPDATE USING (auth.uid() = id OR public.is_admin())
+  WITH CHECK (
+    public.is_admin() OR (auth.uid() = id AND role = 'user'::public.user_role)
+  );
 
 DROP POLICY IF EXISTS "Public charities reading" ON public.charities;
 CREATE POLICY "Public charities reading" ON public.charities FOR SELECT USING (is_active = true);
@@ -401,7 +420,7 @@ INSERT INTO public.draws (
 )
 VALUES (
   'd1000000-0000-0000-0000-000000000001',
-  'Digital Heroes Inaugural Monthly Draw — 9/2026',
+  'FairwayKind Inaugural Monthly Draw — 9/2026',
   9,
   2026,
   NOW(),

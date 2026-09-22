@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { createClientFromRequest, createAdminClient } from '@/lib/supabase/server';
+import { createAdminClient, getUserFromRequest } from '@/lib/supabase/server';
 
 export const dynamic = 'force-dynamic';
 export const fetchCache = 'force-no-store';
@@ -7,8 +7,7 @@ export const fetchCache = 'force-no-store';
 // GET /api/admin/users — List users with search, filters, pagination, scores, subscription, and wins
 export async function GET(request: Request) {
   try {
-    const supabase = createClientFromRequest(request);
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: { user } } = await getUserFromRequest(request);
 
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -56,19 +55,34 @@ export async function GET(request: Request) {
       { data: scores, error: scoresErr },
       { data: winners, error: winnersErr }
     ] = await Promise.all([
-      adminClient.from('subscriptions').select('*'),
+      adminClient
+        .from('subscriptions')
+        .select('id, user_id, plan_type, status, voluntary_charity_percent, current_period_end, created_at')
+        .order('created_at', { ascending: false }),
       adminClient.from('scores').select('id, user_id, score, played_on, is_active').order('played_on', { ascending: false }),
       adminClient.from('winners').select('id, user_id, prize_amount, prize_tier, payout_status, proof_status, created_at')
     ]);
 
-    if (subsErr) console.error('Admin users API subs error:', subsErr);
-    if (scoresErr) console.error('Admin users API scores error:', scoresErr);
-    if (winnersErr) console.error('Admin users API winners error:', winnersErr);
+    if (subsErr || scoresErr || winnersErr) {
+      console.error('Admin users API data error:', { subsErr, scoresErr, winnersErr });
+      return NextResponse.json(
+        { error: 'Unable to load the complete member directory. Please refresh and try again.' },
+        { status: 500 },
+      );
+    }
 
     // Map into enriched user records
     const subMap: Record<string, any> = {};
+    const subscriptionPriority: Record<string, number> = {
+      active: 5,
+      trialing: 4,
+      past_due: 3,
+      incomplete: 2,
+      canceled: 1,
+    };
     (subscriptions || []).forEach((s) => {
-      if (!subMap[s.user_id] || s.status === 'active') {
+      const current = subMap[s.user_id];
+      if (!current || (subscriptionPriority[s.status] || 0) > (subscriptionPriority[current.status] || 0)) {
         subMap[s.user_id] = s;
       }
     });
@@ -130,8 +144,7 @@ export async function GET(request: Request) {
 // PATCH /api/admin/users — Update user profile (role, full_name) with audit logging
 export async function PATCH(request: Request) {
   try {
-    const supabase = createClientFromRequest(request);
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: { user } } = await getUserFromRequest(request);
 
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 

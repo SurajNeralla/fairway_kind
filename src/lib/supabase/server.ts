@@ -70,3 +70,20 @@ export function createClientFromRequest(request: Request) {
   // Fall back to cookie-based auth
   return createClient();
 }
+
+/**
+ * Resolves the signed-in user for an API request. Supabase's `auth.getUser()`
+ * does not read a token supplied only through a client's global headers, so a
+ * bearer token must be passed directly when the request originates in the
+ * browser client rather than from a server-managed cookie session.
+ */
+export async function getUserFromRequest(request: Request) {
+  const authHeader = request.headers.get('Authorization');
+  const bearerToken = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
+
+  if (bearerToken) {
+    return createAdminClient().auth.getUser(bearerToken);
+  }
+
+  return createClient().auth.getUser();
+}

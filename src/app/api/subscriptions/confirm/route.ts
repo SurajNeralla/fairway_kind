@@ -24,8 +24,32 @@ export async function POST(request: Request) {
     let finalVoluntaryPercent = Number(voluntaryPercent);
     let finalStatus = status;
 
-    // If Stripe session ID is provided, verify directly with Stripe API
-    if (sessionId && process.env.STRIPE_SECRET_KEY && !process.env.STRIPE_SECRET_KEY.includes('mock')) {
+    // In production or live Stripe mode, MUST verify real Stripe session and paid status
+    const isLiveStripe = Boolean(process.env.STRIPE_SECRET_KEY && !process.env.STRIPE_SECRET_KEY.includes('mock'));
+    
+    if (process.env.NODE_ENV === 'production' || isLiveStripe) {
+      if (!sessionId) {
+        return NextResponse.json({ error: 'Stripe sessionId is required to verify subscription payment.' }, { status: 400 });
+      }
+      try {
+        const session = await stripe.checkout.sessions.retrieve(sessionId);
+        if (!session || (session.payment_status !== 'paid' && session.status !== 'complete')) {
+          return NextResponse.json({ error: 'Payment verification failed: Session is not paid.' }, { status: 402 });
+        }
+        if (session.metadata?.user_id && session.metadata.user_id !== user.id) {
+          return NextResponse.json({ error: 'Forbidden: Session does not belong to current user.' }, { status: 403 });
+        }
+        stripeCustomerId = (session.customer as string) || stripeCustomerId;
+        stripeSubscriptionId = (session.subscription as string) || `sub_${session.id}`;
+        finalPlanType = (session.metadata?.plan_type as any) || finalPlanType;
+        finalCharityId = session.metadata?.charity_id || finalCharityId;
+        finalVoluntaryPercent = Number(session.metadata?.voluntary_percent || finalVoluntaryPercent);
+        finalStatus = 'active';
+      } catch (stripeErr: any) {
+        return NextResponse.json({ error: `Stripe verification failed: ${stripeErr.message}` }, { status: 400 });
+      }
+    } else if (sessionId) {
+      // Non-production with sessionId: verify if possible, fallback to active
       try {
         const session = await stripe.checkout.sessions.retrieve(sessionId);
         if (session) {
@@ -36,8 +60,8 @@ export async function POST(request: Request) {
           finalVoluntaryPercent = Number(session.metadata?.voluntary_percent || finalVoluntaryPercent);
           finalStatus = 'active';
         }
-      } catch (stripeErr: any) {
-        console.warn('Could not retrieve Stripe session directly:', stripeErr.message);
+      } catch {
+        finalStatus = 'active';
       }
     }
 

@@ -103,22 +103,18 @@ function SubscriptionManager() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const updateQuery = subscription?.id
-        ? supabase.from('subscriptions').update({
-            charity_id: selectedCharityId || null,
-            voluntary_charity_percent: voluntaryPercent,
-            updated_at: new Date().toISOString(),
-          }).eq('id', subscription.id)
-        : supabase.from('subscriptions').update({
-            charity_id: selectedCharityId || null,
-            voluntary_charity_percent: voluntaryPercent,
-            updated_at: new Date().toISOString(),
-          }).eq('user_id', user.id);
+      const res = await fetch('/api/charities/select', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          charityId: selectedCharityId,
+          voluntaryPercent,
+        }),
+      });
 
-      const { error } = await updateQuery;
-
-      if (error) {
-        showToast('Update Failed', error.message, 'error');
+      const data = await res.json();
+      if (!res.ok) {
+        showToast('Update Failed', data.error || 'Failed to update charity settings', 'error');
       } else {
         showToast('Settings Saved', `Charity allocation updated to ${voluntaryPercent}%.`, 'success');
         await fetchData();

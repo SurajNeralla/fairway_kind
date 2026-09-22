@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Users, Search, Shield, Filter, RefreshCw, ArrowLeft, CheckCircle2, XCircle, Award, Calendar } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -14,6 +15,7 @@ import { LoadingState } from '@/components/ui/LoadingState';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { useToast } from '@/components/ui/Toast';
 import { useAuth } from '@/lib/auth/auth-context';
+import { createClient } from '@/lib/supabase/client';
 
 interface AdminUserRecord {
   id: string;
@@ -36,9 +38,13 @@ interface AdminUserRecord {
 
 export default function AdminUsersPage() {
   const { showToast } = useToast();
-  const { session } = useAuth();
+  const router = useRouter();
+  const { session, isLoading: isAuthLoading } = useAuth();
+  const accessToken = session?.access_token;
+  const supabase = React.useMemo(() => createClient(), []);
   const [users, setUsers] = useState<AdminUserRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
@@ -54,40 +60,63 @@ export default function AdminUsersPage() {
 
   const fetchUsers = useCallback(async () => {
     setIsLoading(true);
+    setLoadError(null);
     try {
+      // Ensure an expired access token is refreshed before this protected call.
+      const { data: { session: refreshedSession } } = await supabase.auth.refreshSession();
+      const token = refreshedSession?.access_token || accessToken;
+
+      if (!token) {
+        router.replace('/login?next=/admin/users');
+        return;
+      }
+
       const params = new URLSearchParams();
       if (searchTerm.trim()) params.set('search', searchTerm.trim());
       if (roleFilter) params.set('role', roleFilter);
       if (statusFilter) params.set('status', statusFilter);
 
       params.set('_t', Date.now().toString());
-      const token = session?.access_token;
       const res = await fetch(`/api/admin/users?${params.toString()}`, {
         cache: 'no-store',
         headers: {
           'Cache-Control': 'no-cache',
-          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+          Authorization: `Bearer ${token}`,
         }
       });
       const data = await res.json();
       if (res.ok) {
         setUsers(data.users || []);
       } else {
-        showToast('Error', data.error || 'Failed to load users', 'error');
+        const message = data.error || 'Failed to load users';
+        setLoadError(message);
+        showToast('Error', message, 'error');
+        if (res.status === 401) {
+          router.replace('/login?next=/admin/users');
+        }
       }
     } catch {
-      showToast('Network Error', 'Could not load users.', 'error');
+      const message = 'Could not load users.';
+      setLoadError(message);
+      showToast('Network Error', message, 'error');
     } finally {
       setIsLoading(false);
     }
-  }, [searchTerm, roleFilter, statusFilter, showToast]);
+  }, [accessToken, router, searchTerm, roleFilter, statusFilter, showToast, supabase]);
 
   useEffect(() => {
+    if (isAuthLoading) return;
+
+    if (!accessToken) {
+      router.replace('/login?next=/admin/users');
+      return;
+    }
+
     const timer = setTimeout(() => {
       fetchUsers();
     }, 300);
     return () => clearTimeout(timer);
-  }, [fetchUsers]);
+  }, [accessToken, fetchUsers, isAuthLoading, router]);
 
   const handleOpenEdit = (user: AdminUserRecord) => {
     setSelectedUser(user);
@@ -103,7 +132,10 @@ export default function AdminUsersPage() {
     try {
       const res = await fetch('/api/admin/users', {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(accessToken ? { 'Authorization': `Bearer ${accessToken}` } : {}),
+        },
         body: JSON.stringify({
           userId: selectedUser.id,
           role: editRole,
@@ -200,6 +232,14 @@ export default function AdminUsersPage() {
             <div className="p-12">
               <LoadingState message="Fetching member records, subscriptions, and scores..." />
             </div>
+          ) : loadError ? (
+            <div className="p-12 text-center">
+              <h2 className="text-lg font-bold text-error">Couldn&apos;t load member records</h2>
+              <p className="mt-2 text-sm text-on-surface-variant">{loadError}</p>
+              <Button variant="outline" onClick={fetchUsers} className="mt-5 rounded-full">
+                Try Again
+              </Button>
+            </div>
           ) : users.length > 0 ? (
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
@@ -232,10 +272,10 @@ export default function AdminUsersPage() {
                         </span>
                       </td>
                       <td className="py-4 px-4">
-                        {u.subscription?.status === 'active' ? (
+                        {['active', 'trialing'].includes(u.subscription?.status || '') ? (
                           <div className="inline-flex items-center gap-1.5 text-xs text-primary font-semibold">
                             <span className="w-2 h-2 rounded-full bg-primary"></span>
-                            Active ({u.subscription.plan_type})
+                            Active ({u.subscription?.plan_type})
                           </div>
                         ) : u.subscription ? (
                           <span className="text-xs text-on-surface-variant capitalize">{u.subscription.status}</span>
