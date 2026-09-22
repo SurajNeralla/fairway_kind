@@ -228,7 +228,7 @@ export default function AdminCharitiesPage() {
         <form onSubmit={handleSaveCharity} className="space-y-4">
           <Input
             label="Charity Name"
-            placeholder="e.g. Youth on Course Foundation"
+            placeholder="e.g. Akshaya Patra Foundation"
             value={formName}
             onChange={(e) => setFormName(e.target.value)}
             required

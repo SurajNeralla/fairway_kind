@@ -150,10 +150,11 @@ export default function SubscribePage() {
               value={selectedCharity}
               onChange={(e) => setSelectedCharity(e.target.value)}
               options={[
-                { value: 'c1000000-0000-0000-0000-000000000001', label: 'Youth on Course Foundation' },
-                { value: 'c2000000-0000-0000-0000-000000000002', label: 'Clean Oceans & Coastal Wetlands' },
-                { value: 'c3000000-0000-0000-0000-000000000003', label: 'St. Jude Children’s Research Hospital' },
-                { value: 'c4000000-0000-0000-0000-000000000004', label: 'PGA REACH Military Rehabilitation' },
+                { value: 'c1000000-0000-0000-0000-000000000001', label: 'Akshaya Patra Foundation — Nutritious mid-day school meals' },
+                { value: 'c2000000-0000-0000-0000-000000000002', label: 'CRY – Child Rights and You — Child education & healthcare' },
+                { value: 'c3000000-0000-0000-0000-000000000003', label: 'Goonj — Community development & disaster relief' },
+                { value: 'c4000000-0000-0000-0000-000000000004', label: 'Teach For India — Underserved schools education' },
+                { value: 'c5000000-0000-0000-0000-000000000005', label: 'Smile Foundation — Education & livelihood development' },
               ]}
             />
 

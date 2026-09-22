@@ -216,7 +216,7 @@ export default function MyCharityPage() {
                   Active Beneficiary
                 </span>
                 <h2 className="font-headline-sm text-headline-sm font-semibold text-on-surface mt-1">
-                  {selectedCharity?.name || 'Youth on Course Foundation'}
+                  {selectedCharity?.name || 'Akshaya Patra Foundation'}
                 </h2>
               </div>
               <Badge variant="emerald">VERIFIED 501(C)(3)</Badge>
@@ -226,24 +226,24 @@ export default function MyCharityPage() {
             <div className="space-y-4">
               <div className="flex items-start gap-4 p-4 rounded-2xl bg-[#FAF9F5] border border-outline-variant/30">
                 <div className="w-12 h-12 rounded-xl bg-[#E8EFEA] text-[#1B4332] flex items-center justify-center font-bold text-xl flex-shrink-0">
-                  {selectedCharity?.name?.charAt(0) || 'Y'}
+                  {selectedCharity?.name?.charAt(0) || 'A'}
                 </div>
                 <div className="space-y-1">
                   <div className="font-semibold text-on-surface text-base">
                     {selectedCharity?.name}
                   </div>
                   <div className="text-xs text-on-surface-variant leading-relaxed">
-                    {selectedCharity?.description || 'Providing youth with access to life-changing golf opportunities and educational scholarships nationwide.'}
+                    {selectedCharity?.description || 'Provides nutritious mid-day meals to children in schools across India, helping reduce classroom hunger and support education.'}
                   </div>
                   <div className="flex items-center gap-3 pt-2 text-xs text-outline font-medium">
                     <span className="flex items-center gap-1">
                       <Building2 className="w-3.5 h-3.5 text-primary" />
-                      {selectedCharity?.category || 'Youth & Education'}
+                      {selectedCharity?.category || 'Education & Nutrition'}
                     </span>
                     <span>•</span>
                     <span className="flex items-center gap-1 text-emerald-700">
                       <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-                      EIN: {selectedCharity?.ein || '94-3129841'}
+                      EIN: {selectedCharity?.ein || '04-3829104'}
                     </span>
                   </div>
                 </div>
@@ -262,7 +262,7 @@ export default function MyCharityPage() {
                 >
                   {allCharities.map((c) => (
                     <option key={c.id} value={c.id}>
-                      {c.name} ({c.category})
+                      {c.name} — {c.description}
                     </option>
                   ))}
                 </select>

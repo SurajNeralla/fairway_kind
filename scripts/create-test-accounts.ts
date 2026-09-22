@@ -88,7 +88,7 @@ async function createTestAccounts() {
       cancel_at_period_end: false,
     }, { onConflict: 'user_id' });
 
-    console.log('✓ Active subscription ($29/mo, 15% to Youth on Course) seeded for test subscriber!');
+    console.log('✓ Active subscription ($29/mo, 15% to Akshaya Patra Foundation) seeded for test subscriber!');
 
     // Seed 5 sample golf scores (range 1-45, unique dates)
     const sampleScores = [

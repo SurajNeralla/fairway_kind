@@ -142,10 +142,11 @@ export default function SignupPage() {
               onChange={(e) => setSelectedCharity(e.target.value)}
               className="w-full px-3.5 py-2.5 rounded-xl bg-surface-container-low border border-outline-variant/40 text-on-surface text-sm focus:outline-none focus:ring-2 focus:ring-primary"
             >
-              <option value="c1000000-0000-0000-0000-000000000001">Youth on Course Foundation (Youth &amp; Sports Access)</option>
-              <option value="c2000000-0000-0000-0000-000000000002">Clean Oceans &amp; Coastal Wetlands (Environment)</option>
-              <option value="c3000000-0000-0000-0000-000000000003">St. Jude Children’s Research Hospital (Pediatric Health)</option>
-              <option value="c4000000-0000-0000-0000-000000000004">PGA REACH Military Rehabilitation (Veteran Welfare)</option>
+              <option value="c1000000-0000-0000-0000-000000000001">Akshaya Patra Foundation — Nutritious mid-day school meals across India</option>
+              <option value="c2000000-0000-0000-0000-000000000002">CRY – Child Rights and You — Child education, healthcare, and protection</option>
+              <option value="c3000000-0000-0000-0000-000000000003">Goonj — Community development, disaster relief, and rural empowerment</option>
+              <option value="c4000000-0000-0000-0000-000000000004">Teach For India — Educational opportunities and leadership in underserved communities</option>
+              <option value="c5000000-0000-0000-0000-000000000005">Smile Foundation — Education, healthcare, and livelihood development</option>
             </select>
           </div>
 

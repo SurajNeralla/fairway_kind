@@ -145,7 +145,7 @@ export default function CharityInquiriesPage() {
                   <input
                     type="text"
                     required
-                    placeholder="e.g. Clean Oceans Initiative"
+                    placeholder="e.g. Akshaya Patra Foundation"
                     value={formData.charityName}
                     onChange={(e) => setFormData({ ...formData, charityName: e.target.value })}
                     className="w-full px-4 py-2.5 rounded-xl border border-outline-variant/40 bg-surface-container-low text-on-surface text-sm focus:outline-none focus:border-primary"

@@ -366,34 +366,42 @@ INSERT INTO public.charities (id, name, description, category, total_raised, is_
 VALUES
   (
     'c1000000-0000-0000-0000-000000000001',
-    'Youth on Course Foundation',
-    'Providing junior golfers underrepresented in sport access to play for $5 per round at 2,000+ facilities.',
-    'Youth & Sports Access',
+    'Akshaya Patra Foundation',
+    'Provides nutritious mid-day meals to children in schools across India, helping reduce classroom hunger and support education.',
+    'Education & Nutrition',
     384200.00,
     true
   ),
   (
     'c2000000-0000-0000-0000-000000000002',
-    'Clean Oceans & Coastal Wetlands',
-    'Restoring marine ecosystems, protecting coastal golf link habitats, and removing plastic pollutants.',
-    'Environment & Climate',
+    'CRY – Child Rights and You',
+    'Works to protect children''s rights by supporting access to education, healthcare, nutrition, and protection from exploitation.',
+    'Child Rights & Healthcare',
     291500.00,
     true
   ),
   (
     'c3000000-0000-0000-0000-000000000003',
-    'St. Jude Children’s Research Hospital',
-    'Leading the way the world understands, treats and defeats childhood cancer and other life-threatening diseases.',
-    'Pediatric Health',
-    520800.00,
+    'Goonj',
+    'Uses clothing and other essential materials as a resource for community development, disaster relief, and rural empowerment.',
+    'Community Development & Relief',
+    410000.00,
     true
   ),
   (
     'c4000000-0000-0000-0000-000000000004',
-    'Veterans Golf Healing Alliance',
-    'Empowering military veterans through adaptive golf rehabilitation and mental health support networks.',
-    'Veteran Welfare',
-    185400.00,
+    'Teach For India',
+    'Works to improve educational opportunities for children from underserved communities through teaching and leadership programs.',
+    'Education & Leadership',
+    325000.00,
+    true
+  ),
+  (
+    'c5000000-0000-0000-0000-000000000005',
+    'Smile Foundation',
+    'Supports underserved communities through initiatives focused on education, healthcare, livelihood development, and social empowerment.',
+    'Healthcare & Livelihood',
+    275000.00,
     true
   )
 ON CONFLICT (id) DO UPDATE SET

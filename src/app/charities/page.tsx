@@ -202,10 +202,11 @@ export default function CharitiesPage() {
               onChange={(e) => setSelectedCategory(e.target.value)}
               options={[
                 { value: 'all', label: 'All Causes' },
-                { value: 'Youth & Sports Access', label: 'Youth & Sports' },
-                { value: 'Environment & Climate', label: 'Environment' },
-                { value: 'Pediatric Health', label: 'Health & Research' },
-                { value: 'Veteran Welfare', label: 'Veteran Welfare' },
+                { value: 'Education & Nutrition', label: 'Education & Nutrition' },
+                { value: 'Child Rights & Healthcare', label: 'Child Rights & Healthcare' },
+                { value: 'Community Development & Relief', label: 'Community Development' },
+                { value: 'Education & Leadership', label: 'Education & Leadership' },
+                { value: 'Healthcare & Livelihood', label: 'Healthcare & Livelihood' },
               ]}
             />
           </div>

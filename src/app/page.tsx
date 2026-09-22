@@ -228,22 +228,22 @@ export default function HomePage() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Charity 1: Youth on Course */}
+            {/* Charity 1: Akshaya Patra Foundation */}
             <div className="bg-surface-container-lowest border border-outline-variant/40 rounded-3xl p-8 custom-card-shadow flex flex-col justify-between">
               <div>
                 <div className="flex items-start justify-between gap-4 mb-6">
                   <div>
                     <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-surface-container text-primary font-label-sm text-label-sm mb-2 font-medium">
-                      Youth &amp; Community Access
+                      Education &amp; Nutrition
                     </span>
-                    <h3 className="font-headline-sm text-headline-sm text-on-surface font-semibold">Youth on Course Foundation</h3>
+                    <h3 className="font-headline-sm text-headline-sm text-on-surface font-semibold">Akshaya Patra Foundation</h3>
                   </div>
                   <div className="w-12 h-12 rounded-full bg-primary-fixed/30 flex items-center justify-center text-primary">
-                    <span className="material-symbols-outlined text-2xl">school</span>
+                    <span className="material-symbols-outlined text-2xl">restaurant</span>
                   </div>
                 </div>
                 <p className="text-on-surface-variant font-body-md text-body-md mb-6 leading-relaxed">
-                  Eliminating economic barriers so junior golfers from underrepresented backgrounds can play for $5 or less per round at premier facilities nationwide.
+                  Provides nutritious mid-day meals to children in schools across India, helping reduce classroom hunger and support education.
                 </p>
 
                 {/* Upcoming Golf Event */}
@@ -252,7 +252,7 @@ export default function HomePage() {
                     <span className="material-symbols-outlined text-base">event</span>
                     <span>Upcoming Charity Golf Day</span>
                   </div>
-                  <p className="text-on-surface font-body-sm text-body-sm">Annual Junior Invitational &amp; Charity Fundraiser — October 18, 2026</p>
+                  <p className="text-on-surface font-body-sm text-body-sm">Annual Mid-Day Meal Invitational &amp; Charity Fundraiser — October 18, 2026</p>
                 </div>
               </div>
 
@@ -262,30 +262,30 @@ export default function HomePage() {
                   Verified 501(c)(3) Partner
                 </span>
                 <button 
-                  onClick={() => handleSelectCharity('Youth on Course Foundation')}
+                  onClick={() => handleSelectCharity('Akshaya Patra Foundation')}
                   className="px-4 py-2 rounded-full bg-surface-container hover:bg-surface-container-high text-primary font-label-sm text-label-sm font-semibold transition-colors active:scale-95"
                 >
-                  {selectedCharity === 'Youth on Course Foundation' ? '✓ Selected' : 'Select as My Charity'}
+                  {selectedCharity === 'Akshaya Patra Foundation' ? '✓ Selected' : 'Select as My Charity'}
                 </button>
               </div>
             </div>
 
-            {/* Charity 2: Clean Oceans & Wetlands */}
+            {/* Charity 2: CRY – Child Rights and You */}
             <div className="bg-surface-container-lowest border border-outline-variant/40 rounded-3xl p-8 custom-card-shadow flex flex-col justify-between">
               <div>
                 <div className="flex items-start justify-between gap-4 mb-6">
                   <div>
                     <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-surface-container text-primary font-label-sm text-label-sm mb-2 font-medium">
-                      Ecological Stewardship
+                      Child Rights &amp; Healthcare
                     </span>
-                    <h3 className="font-headline-sm text-headline-sm text-on-surface font-semibold">Clean Oceans &amp; Coastal Wetlands</h3>
+                    <h3 className="font-headline-sm text-headline-sm text-on-surface font-semibold">CRY – Child Rights and You</h3>
                   </div>
                   <div className="w-12 h-12 rounded-full bg-primary-fixed/30 flex items-center justify-center text-primary">
-                    <span className="material-symbols-outlined text-2xl">water_drop</span>
+                    <span className="material-symbols-outlined text-2xl">favorite</span>
                   </div>
                 </div>
                 <p className="text-on-surface-variant font-body-md text-body-md mb-6 leading-relaxed">
-                  Revitalizing coastal ecosystems, restoring critical water habitats adjacent to coastal links courses, and eliminating synthetic runoff.
+                  Works to protect children&apos;s rights by supporting access to education, healthcare, nutrition, and protection from exploitation.
                 </p>
 
                 {/* Upcoming Golf Event */}
@@ -294,7 +294,7 @@ export default function HomePage() {
                     <span className="material-symbols-outlined text-base">event</span>
                     <span>Upcoming Charity Golf Day</span>
                   </div>
-                  <p className="text-on-surface font-body-sm text-body-sm">Coastal Links Scramble for Conservation — November 07, 2026</p>
+                  <p className="text-on-surface font-body-sm text-body-sm">Child Rights Charity Scramble for Education — November 07, 2026</p>
                 </div>
               </div>
 
@@ -304,10 +304,10 @@ export default function HomePage() {
                   Verified 501(c)(3) Partner
                 </span>
                 <button 
-                  onClick={() => handleSelectCharity('Clean Oceans & Coastal Wetlands')}
+                  onClick={() => handleSelectCharity('CRY – Child Rights and You')}
                   className="px-4 py-2 rounded-full bg-surface-container hover:bg-surface-container-high text-primary font-label-sm text-label-sm font-semibold transition-colors active:scale-95"
                 >
-                  {selectedCharity === 'Clean Oceans & Coastal Wetlands' ? '✓ Selected' : 'Select as My Charity'}
+                  {selectedCharity === 'CRY – Child Rights and You' ? '✓ Selected' : 'Select as My Charity'}
                 </button>
               </div>
             </div>

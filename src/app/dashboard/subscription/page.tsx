@@ -273,11 +273,16 @@ function SubscriptionManager() {
               onChange={(e) => setSelectedCharityId(e.target.value)}
               options={
                 charities.length > 0
-                  ? charities.map((c) => ({ value: c.id, label: c.name }))
+                  ? charities.map((c) => ({
+                      value: c.id,
+                      label: `${c.name} — ${c.description || ''}`,
+                    }))
                   : [
-                      { value: 'c1', label: 'Youth on Course Foundation' },
-                      { value: 'c2', label: 'Clean Oceans & Coastal Wetlands' },
-                      { value: 'c3', label: 'St. Jude Children’s Research Hospital' },
+                      { value: 'c1000000-0000-0000-0000-000000000001', label: 'Akshaya Patra Foundation — Nutritious mid-day school meals' },
+                      { value: 'c2000000-0000-0000-0000-000000000002', label: 'CRY – Child Rights and You — Child education & healthcare' },
+                      { value: 'c3000000-0000-0000-0000-000000000003', label: 'Goonj — Community development & disaster relief' },
+                      { value: 'c4000000-0000-0000-0000-000000000004', label: 'Teach For India — Underserved schools education' },
+                      { value: 'c5000000-0000-0000-0000-000000000005', label: 'Smile Foundation — Education & livelihood development' },
                     ]
               }
             />
