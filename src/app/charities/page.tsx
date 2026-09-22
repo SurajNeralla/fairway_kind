@@ -99,6 +99,31 @@ export default function CharitiesPage() {
     }
   };
 
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('donation') === 'success') {
+        const charityName = params.get('charity') || 'your selected cause';
+        const amt = params.get('amount') || 'your contribution';
+        showToast(
+          'Donation Confirmed via Stripe!',
+          `Thank you for your independent gift of $${amt} to ${charityName}. An official tax receipt has been emailed by Stripe.`,
+          'success'
+        );
+        window.history.replaceState({}, '', window.location.pathname);
+      } else if (params.get('donation') === 'cancelled') {
+        showToast('Donation Cancelled', 'Your direct donation session was cancelled.', 'info');
+        window.history.replaceState({}, '', window.location.pathname);
+      }
+    }
+  }, [showToast]);
+
+  useEffect(() => {
+    if (user?.email && !donorEmail) {
+      setDonorEmail(user.email);
+    }
+  }, [user, donorEmail]);
+
   const handleOpenDonation = (charity: CharityItem) => {
     setSelectedCharityForDonation(charity);
     setDonationModalOpen(true);
@@ -106,22 +131,43 @@ export default function CharitiesPage() {
 
   const handleExecuteDonation = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!selectedCharityForDonation) return;
+
     const amountNum = parseFloat(donationAmount);
-    if (isNaN(amountNum) || amountNum <= 0) {
-      showToast('Invalid Amount', 'Please enter a valid donation amount.', 'error');
+    if (isNaN(amountNum) || amountNum < 1) {
+      showToast('Invalid Amount', 'Please enter a donation amount of at least $1.00.', 'error');
+      return;
+    }
+
+    if (!donorEmail) {
+      showToast('Email Required', 'Please provide an email address for your official tax receipt.', 'error');
       return;
     }
 
     setIsDonating(true);
-    await new Promise((resolve) => setTimeout(resolve, 600));
-    setIsDonating(false);
-    setDonationModalOpen(false);
+    try {
+      const res = await fetch('/api/charities/donate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          charityId: selectedCharityForDonation.id,
+          amount: amountNum,
+          donorEmail,
+          donorName,
+        }),
+      });
 
-    showToast(
-      'Donation Confirmed!',
-      `Thank you for your independent contribution of $${amountNum.toFixed(2)} to ${selectedCharityForDonation?.name}. A tax receipt will be sent to your email.`,
-      'success'
-    );
+      const data = await res.json();
+      if (!res.ok || !data.url) {
+        throw new Error(data.error || 'Failed to initialize Stripe payment screen');
+      }
+
+      showToast('Redirecting to Stripe...', 'Transferring to secure Stripe Checkout payment screen...', 'info');
+      window.location.href = data.url;
+    } catch (err: any) {
+      showToast('Donation Error', err.message || 'Payment initialization failed', 'error');
+      setIsDonating(false);
+    }
   };
 
   return (
@@ -304,9 +350,15 @@ export default function CharitiesPage() {
             required
           />
 
-          <div className="p-3 rounded-xl bg-surface-container-low border border-outline-variant/20 flex items-center justify-between text-xs">
-            <span className="text-on-surface-variant">Contribution Total:</span>
-            <span className="font-bold text-primary text-sm">${parseFloat(donationAmount || '0').toFixed(2)}</span>
+          <div className="p-3.5 rounded-xl bg-surface-container-low border border-outline-variant/20 space-y-1 text-xs">
+            <div className="flex items-center justify-between">
+              <span className="text-on-surface-variant font-medium">Contribution Total:</span>
+              <span className="font-bold text-primary text-base">${parseFloat(donationAmount || '0').toFixed(2)}</span>
+            </div>
+            <div className="text-[11px] text-on-surface-variant flex items-center gap-1.5 pt-1 border-t border-outline-variant/20">
+              <ShieldCheck className="w-3.5 h-3.5 text-primary shrink-0" />
+              <span>100% Tax-Deductible • 256-Bit SSL Encrypted by Stripe</span>
+            </div>
           </div>
 
           <div className="flex justify-end gap-3 pt-2">
@@ -323,7 +375,7 @@ export default function CharitiesPage() {
               isLoading={isDonating}
               leftIcon={<Heart className="w-4 h-4" />}
             >
-              Complete Independent Gift
+              Proceed to Stripe Checkout &rarr;
             </Button>
           </div>
         </form>
