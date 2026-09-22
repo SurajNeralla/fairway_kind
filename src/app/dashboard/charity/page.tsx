@@ -24,6 +24,7 @@ import { Charity, Subscription } from '@/lib/types';
 import { createClient } from '@/lib/supabase/client';
 import { calculateCharityContribution, sanitizeCharityPercentage } from '@/lib/charity/calculator';
 import { DashboardSubNav } from '@/components/dashboard/DashboardSubNav';
+import { PanelFooter } from '@/components/layout/PanelFooter';
 
 const PRESET_PERCENTAGES = [10, 15, 20, 25, 50, 100];
 
@@ -438,6 +439,8 @@ export default function MyCharityPage() {
           )}
         </div>
       </div>
+
+      <PanelFooter variant="subscriber" className="mt-16" />
     </div>
   );
 }

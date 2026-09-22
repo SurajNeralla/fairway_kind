@@ -15,6 +15,7 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { Modal } from '@/components/ui/Modal';
 import { useToast } from '@/components/ui/Toast';
 import { DashboardSubNav } from '@/components/dashboard/DashboardSubNav';
+import { PanelFooter } from '@/components/layout/PanelFooter';
 
 type ProofStatus = 'pending_submission' | 'submitted' | 'approved' | 'rejected';
 type PayoutStatus = 'unpaid' | 'pending' | 'paid' | 'failed';
@@ -604,6 +605,8 @@ export default function MyWinningsPage() {
           )}
         </Modal>
       </div>
+
+      <PanelFooter variant="subscriber" className="mt-16" />
     </div>
   );
 }

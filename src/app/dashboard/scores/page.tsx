@@ -14,6 +14,7 @@ import { useToast } from '@/components/ui/Toast';
 import { GolfScore } from '@/lib/types';
 import { validateScoreValue, validateScoreDate } from '@/lib/scores/score-engine';
 import { DashboardSubNav } from '@/components/dashboard/DashboardSubNav';
+import { PanelFooter } from '@/components/layout/PanelFooter';
 
 export default function GolfScoresPage() {
   const { showToast } = useToast();
@@ -368,6 +369,8 @@ export default function GolfScoresPage() {
           )}
         </Modal>
       </div>
+
+      <PanelFooter variant="subscriber" className="mt-16" />
     </div>
   );
 }

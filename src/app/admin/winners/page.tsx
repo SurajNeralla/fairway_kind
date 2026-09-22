@@ -15,6 +15,7 @@ import { Modal } from '@/components/ui/Modal';
 import { LoadingState } from '@/components/ui/LoadingState';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { useToast } from '@/components/ui/Toast';
+import { PanelFooter } from '@/components/layout/PanelFooter';
 
 type ProofStatus = 'pending_submission' | 'submitted' | 'approved' | 'rejected';
 type PayoutStatus = 'unpaid' | 'pending' | 'paid' | 'failed';
@@ -704,6 +705,8 @@ export default function AdminWinnersPage() {
           </div>
         )}
       </Modal>
+
+      <PanelFooter variant="admin" className="mt-16" />
     </div>
   );
 }

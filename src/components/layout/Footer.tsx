@@ -130,12 +130,12 @@ export const Footer: React.FC = () => {
               </Link>
             </li>
             <li>
-              <Link 
-                href="/charity-inquiries"
+              <a 
+                href="mailto:support@fairwaykind.com?subject=501(c)(3)%20Charity%20Partner%20Inquiry"
                 className="text-label-sm font-label-sm text-on-surface-variant dark:text-on-tertiary-container hover:text-primary dark:hover:text-inverse-primary transition-colors"
               >
                 501(c)(3) Inquiries
-              </Link>
+              </a>
             </li>
           </ul>
         </div>

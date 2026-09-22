@@ -14,6 +14,7 @@ import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@
 import { LoadingState } from '@/components/ui/LoadingState';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { useToast } from '@/components/ui/Toast';
+import { PanelFooter } from '@/components/layout/PanelFooter';
 import { useAuth } from '@/lib/auth/auth-context';
 import { createClient } from '@/lib/supabase/client';
 
@@ -410,6 +411,8 @@ export default function AdminUsersPage() {
           </div>
         </Modal>
       </div>
+
+      <PanelFooter variant="admin" className="mt-16" />
     </div>
   );
 }

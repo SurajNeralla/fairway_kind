@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { LoadingState } from '@/components/ui/LoadingState';
 import { useToast } from '@/components/ui/Toast';
+import { PanelFooter } from '@/components/layout/PanelFooter';
 
 interface ReportsData {
   userStats: {
@@ -242,6 +243,8 @@ export default function AdminReportsPage() {
           </div>
         ) : null}
       </div>
+
+      <PanelFooter variant="admin" className="mt-16" />
     </div>
   );
 }

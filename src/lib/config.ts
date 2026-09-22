@@ -14,6 +14,10 @@ export const APP_CONFIG = {
       process.env.SUPABASE_ANON_KEY ||
       process.env.SUPABASE_PUBLISHABLE_KEY ||
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJqcXFneGN6eXhybmt2anZsbm5yIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk5ODcxMzUsImV4cCI6MjEwNTU2MzEzNX0.01db-y8FEh_P1lstqzyuo6-m5CrhChSBo7jVs_clFJw',
+    serviceRoleKey:
+      process.env.SUPABASE_SERVICE_ROLE_KEY ||
+      process.env.SUPABASE_SECRET_KEY ||
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJqcXFneGN6eXhybmt2anZsbm5yIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4OTk4NzEzNSwiZXhwIjoyMTA1NTYzMTM1fQ.irHkBT14EMUqoW5knQMdjUBZdxgzZ6kGtIvTp2ZfD_8',
   },
   stripe: {
     publishableKey:

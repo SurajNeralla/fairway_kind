@@ -14,6 +14,7 @@ import { LoadingState } from '@/components/ui/LoadingState';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { useToast } from '@/components/ui/Toast';
 import { Charity } from '@/lib/types';
+import { PanelFooter } from '@/components/layout/PanelFooter';
 
 export default function AdminCharitiesPage() {
   const { showToast } = useToast();
@@ -272,6 +273,8 @@ export default function AdminCharitiesPage() {
           </Button>
         </form>
       </Modal>
+
+      <PanelFooter variant="admin" className="mt-16" />
     </div>
   );
 }

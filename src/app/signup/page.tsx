@@ -39,40 +39,35 @@ export default function SignupPage() {
 
     setIsLoading(true);
     try {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            full_name: fullName,
-            role: 'user',
-            charity_id: selectedCharity,
-          },
-        },
+      const res = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fullName,
+          email,
+          password,
+          charityId: selectedCharity,
+        }),
       });
 
-      if (error) {
-        setErrorMessage(error.message);
-        showToast('Registration Failed', error.message, 'error');
-      } else if (data.user) {
-        // Explicitly sync profile table
-        await supabase.from('profiles').upsert({
-          id: data.user.id,
-          email: email,
-          full_name: fullName,
-          role: 'user',
-        });
+      const resData = await res.json();
 
-        // Initialize subscription record with chosen charity if not exists
-        await supabase.from('subscriptions').upsert({
-          user_id: data.user.id,
-          stripe_customer_id: `cus_new_${data.user.id.substring(0, 8)}`,
-          status: 'incomplete',
-          plan_type: 'monthly',
-          charity_id: selectedCharity,
-          voluntary_charity_percent: 10.00,
-        }, { onConflict: 'user_id' });
+      if (!res.ok) {
+        setErrorMessage(resData.error || 'Failed to create account.');
+        showToast('Registration Failed', resData.error || 'Failed to create account.', 'error');
+        return;
+      }
 
+      // Automatically sign in the user now that their account is pre-confirmed
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (signInError) {
+        showToast('Account Created!', 'Please sign in with your credentials.', 'success');
+        router.push(`/login?email=${encodeURIComponent(email)}`);
+      } else {
         showToast('Account Created!', 'Welcome to FairwayKind.', 'success');
         router.push(`/subscribe?charity=${selectedCharity}`);
         router.refresh();

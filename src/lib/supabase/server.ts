@@ -32,7 +32,7 @@ export function createAdminClient() {
   const serviceRoleKey =
     process.env.SUPABASE_SERVICE_ROLE_KEY ||
     process.env.SUPABASE_SECRET_KEY ||
-    APP_CONFIG.supabase.anonKey;
+    APP_CONFIG.supabase.serviceRoleKey;
   return createSupabaseClient(
     APP_CONFIG.supabase.url,
     serviceRoleKey,

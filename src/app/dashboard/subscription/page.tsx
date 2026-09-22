@@ -13,6 +13,7 @@ import { Subscription, Charity } from '@/lib/types';
 import { getStatusBadgeVariant } from '@/lib/subscription/access';
 import { LoadingState } from '@/components/ui/LoadingState';
 import { DashboardSubNav } from '@/components/dashboard/DashboardSubNav';
+import { PanelFooter } from '@/components/layout/PanelFooter';
 
 function SubscriptionManager() {
   const searchParams = useSearchParams();
@@ -343,6 +344,8 @@ function SubscriptionManager() {
           </div>
         </div>
       </div>
+
+      <PanelFooter variant="subscriber" className="mt-16" />
     </div>
   );
 }

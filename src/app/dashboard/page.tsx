@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { FairwayKindLogo } from '@/components/ui/Logo';
+import { PanelFooter } from '@/components/layout/PanelFooter';
 import { useAuth } from '@/lib/auth/auth-context';
 import { useToast } from '@/components/ui/Toast';
 
@@ -765,27 +766,8 @@ export default function SubscriberDashboard() {
             </div>
           </section>
 
-          {/* ================= EDITORIAL FOOTER ================= */}
-          <footer className="mt-8 border-t border-outline-variant/30 py-10 text-on-surface-variant">
-            <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-              <div className="flex items-center gap-3">
-                <span className="text-headline-sm font-headline-sm font-semibold text-primary">FairwayKind</span>
-                <span className="text-outline">|</span>
-                <span className="text-body-sm text-outline">Feel, Not Fairway.</span>
-              </div>
-              <div className="flex flex-wrap items-center gap-6 text-label-sm">
-                <span className="hover:text-primary transition-colors cursor-pointer">Terms of Service</span>
-                <span className="hover:text-primary transition-colors cursor-pointer">Privacy Policy</span>
-                <Link href="/charities" className="hover:text-primary transition-colors">Charity Partners</Link>
-                <span className="hover:text-primary transition-colors cursor-pointer">Responsible Play</span>
-                <a href="#impact" className="hover:text-primary transition-colors">Impact Report</a>
-                <a href="mailto:support@fairwaykind.com" className="hover:text-primary transition-colors">Contact Us</a>
-              </div>
-            </div>
-            <div className="mt-6 text-center md:text-left text-xs text-outline leading-relaxed">
-              © 2024 FairwayKind Technologies Inc. All rights reserved. Skill-based performance draws with philanthropic allocation; strictly non-gambling mechanics.
-            </div>
-          </footer>
+          {/* ================= SUBSCRIBER PANEL FOOTER ================= */}
+          <PanelFooter variant="subscriber" className="mt-8" />
         </div>
       </main>
 

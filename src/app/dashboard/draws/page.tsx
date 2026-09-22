@@ -6,6 +6,7 @@ import { Trophy } from 'lucide-react';
 import { LoadingState } from '@/components/ui/LoadingState';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { DashboardSubNav } from '@/components/dashboard/DashboardSubNav';
+import { PanelFooter } from '@/components/layout/PanelFooter';
 import { Draw } from '@/lib/types';
 
 export default function UserDrawHistoryPage() {
@@ -104,6 +105,8 @@ export default function UserDrawHistoryPage() {
           />
         )}
       </div>
+
+      <PanelFooter variant="subscriber" className="mt-16" />
     </div>
   );
 }

@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { FairwayKindLogo } from '@/components/ui/Logo';
+import { PanelFooter } from '@/components/layout/PanelFooter';
 import { useAuth } from '@/lib/auth/auth-context';
 import { useToast } from '@/components/ui/Toast';
 import { Modal } from '@/components/ui/Modal';
@@ -1250,23 +1251,7 @@ export default function AdminDashboardPage() {
         </div>
 
         {/* ======================== SHARED FOOTER COMPONENT ======================== */}
-        <footer className="bg-surface-container border-t border-outline-variant/30 mt-auto">
-          <div className="max-w-7xl mx-auto px-6 md:px-12 py-12 flex flex-col md:flex-row items-center justify-between gap-6">
-            <div className="flex items-center gap-3">
-              <FairwayKindLogo className="h-10 w-auto" />
-              <span className="text-on-surface-variant text-body-sm font-body-sm ml-2">Admin Control Environment</span>
-            </div>
-            <p className="font-body-sm text-body-sm text-on-surface-variant text-center md:text-left max-w-xl">
-              © 2024 FairwayKind Technologies Inc. All rights reserved. Skill-based performance draws with philanthropic allocation; strictly non-gambling mechanics.
-            </p>
-            <div className="flex flex-wrap items-center gap-4 text-label-sm font-label-sm text-on-surface-variant">
-              <span className="hover:text-primary transition-colors cursor-pointer">Terms of Service</span>
-              <span className="hover:text-primary transition-colors cursor-pointer">Privacy Policy</span>
-              <span className="hover:text-primary transition-colors cursor-pointer">Responsible Play</span>
-              <a href="/#impact" className="hover:text-primary transition-colors">Impact Report</a>
-            </div>
-          </div>
-        </footer>
+        <PanelFooter variant="admin" />
       </main>
     </div>
   );
