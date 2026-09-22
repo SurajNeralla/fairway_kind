@@ -3,11 +3,16 @@ export const APP_CONFIG = {
   description: 'Feel, Not Fairway — Modern Performance & Philanthropy',
   url: process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
   supabase: {
+    // Support both standard names and Vercel-generated Supabase integration names
     url: process.env.NEXT_PUBLIC_SUPABASE_URL || '',
-    anonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '',
+    anonKey:
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+      '',
   },
   stripe: {
-    publishableKey: process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '',
+    publishableKey:
+      process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '',
   },
   draw: {
     minScore: 1,
