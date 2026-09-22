@@ -27,11 +27,6 @@ export default function HomePage() {
       {/* 2. HERO SECTION */}
       <section className="relative pt-12 pb-16 md:pt-20 md:pb-24 overflow-hidden bg-[#FAF9F5]">
         <div className="max-w-4xl mx-auto px-6 text-center flex flex-col items-center">
-          {/* Editorial Pill Badge */}
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#ECECE5] text-[#3A3F3C] font-semibold text-xs tracking-wider uppercase mb-8">
-            <span className="w-2 h-2 rounded-full bg-[#1B4332]"></span>
-            <span>PURPOSE-DRIVEN PERFORMANCE REWARDS</span>
-          </div>
 
           {/* Main Headline */}
           <h1 className="text-6xl sm:text-7xl md:text-8xl font-extrabold text-[#191C1A] tracking-tight leading-[1.05] mb-6">
