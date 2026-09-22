@@ -53,13 +53,13 @@ const PROOF_STATUS_CONFIG: Record<ProofStatus, { label: string; color: string; i
     description: 'Please upload your scorecard or proof of play to proceed.',
   },
   submitted: {
-    label: 'Under Admin Review',
+    label: 'Waiting for Validation',
     color: 'cyan',
-    icon: <Eye className="w-4 h-4 text-primary" />,
-    description: 'Your proof has been submitted. Our compliance team is reviewing it.',
+    icon: <Clock className="w-4 h-4 text-primary" />,
+    description: 'Your scorecard has been submitted and is waiting for validation. Platform administrators are reviewing it.',
   },
   approved: {
-    label: 'Proof Approved',
+    label: 'Proof Validated & Certified',
     color: 'emerald',
     icon: <CheckCircle2 className="w-4 h-4 text-primary" />,
     description: 'Your score has been certified. Payout is scheduled for release.',
@@ -73,8 +73,8 @@ const PROOF_STATUS_CONFIG: Record<ProofStatus, { label: string; color: string; i
 };
 
 const PAYOUT_STATUS_CONFIG: Record<PayoutStatus, { label: string; color: string }> = {
-  unpaid: { label: 'Awaiting Proof', color: 'slate' },
-  pending: { label: 'Pending', color: 'amber' },
+  unpaid: { label: 'Awaiting Validation', color: 'slate' },
+  pending: { label: 'Pending Payout', color: 'amber' },
   paid: { label: 'Paid', color: 'emerald' },
   failed: { label: 'Failed', color: 'rose' },
 };
@@ -100,8 +100,13 @@ export default function MyWinningsPage() {
       const res = await fetch('/api/winners');
       const data = await res.json();
       if (res.ok && data.winners?.length > 0) {
-        setWinners(data.winners);
+        const mapped = data.winners.map((w: WinnerRecord) => {
+          const stored = typeof window !== 'undefined' ? localStorage.getItem(`proof_status_${w.id}`) : null;
+          return stored ? { ...w, proof_status: stored as ProofStatus } : w;
+        });
+        setWinners(mapped);
       } else {
+        const stored = typeof window !== 'undefined' ? localStorage.getItem('proof_status_w1') : null;
         setWinners([
           {
             id: 'w1',
@@ -109,7 +114,7 @@ export default function MyWinningsPage() {
             match_count: 4,
             prize_tier: 'tier_4',
             prize_amount: 1250,
-            proof_status: 'pending_submission',
+            proof_status: (stored as ProofStatus) || 'pending_submission',
             payout_status: 'unpaid',
             created_at: '2024-10-31T23:59:59Z',
             updated_at: '2024-10-31T23:59:59Z',
@@ -156,13 +161,15 @@ export default function MyWinningsPage() {
       }
 
       if (res.ok) {
+        if (typeof window !== 'undefined') {
+          localStorage.setItem(`proof_status_${winnerId}`, 'submitted');
+        }
         setWinners(prev =>
           prev.map(w =>
             w.id === winnerId ? { ...w, proof_status: 'submitted' } : w
           )
         );
-        showToast('Proof Submitted!', 'Your scorecard has been uploaded for compliance review.', 'success');
-        await fetchWinners();
+        showToast('Proof Submitted!', 'Your scorecard has been uploaded. Status is now Waiting for Validation.', 'success');
       } else {
         showToast('Upload Failed', data.error || 'Could not upload proof.', 'error');
       }
@@ -297,41 +304,54 @@ export default function MyWinningsPage() {
                   </div>
 
                   {/* Action Zone */}
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 pt-3 border-t border-surface-container">
-                    {canUpload && (
-                      <div>
-                        <input
-                          ref={winner.id === uploadingId ? fileInputRef : undefined}
-                          type="file"
-                          id={`upload-${winner.id}`}
-                          className="hidden"
-                          accept=".pdf,.jpg,.jpeg,.png,.webp"
-                          onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            if (file) handleFileUpload(winner.id, file);
-                          }}
-                        />
-                        <Button
-                          variant="gold"
-                          size="sm"
-                          isLoading={isUploading}
-                          leftIcon={<Upload className="w-4 h-4" />}
-                          onClick={() => {
-                            document.getElementById(`upload-${winner.id}`)?.click();
-                          }}
-                        >
-                          {winner.proof_status === 'rejected' ? 'Re-upload Scorecard' : 'Upload Scorecard Proof'}
-                        </Button>
-                      </div>
-                    )}
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      leftIcon={<Eye className="w-4 h-4" />}
-                      onClick={() => openDetail(winner)}
-                    >
-                      View Full Details
-                    </Button>
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-3 border-t border-surface-container">
+                    <div className="flex items-center gap-3">
+                      {canUpload ? (
+                        <div>
+                          <input
+                            ref={winner.id === uploadingId ? fileInputRef : undefined}
+                            type="file"
+                            id={`upload-${winner.id}`}
+                            className="hidden"
+                            accept=".pdf,.jpg,.jpeg,.png,.webp"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) handleFileUpload(winner.id, file);
+                            }}
+                          />
+                          <Button
+                            variant="gold"
+                            size="sm"
+                            isLoading={isUploading}
+                            leftIcon={<Upload className="w-4 h-4" />}
+                            onClick={() => {
+                              document.getElementById(`upload-${winner.id}`)?.click();
+                            }}
+                          >
+                            {winner.proof_status === 'rejected' ? 'Re-upload Scorecard' : 'Upload Scorecard Proof'}
+                          </Button>
+                        </div>
+                      ) : winner.proof_status === 'submitted' ? (
+                        <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-primary-fixed/25 border border-primary/25 text-xs font-semibold text-primary">
+                          <Clock className="w-4 h-4 text-primary shrink-0" />
+                          <span>Waiting for Validation</span>
+                        </div>
+                      ) : winner.proof_status === 'approved' ? (
+                        <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-emerald-50 border border-emerald-200 text-xs font-semibold text-emerald-800">
+                          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                          <span>Scorecard Certified</span>
+                        </div>
+                      ) : null}
+
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        leftIcon={<Eye className="w-4 h-4" />}
+                        onClick={() => openDetail(winner)}
+                      >
+                        View Full Details
+                      </Button>
+                    </div>
                   </div>
                 </div>
               );
