@@ -117,7 +117,7 @@ function SubscriptionManager() {
         }),
       });
 
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         showToast('Update Failed', data.error || 'Failed to update charity settings', 'error');
       } else {
@@ -134,17 +134,17 @@ function SubscriptionManager() {
   const handleOpenStripePortal = async () => {
     setIsProcessing(true);
     try {
-      const res = await fetch('/api/stripe/portal', {
+      const res = await fetch('/api/portal', {
         method: 'POST',
       });
-      const data = await res.json();
-      if (data.url) {
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.url) {
         window.location.href = data.url;
       } else {
-        showToast('Portal Error', data.error || 'Failed to open billing portal.', 'error');
+        showToast('Portal Unavailable', data.error || 'Stripe Customer Portal is currently unavailable.', 'info');
       }
     } catch (err: any) {
-      showToast('Error', err.message, 'error');
+      showToast('Portal Error', err.message || 'Failed to open billing portal.', 'error');
     } finally {
       setIsProcessing(false);
     }
@@ -163,7 +163,7 @@ function SubscriptionManager() {
         }),
       });
 
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         throw new Error(data.error || 'Failed to update simulation state');
       }
@@ -171,7 +171,7 @@ function SubscriptionManager() {
       showToast('State Simulated', `Subscription status set to ${targetStatus.toUpperCase()}`, 'info');
       await fetchData();
     } catch (err: any) {
-      showToast('Simulation Error', err.message, 'error');
+      showToast('Simulation Error', err.message || 'Simulation failed.', 'error');
     } finally {
       setIsProcessing(false);
     }

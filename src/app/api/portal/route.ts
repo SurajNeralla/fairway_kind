@@ -25,14 +25,46 @@ export async function POST(request: Request) {
     }
 
     const baseUrl = APP_CONFIG.url;
+    let customerId = subscription?.stripe_customer_id;
 
     if (process.env.STRIPE_SECRET_KEY && !process.env.STRIPE_SECRET_KEY.includes('mock')) {
-      const portalSession = await stripe.billingPortal.sessions.create({
-        customer: subscription.stripe_customer_id,
-        return_url: `${baseUrl}/dashboard/subscription`,
-      });
+      let isValidCustomer = false;
+      if (customerId && !customerId.startsWith('cus_new_') && !customerId.startsWith('pending_') && !customerId.startsWith('cus_mock_')) {
+        try {
+          const cust = await stripe.customers.retrieve(customerId);
+          if (cust && !('deleted' in cust && cust.deleted)) {
+            isValidCustomer = true;
+          }
+        } catch {
+          isValidCustomer = false;
+        }
+      }
 
-      return NextResponse.json({ url: portalSession.url });
+      if (!isValidCustomer) {
+        try {
+          const newCust = await stripe.customers.create({
+            email: user.email,
+            metadata: { user_id: user.id },
+          });
+          customerId = newCust.id;
+          await supabase.from('subscriptions').update({ stripe_customer_id: customerId }).eq('user_id', user.id);
+        } catch (e: any) {
+          console.error('Failed to create customer for portal:', e);
+        }
+      }
+
+      try {
+        const portalSession = await stripe.billingPortal.sessions.create({
+          customer: customerId,
+          return_url: `${baseUrl}/dashboard/subscription`,
+        });
+
+        return NextResponse.json({ url: portalSession.url });
+      } catch (portalErr: any) {
+        return NextResponse.json({
+          error: portalErr.message || 'Stripe Customer Portal is not configured in this mode.',
+        }, { status: 400 });
+      }
     }
 
     // Dev Simulation Mode: Toggle subscription cancellation status for local testing

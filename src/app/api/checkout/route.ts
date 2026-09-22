@@ -41,8 +41,21 @@ export async function POST(request: Request) {
 
     let customerId = existingSub?.stripe_customer_id;
 
-    // Create Stripe Customer if not existing (or test mode mock)
-    if (!customerId) {
+    // Verify if customer exists in Stripe (ignore mock or fake placeholder IDs)
+    let isStripeCustomerValid = false;
+    if (customerId && !customerId.startsWith('cus_new_') && !customerId.startsWith('pending_') && !customerId.startsWith('cus_mock_')) {
+      try {
+        const existingStripeCustomer = await stripe.customers.retrieve(customerId);
+        if (existingStripeCustomer && !('deleted' in existingStripeCustomer && existingStripeCustomer.deleted)) {
+          isStripeCustomerValid = true;
+        }
+      } catch (err: any) {
+        // Customer not found in Stripe account
+        isStripeCustomerValid = false;
+      }
+    }
+
+    if (!isStripeCustomerValid) {
       try {
         const customer = await stripe.customers.create({
           email: user.email,
@@ -52,9 +65,15 @@ export async function POST(request: Request) {
           },
         });
         customerId = customer.id;
+
+        // Persist verified customer ID to database
+        await supabase
+          .from('subscriptions')
+          .update({ stripe_customer_id: customerId })
+          .eq('user_id', user.id);
       } catch (err: any) {
-        // Fallback for test/mock environment without live Stripe connection
-        customerId = `cus_mock_${user.id.substring(0, 8)}`;
+        console.error('Failed to create Stripe customer:', err);
+        customerId = undefined;
       }
     }
 
@@ -62,8 +81,7 @@ export async function POST(request: Request) {
 
     // Check if live Stripe keys are present or if running in mock mode
     if (process.env.STRIPE_SECRET_KEY && !process.env.STRIPE_SECRET_KEY.includes('mock')) {
-      const session = await stripe.checkout.sessions.create({
-        customer: customerId,
+      const sessionPayload: any = {
         payment_method_types: ['card'],
         line_items: [
           {
@@ -90,7 +108,15 @@ export async function POST(request: Request) {
           charity_id: charityId || '',
           voluntary_percent: charityPct.toString(),
         },
-      });
+      };
+
+      if (customerId) {
+        sessionPayload.customer = customerId;
+      } else if (user.email) {
+        sessionPayload.customer_email = user.email;
+      }
+
+      const session = await stripe.checkout.sessions.create(sessionPayload);
 
       return NextResponse.json({ url: session.url });
     }

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/server';
+import { stripe } from '@/lib/stripe/client';
 
 export const dynamic = 'force-dynamic';
 
@@ -60,10 +61,25 @@ export async function POST(request: Request) {
       role: 'user',
     }, { onConflict: 'id' });
 
-    // 3. Initialize default subscription record with inactive status
+    // 3. Create Stripe customer or pending placeholder for subscription gating
+    let stripeCustomerId = `pending_${userId.substring(0, 8)}`;
+    try {
+      const customer = await stripe.customers.create({
+        email: email.trim().toLowerCase(),
+        name: fullName.trim(),
+        metadata: {
+          user_id: userId,
+        },
+      });
+      stripeCustomerId = customer.id;
+    } catch (stripeErr) {
+      console.warn('Stripe customer creation on signup deferred to checkout:', stripeErr);
+    }
+
+    // 4. Initialize default subscription record with inactive status
     await adminSupabase.from('subscriptions').upsert({
       user_id: userId,
-      stripe_customer_id: `cus_new_${userId.substring(0, 8)}`,
+      stripe_customer_id: stripeCustomerId,
       status: 'inactive',
       plan_type: 'monthly',
       charity_id: charityId || null,
