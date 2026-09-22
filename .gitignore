@@ -42,3 +42,10 @@ Thumbs.db
 .vscode/
 *.swp
 *.swo
+
+# TypeScript incremental build cache (Windows/OS specific, breaks cross-platform builds)
+tsconfig.tsbuildinfo
+*.tsbuildinfo
+
+# Local build artifacts
+build_output.txt
