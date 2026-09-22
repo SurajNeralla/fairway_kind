@@ -7,17 +7,18 @@ export const APP_CONFIG = {
     url:
       process.env.NEXT_PUBLIC_SUPABASE_URL ||
       process.env.SUPABASE_URL ||
-      'https://placeholder.supabase.co',
+      'https://rjqqgxczyxrnkvjvlnnr.supabase.co',
     anonKey:
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
       process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
       process.env.SUPABASE_ANON_KEY ||
       process.env.SUPABASE_PUBLISHABLE_KEY ||
-      'placeholder-anon-key',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJqcXFneGN6eXhybmt2anZsbm5yIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk5ODcxMzUsImV4cCI6MjEwNTU2MzEzNX0.01db-y8FEh_P1lstqzyuo6-m5CrhChSBo7jVs_clFJw',
   },
   stripe: {
     publishableKey:
-      process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '',
+      process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY ||
+      'pk_test_51UI6bOGKGd3v3DOTgicb4n5XdlNzlvfmbexCyyYfJDdo3ig9C6h3XiCZlEHEK2Ws26b4rkTSfK94XLOespGL1MOX00Df9KqF18',
   },
   draw: {
     minScore: 1,
