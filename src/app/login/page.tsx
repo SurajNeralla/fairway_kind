@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useState, Suspense } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Mail, Lock, ArrowRight, Shield, AlertCircle } from 'lucide-react';
+import { Mail, Lock, ArrowRight, Shield, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
@@ -19,10 +19,24 @@ function LoginForm() {
   const { showToast } = useToast();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState(urlError || '');
 
   const supabase = createClient();
+
+  useEffect(() => {
+    try {
+      const savedEmail = localStorage.getItem('fairway_remembered_email');
+      if (savedEmail) {
+        setEmail(savedEmail);
+        setRememberMe(true);
+      }
+    } catch {
+      // Ignore localStorage availability issues
+    }
+  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,8 +49,14 @@ function LoginForm() {
 
     setIsLoading(true);
     try {
+      if (rememberMe) {
+        localStorage.setItem('fairway_remembered_email', email.trim());
+      } else {
+        localStorage.removeItem('fairway_remembered_email');
+      }
+
       const { data, error } = await supabase.auth.signInWithPassword({
-        email,
+        email: email.trim(),
         password,
       });
 
@@ -94,18 +114,42 @@ function LoginForm() {
           required
         />
 
-        <div className="space-y-1">
+        <div className="space-y-1.5">
           <Input
             label="Password"
-            type="password"
+            type={showPassword ? 'text' : 'password'}
             placeholder="••••••••"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             leftIcon={<Lock className="w-4 h-4 text-on-surface-variant" />}
+            rightIcon={
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="text-on-surface-variant hover:text-on-surface transition-colors p-1 -mr-1 focus:outline-none"
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                tabIndex={-1}
+              >
+                {showPassword ? (
+                  <EyeOff className="w-4 h-4 text-on-surface-variant" />
+                ) : (
+                  <Eye className="w-4 h-4 text-on-surface-variant" />
+                )}
+              </button>
+            }
             required
           />
-          <div className="flex justify-end">
-            <Link href="/forgot-password" className="text-xs text-primary font-medium hover:underline">
+          <div className="flex items-center justify-between text-xs pt-1">
+            <label className="flex items-center gap-2 cursor-pointer select-none text-on-surface-variant hover:text-on-surface">
+              <input
+                type="checkbox"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+                className="w-4 h-4 rounded border-outline-variant/60 text-primary focus:ring-primary/20 accent-primary cursor-pointer"
+              />
+              <span>Remember me</span>
+            </label>
+            <Link href="/forgot-password" className="text-primary font-medium hover:underline">
               Forgot password?
             </Link>
           </div>
