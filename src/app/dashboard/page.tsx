@@ -548,373 +548,195 @@ export default function SubscriberDashboard() {
             </div>
           </section>
 
-          {/* ================= 4. QUICK INLINE ADD SCORE FORM ================= */}
-          <section className="bg-surface-container-lowest border border-outline-variant/40 rounded-2xl p-6 lg:p-7 shadow-xs">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-5 border-b border-outline-variant/20">
+          {/* ================= 4. DEDICATED SECTIONS PORTAL ================= */}
+          <section className="space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <div>
-                <div className="flex items-center gap-2">
-                  <h2 className="font-headline-sm text-headline-sm font-semibold text-on-surface">Add Golf Score</h2>
-                  <span className="bg-[#E8EFEA] text-[#2E5A44] font-label-md text-label-md px-2.5 py-0.5 rounded-full font-semibold">
-                    Stableford 1–45 Pts
-                  </span>
-                </div>
-                <p className="font-body-sm text-body-sm text-on-surface-variant mt-1">
-                  Log your Stableford score and round date. Your latest 5 scores are retained automatically.
-                </p>
-              </div>
-              <div className="flex items-center gap-2 text-label-md font-label-md text-outline">
-                <span className="material-symbols-outlined text-base text-primary">info</span>
-                <span>Max 5 rolling scores • 1 per date</span>
+                <h2 className="font-headline-sm text-headline-sm font-semibold text-on-surface">Member Modules &amp; Services</h2>
+                <p className="font-body-sm text-body-sm text-on-surface-variant">Each service is managed on its own dedicated page, just like the Settings page.</p>
               </div>
             </div>
 
-            <form onSubmit={handleInlineSubmit} className="mt-6 grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-12 gap-4 items-end">
-              {/* Date Played */}
-              <div className="lg:col-span-4">
-                <label className="block font-label-md text-label-md text-on-surface mb-1.5 font-medium">Date of Round</label>
-                <input
-                  type="date"
-                  value={inlineDate}
-                  max={today}
-                  onChange={(e) => setInlineDate(e.target.value)}
-                  className="w-full h-12 px-3.5 bg-surface rounded-xl border border-outline-variant/60 font-body-sm text-on-surface focus:outline-none focus:border-primary-container focus:ring-1 focus:ring-primary-container"
-                  required
-                />
-              </div>
-
-              {/* Stableford Points */}
-              <div className="lg:col-span-4">
-                <label className="block font-label-md text-label-md text-on-surface mb-1.5 font-medium">Stableford Score (1–45)</label>
-                <div className="relative">
-                  <input
-                    type="number"
-                    min="1"
-                    max="45"
-                    value={inlinePoints}
-                    onChange={(e) => setInlinePoints(e.target.value)}
-                    placeholder="e.g. 38"
-                    className="w-full h-12 pl-3.5 pr-10 bg-surface rounded-xl border border-outline-variant/60 font-body-md text-body-md font-semibold text-on-surface focus:outline-none focus:border-primary-container focus:ring-1 focus:ring-primary-container"
-                    required
-                  />
-                  <span className="absolute right-3 top-3 text-outline text-xs font-bold uppercase">PTS</span>
-                </div>
-              </div>
-
-              {/* Submit CTA Button */}
-              <div className="lg:col-span-4">
-                <button
-                  type="submit"
-                  className="w-full h-12 bg-primary-container hover:bg-primary text-on-primary rounded-xl font-label-md text-label-md flex items-center justify-center gap-1.5 transition-all duration-150 active:scale-[0.98] shadow-xs font-semibold"
-                >
-                  <span className="material-symbols-outlined text-base">add_circle</span>
-                  <span>Add Score</span>
-                </button>
-              </div>
-            </form>
-
-            <div className="mt-3 text-xs text-on-surface-variant pt-2 border-t border-surface-container">
-              One score per date allowed. Duplicate dates will be rejected. Score must be between 1 and 45.
-            </div>
-          </section>
-
-          {/* ================= 5 & 6. BENTO GRID: 5 SCORES + CHARITY ================= */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-            {/* Left: Rolling 5-Score History (Span 8) */}
-            <section className="lg:col-span-8 flex flex-col gap-4" id="scores-section">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="font-headline-sm text-headline-sm font-semibold text-on-surface">Rolling 5-Score History</h2>
-                  <p className="font-body-sm text-body-sm text-on-surface-variant">Active entries counting toward October monthly draw &amp; ranking average.</p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="bg-surface-container text-on-surface-variant px-3 py-1 rounded-lg text-xs font-semibold">
-                    Last {scores.length} of 5 Verified
-                  </span>
-                </div>
-              </div>
-
-              {/* Table Container */}
-              <div className="bg-surface-container-lowest border border-outline-variant/40 rounded-2xl shadow-xs overflow-hidden">
-                {scores.length === 0 ? (
-                  <div className="p-12 text-center">
-                    <span className="material-symbols-outlined text-4xl text-outline mb-3 block">sports_score</span>
-                    <p className="font-label-lg text-label-lg text-on-surface-variant">No scores yet.</p>
-                    <p className="text-xs text-outline mt-1">Add your first Stableford score using the form above.</p>
-                  </div>
-                ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left border-collapse">
-                    <thead>
-                      <tr className="bg-surface-container-low/70 border-b border-outline-variant/30 text-on-surface-variant font-label-md text-label-md uppercase tracking-wider text-[11px]">
-                        <th className="py-3.5 px-5 font-semibold">Date Played</th>
-                        <th className="py-3.5 px-4 font-semibold text-center">Stableford Score</th>
-                        <th className="py-3.5 px-4 font-semibold">Status</th>
-                        <th className="py-3.5 px-5 font-semibold text-right">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-surface-container text-body-sm">
-                      {scores.map((s) => (
-                        <tr key={s.id} className="hover:bg-surface-container-low/40 transition-colors group">
-                          <td className="py-4 px-5">
-                            <div className="font-semibold text-on-surface">{s.date}</div>
-                          </td>
-                          <td className="py-4 px-4 text-center">
-                            <span className="inline-flex items-center px-2.5 py-1 rounded-lg bg-[#E8EFEA] text-[#2E5A44] font-headline-sm font-bold text-sm">
-                              {s.score} pts
-                            </span>
-                          </td>
-                          <td className="py-4 px-4">
-                            <div className="inline-flex items-center gap-1.5 text-xs text-primary font-medium">
-                              <span className="material-symbols-outlined text-sm text-primary">check_circle</span>
-                              Active Entry
-                            </div>
-                          </td>
-                          <td className="py-4 px-5 text-right">
-                            <div className="inline-flex items-center gap-1 text-on-surface-variant">
-                              <button
-                                onClick={() => handleOpenEditModal(s)}
-                                className="p-1.5 hover:text-primary hover:bg-surface-container rounded-lg transition-colors"
-                                title="Edit Score"
-                              >
-                                <span className="material-symbols-outlined text-base">edit</span>
-                              </button>
-                              <button
-                                onClick={() => handleDeleteScore(s.id)}
-                                className="p-1.5 hover:text-error hover:bg-error-container/30 rounded-lg transition-colors"
-                                title="Delete Score"
-                              >
-                                <span className="material-symbols-outlined text-base">delete</span>
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-                )}
-
-                <div className="p-4 bg-surface-container-low/40 border-t border-outline-variant/20 flex flex-col sm:flex-row items-center justify-between text-body-sm text-on-surface-variant gap-2">
-                  <span className="text-xs">{scores.length} of 5 active scores — newest scores replace oldest when limit is reached.</span>
-                  <div className="flex items-center gap-3">
-                    <button 
-                      onClick={() => setModalOpen(true)}
-                      className="text-xs font-semibold text-primary hover:underline flex items-center gap-1"
-                    >
-                      Quick Add
-                      <span className="material-symbols-outlined text-sm">add_circle</span>
-                    </button>
-                    <span className="text-outline">|</span>
-                    <Link
-                      href="/dashboard/scores"
-                      className="text-xs font-semibold text-primary hover:underline flex items-center gap-1"
-                    >
-                      Open Score Engine
-                      <span className="material-symbols-outlined text-sm">arrow_forward</span>
-                    </Link>
-                  </div>
-                </div>
-              </div>
-            </section>
-
-            {/* Right: My Charity Impact Mini-Section (Span 4) */}
-            <section className="lg:col-span-4 flex flex-col gap-4" id="charity-section">
-              <div>
-                <h2 className="font-headline-sm text-headline-sm font-semibold text-on-surface">My Charity Allocation</h2>
-                <p className="font-body-sm text-body-sm text-on-surface-variant">Philanthropic distribution from subscriber fees.</p>
-              </div>
-
-              <div className="bg-surface-container-lowest border border-outline-variant/40 rounded-2xl p-6 shadow-xs flex flex-col justify-between h-full">
-                <div>
-                  {/* Charity Badge Header */}
-                  <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-surface-container-low border border-outline-variant/40 flex items-center justify-center text-primary flex-shrink-0">
-                      <span className="material-symbols-outlined text-2xl text-primary">volunteer_activism</span>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {/* Card 1: My Scores */}
+              <div className="bg-surface-container-lowest border border-outline-variant/40 rounded-3xl p-6 shadow-xs flex flex-col justify-between hover:border-primary/40 transition-all group">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="w-12 h-12 rounded-2xl bg-primary-fixed/30 text-primary flex items-center justify-center">
+                      <span className="material-symbols-outlined text-2xl">golf_course</span>
                     </div>
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="font-headline-sm text-base font-semibold text-on-surface leading-snug">
-                          {charityName || 'No charity selected'}
-                        </span>
-                      </div>
-                      <span className="inline-flex items-center text-xs font-semibold text-secondary mt-0.5">
-                        Selected Charity
-                      </span>
-                    </div>
+                    <span className="bg-surface-container text-on-surface-variant font-label-sm text-xs px-3 py-1 rounded-full font-bold">
+                      {scores.length}/5 Scores
+                    </span>
                   </div>
-
-                  {!charityName && (
-                    <p className="mt-4 font-body-sm text-body-sm text-on-surface-variant leading-relaxed">
-                      You haven&apos;t selected a charity yet. Visit your subscription settings to choose a cause.
+                  <div>
+                    <h3 className="font-headline-sm text-lg font-bold text-on-surface group-hover:text-primary transition-colors">
+                      My Golf Scores
+                    </h3>
+                    <p className="font-body-sm text-xs text-on-surface-variant mt-1.5 leading-relaxed">
+                      Log your official Stableford scores (1–45) and track your rolling 5 active rounds for draw qualification.
                     </p>
-                  )}
-
-                  {/* Charity Allocation Visual */}
-                  <div className="mt-6 p-4 rounded-xl bg-surface-container-low border border-outline-variant/30">
-                    <div className="flex items-center justify-between text-xs font-semibold text-on-surface">
-                      <span>Your Charity Allocation</span>
-                      <span className="text-primary font-bold">{charityPercent}% of subscription fee</span>
-                    </div>
-                    <div className="w-full bg-[#E8EFEA] h-2.5 rounded-full overflow-hidden mt-2.5">
-                      <div className="bg-primary-container h-full rounded-full" style={{ width: `${charityPercent}%` }}></div>
-                    </div>
-                    <div className="flex items-center justify-between text-[11px] text-outline mt-2">
-                      <span>Min 10%</span>
-                      <span>Max 100%</span>
-                    </div>
                   </div>
-
-                  {/* Impact stats */}
-                  <div className="grid grid-cols-2 gap-3 mt-4">
-                    <div className="p-3 rounded-lg border border-outline-variant/30 bg-surface">
-                      <div className="text-xs text-outline font-label-md">Current Share</div>
-                      <div className="text-base font-bold text-on-surface mt-0.5">{charityPercent}% of Plan</div>
-                    </div>
-                    <div className="p-3 rounded-lg border border-outline-variant/30 bg-surface">
-                      <div className="text-xs text-outline font-label-md">Matched Rounds</div>
-                      <div className="text-base font-bold text-primary mt-0.5">5 Rounds ($25)</div>
-                    </div>
+                  <div className="p-3.5 rounded-xl bg-surface-container-low border border-outline-variant/20 flex items-center justify-between text-xs">
+                    <span className="text-on-surface-variant font-medium">Avg Stableford:</span>
+                    <span className="font-bold text-primary">
+                      {(scores.reduce((a, b) => a + b.score, 0) / (scores.length || 1)).toFixed(1)} pts
+                    </span>
                   </div>
                 </div>
+                <div className="pt-6 border-t border-surface-container mt-6">
+                  <Link
+                    href="/dashboard/scores"
+                    className="w-full py-2.5 px-4 rounded-xl bg-primary-container hover:bg-primary text-on-primary font-label-md text-sm font-semibold transition-all flex items-center justify-center gap-2"
+                  >
+                    <span>Open Scores Page</span>
+                    <span className="material-symbols-outlined text-sm">arrow_forward</span>
+                  </Link>
+                </div>
+              </div>
 
-                {/* Actions */}
-                <div className="flex flex-col gap-2.5 mt-6 pt-4 border-t border-surface-container">
+              {/* Card 2: My Charity */}
+              <div className="bg-surface-container-lowest border border-outline-variant/40 rounded-3xl p-6 shadow-xs flex flex-col justify-between hover:border-secondary/40 transition-all group">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="w-12 h-12 rounded-2xl bg-[#E8EFEA] text-[#1B4332] flex items-center justify-center">
+                      <span className="material-symbols-outlined text-2xl">volunteer_activism</span>
+                    </div>
+                    <span className="bg-[#E8EFEA] text-[#1B4332] font-label-sm text-xs px-3 py-1 rounded-full font-bold">
+                      {charityPercent}% Allocation
+                    </span>
+                  </div>
+                  <div>
+                    <h3 className="font-headline-sm text-lg font-bold text-on-surface group-hover:text-secondary transition-colors">
+                      My Charity Partner
+                    </h3>
+                    <p className="font-body-sm text-xs text-on-surface-variant mt-1.5 leading-relaxed">
+                      Supporting <strong className="text-on-surface">{charityName || 'Selected Cause'}</strong>. Customize your voluntary allocation (10% to 100%).
+                    </p>
+                  </div>
+                  <div className="p-3.5 rounded-xl bg-surface-container-low border border-outline-variant/20 flex items-center justify-between text-xs">
+                    <span className="text-on-surface-variant font-medium">Monthly Impact:</span>
+                    <span className="font-bold text-primary">
+                      ${((29 * charityPercent) / 100).toFixed(2)}/mo
+                    </span>
+                  </div>
+                </div>
+                <div className="pt-6 border-t border-surface-container mt-6">
                   <Link
                     href="/dashboard/charity"
-                    className="w-full py-2.5 px-4 rounded-xl bg-primary-container hover:bg-primary text-on-primary font-label-md text-label-md font-semibold transition-colors duration-150 active:scale-[0.98] text-center block"
+                    className="w-full py-2.5 px-4 rounded-xl bg-surface-container-high hover:bg-surface-container-highest text-on-surface font-label-md text-sm font-semibold transition-all flex items-center justify-center gap-2 border border-outline-variant/30"
                   >
-                    Manage Charity Allocation ({charityPercent}%)
-                  </Link>
-                  <Link
-                    href="/charities"
-                    className="w-full py-2 px-4 rounded-xl border border-outline-variant/50 hover:bg-surface-container text-on-surface font-label-md text-label-md transition-colors duration-150 text-center block"
-                  >
-                    Explore Partner Charities
+                    <span>Open Charity Page</span>
+                    <span className="material-symbols-outlined text-sm">arrow_forward</span>
                   </Link>
                 </div>
               </div>
-            </section>
-          </div>
 
-          {/* ================= 7. ACTIVE DRAW & WINNINGS ================= */}
-          <section className="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-6" id="draws-section">
-            {/* Monthly Draw Eligibility Card (Span 6) */}
-            <div className="lg:col-span-6 bg-surface-container-lowest border border-outline-variant/40 rounded-2xl p-6 shadow-xs flex flex-col justify-between">
-              <div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="material-symbols-outlined text-secondary text-2xl">confirmation_number</span>
-                    <h3 className="font-headline-sm text-headline-sm font-semibold text-on-surface">
-                      Monthly Draw Participation
+              {/* Card 3: Draws */}
+              <div className="bg-surface-container-lowest border border-outline-variant/40 rounded-3xl p-6 shadow-xs flex flex-col justify-between hover:border-primary/40 transition-all group">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="w-12 h-12 rounded-2xl bg-secondary-fixed/40 text-secondary flex items-center justify-center">
+                      <span className="material-symbols-outlined text-2xl">celebration</span>
+                    </div>
+                    <span className="bg-secondary-fixed text-on-secondary-fixed font-label-sm text-xs px-3 py-1 rounded-full font-bold">
+                      4d Remaining
+                    </span>
+                  </div>
+                  <div>
+                    <h3 className="font-headline-sm text-lg font-bold text-on-surface group-hover:text-primary transition-colors">
+                      Monthly Draws
                     </h3>
+                    <p className="font-body-sm text-xs text-on-surface-variant mt-1.5 leading-relaxed">
+                      Check your draw qualification, active 5-stroke participation tickets, winning numbers, and prize splits.
+                    </p>
                   </div>
-                  <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold ${scores.length === 5 ? 'bg-[#E8EFEA] text-[#2E5A44]' : 'bg-surface-container text-outline'}`}>
-                    {scores.length === 5 ? 'Qualified' : `${scores.length}/5 Scores`}
-                  </span>
-                </div>
-                <p className="font-body-sm text-body-sm text-on-surface-variant mt-2">
-                  You need 5 active scores to qualify for the monthly draw. Each score must be a valid Stableford value (1–45).
-                </p>
-
-                {/* Draw Checklist */}
-                <div className="mt-5 space-y-2.5">
-                  <div className="flex items-center justify-between p-3 rounded-xl bg-surface-container-low border border-outline-variant/20">
-                    <div className="flex items-center gap-2.5">
-                      <span className={`material-symbols-outlined text-lg ${scores.length === 5 ? 'text-primary' : 'text-outline'}`}>
-                        {scores.length === 5 ? 'check_circle' : 'radio_button_unchecked'}
-                      </span>
-                      <span className="text-body-sm text-on-surface font-medium">{scores.length} of 5 Scores Active</span>
-                    </div>
-                    <span className={`text-xs font-bold ${scores.length === 5 ? 'text-primary' : 'text-outline'}`}>
-                      {scores.length === 5 ? 'Qualified' : 'Needs More Scores'}
+                  <div className="p-3.5 rounded-xl bg-surface-container-low border border-outline-variant/20 flex items-center justify-between text-xs">
+                    <span className="text-on-surface-variant font-medium">Draw Status:</span>
+                    <span className={`font-bold ${scores.length === 5 ? 'text-primary' : 'text-outline'}`}>
+                      {scores.length === 5 ? 'Qualified (5/5)' : `${scores.length}/5 Scores`}
                     </span>
                   </div>
-                  <div className="flex items-center justify-between p-3 rounded-xl bg-surface-container-low border border-outline-variant/20">
-                    <div className="flex items-center gap-2.5">
-                      <span className="material-symbols-outlined text-primary text-lg">emoji_events</span>
-                      <span className="text-body-sm text-on-surface font-medium">Prize Pool Tiers</span>
-                    </div>
-                    <span className="text-xs font-bold text-on-surface">40% / 35% / 25%</span>
-                  </div>
-                  <div className="flex items-center justify-between p-3 rounded-xl bg-surface-container-low border border-outline-variant/20">
-                    <div className="flex items-center gap-2.5">
-                      <span className="material-symbols-outlined text-secondary text-lg">refresh</span>
-                      <span className="text-body-sm text-on-surface font-medium">Jackpot Rollover</span>
-                    </div>
-                    <span className="text-xs font-bold text-secondary">5-Number Match Only</span>
-                  </div>
+                </div>
+                <div className="pt-6 border-t border-surface-container mt-6">
+                  <Link
+                    href="/dashboard/draws"
+                    className="w-full py-2.5 px-4 rounded-xl bg-surface-container-high hover:bg-surface-container-highest text-on-surface font-label-md text-sm font-semibold transition-all flex items-center justify-center gap-2 border border-outline-variant/30"
+                  >
+                    <span>Open Draws Page</span>
+                    <span className="material-symbols-outlined text-sm">arrow_forward</span>
+                  </Link>
                 </div>
               </div>
 
-              <div className="mt-6 pt-4 border-t border-surface-container flex items-center justify-between text-xs text-outline">
-                <Link href="/dashboard/draws" className="text-primary font-semibold hover:underline flex items-center gap-1">
-                  View Draw Numbers &amp; Tickets
-                  <span className="material-symbols-outlined text-sm">arrow_forward</span>
-                </Link>
-                <Link href="/how-it-works" className="text-on-surface-variant hover:underline">
-                  How It Works
-                </Link>
-              </div>
-            </div>
-
-            {/* Winnings Section (Span 6) */}
-            <div
-              className="lg:col-span-6 bg-surface-container-lowest border border-outline-variant/40 rounded-2xl p-6 shadow-xs flex flex-col justify-between"
-              id="winnings-section"
-            >
-              <div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="material-symbols-outlined text-secondary text-2xl">trophy</span>
-                    <h3 className="font-headline-sm text-headline-sm font-semibold text-on-surface">My Winnings</h3>
-                  </div>
-                  {winners.length > 0 && (
-                    <span className="bg-secondary text-on-secondary px-2.5 py-0.5 rounded-full text-xs font-bold">
-                      {winners.length} Win{winners.length > 1 ? 's' : ''}
+              {/* Card 4: Winnings */}
+              <div className="bg-surface-container-lowest border border-outline-variant/40 rounded-3xl p-6 shadow-xs flex flex-col justify-between hover:border-primary/40 transition-all group">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="w-12 h-12 rounded-2xl bg-surface-container-low text-secondary flex items-center justify-center border border-outline-variant/30">
+                      <span className="material-symbols-outlined text-2xl">emoji_events</span>
+                    </div>
+                    <span className="bg-surface-container text-on-surface-variant font-label-sm text-xs px-3 py-1 rounded-full font-bold">
+                      {winners.length} Won
                     </span>
-                  )}
+                  </div>
+                  <div>
+                    <h3 className="font-headline-sm text-lg font-bold text-on-surface group-hover:text-primary transition-colors">
+                      My Winnings &amp; Payouts
+                    </h3>
+                    <p className="font-body-sm text-xs text-on-surface-variant mt-1.5 leading-relaxed">
+                      Submit scorecard proof, track compliance audit reviews, and monitor direct bank prize disbursements.
+                    </p>
+                  </div>
+                  <div className="p-3.5 rounded-xl bg-surface-container-low border border-outline-variant/20 flex items-center justify-between text-xs">
+                    <span className="text-on-surface-variant font-medium">Total Won:</span>
+                    <span className="font-bold text-secondary">${totalWonAmount.toLocaleString()}</span>
+                  </div>
                 </div>
-
-                {winners.length === 0 ? (
-                  <div className="mt-6 text-center py-8">
-                    <span className="material-symbols-outlined text-4xl text-outline mb-3 block">emoji_events</span>
-                    <p className="font-label-lg text-label-lg text-on-surface-variant">No winnings yet.</p>
-                    <p className="text-xs text-outline mt-1">Qualify for the monthly draw with 5 active scores.</p>
-                  </div>
-                ) : (
-                  <div className="mt-4 space-y-3">
-                    {winners.slice(0, 2).map((w: any) => (
-                      <div key={w.id} className="p-4 rounded-xl bg-surface-container-low border border-outline-variant/20">
-                        <div className="flex items-center justify-between">
-                          <span className="font-label-md text-label-md font-semibold text-on-surface">
-                            {w.match_count}-Number Match
-                          </span>
-                          <span className="font-headline-sm text-headline-sm font-bold text-secondary">
-                            ${Number(w.prize_amount).toLocaleString()}
-                          </span>
-                        </div>
-                        <div className="flex items-center justify-between mt-1">
-                          <span className="text-xs text-on-surface-variant">
-                            {w.proof_status === 'approved' ? 'Verified' : w.proof_status === 'submitted' ? 'Under Review' : w.proof_status === 'rejected' ? 'Proof Rejected' : 'Awaiting Proof'}
-                          </span>
-                          <span className={`text-xs font-bold ${w.payout_status === 'paid' ? 'text-primary' : 'text-outline'}`}>
-                            {w.payout_status === 'paid' ? 'Paid' : 'Pending'}
-                          </span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                <div className="pt-6 border-t border-surface-container mt-6">
+                  <Link
+                    href="/dashboard/winnings"
+                    className="w-full py-2.5 px-4 rounded-xl bg-surface-container-high hover:bg-surface-container-highest text-on-surface font-label-md text-sm font-semibold transition-all flex items-center justify-center gap-2 border border-outline-variant/30"
+                  >
+                    <span>Open Winnings Page</span>
+                    <span className="material-symbols-outlined text-sm">arrow_forward</span>
+                  </Link>
+                </div>
               </div>
 
-              <div className="mt-6 pt-4 border-t border-surface-container">
-                <Link
-                  href="/dashboard/winners"
-                  className="w-full py-2.5 px-4 rounded-xl border border-outline-variant/50 hover:bg-surface-container text-on-surface font-label-md text-label-md transition-colors text-center flex items-center justify-center gap-2"
-                >
-                  <span className="material-symbols-outlined text-base">open_in_new</span>
-                  View All Winnings & Upload Proof
-                </Link>
+              {/* Card 5: Settings */}
+              <div className="bg-surface-container-lowest border border-outline-variant/40 rounded-3xl p-6 shadow-xs flex flex-col justify-between hover:border-primary/40 transition-all group">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="w-12 h-12 rounded-2xl bg-surface-container-low text-on-surface flex items-center justify-center border border-outline-variant/30">
+                      <span className="material-symbols-outlined text-2xl">settings</span>
+                    </div>
+                    <span className="bg-primary-fixed/30 text-primary font-label-sm text-xs px-3 py-1 rounded-full font-bold">
+                      Active
+                    </span>
+                  </div>
+                  <div>
+                    <h3 className="font-headline-sm text-lg font-bold text-on-surface group-hover:text-primary transition-colors">
+                      Subscription &amp; Settings
+                    </h3>
+                    <p className="font-body-sm text-xs text-on-surface-variant mt-1.5 leading-relaxed">
+                      Manage your plan membership, Stripe billing portal, payment cards, and account preferences.
+                    </p>
+                  </div>
+                  <div className="p-3.5 rounded-xl bg-surface-container-low border border-outline-variant/20 flex items-center justify-between text-xs">
+                    <span className="text-on-surface-variant font-medium">Billing Plan:</span>
+                    <span className="font-bold text-on-surface">{subStatus.split('—')[0] || 'Monthly Plan'}</span>
+                  </div>
+                </div>
+                <div className="pt-6 border-t border-surface-container mt-6">
+                  <Link
+                    href="/dashboard/subscription"
+                    className="w-full py-2.5 px-4 rounded-xl bg-surface-container-high hover:bg-surface-container-highest text-on-surface font-label-md text-sm font-semibold transition-all flex items-center justify-center gap-2 border border-outline-variant/30"
+                  >
+                    <span>Open Settings Page</span>
+                    <span className="material-symbols-outlined text-sm">arrow_forward</span>
+                  </Link>
+                </div>
               </div>
             </div>
           </section>
