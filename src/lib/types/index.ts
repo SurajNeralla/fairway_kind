@@ -22,6 +22,8 @@ export interface Charity {
   description: string;
   category: string;
   logo_url?: string;
+  ein?: string;
+  website_url?: string;
   total_raised: number;
   is_active: boolean;
   created_at: string;
