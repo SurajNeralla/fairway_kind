@@ -9,6 +9,11 @@ export async function middleware(request: NextRequest) {
     },
   });
 
+  // Skip auth middleware if Supabase is not configured (e.g. build time without env vars)
+  if (!APP_CONFIG.supabase.url || !APP_CONFIG.supabase.anonKey) {
+    return response;
+  }
+
   const supabase = createServerClient(
     APP_CONFIG.supabase.url,
     APP_CONFIG.supabase.anonKey,

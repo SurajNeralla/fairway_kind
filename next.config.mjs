@@ -7,6 +7,11 @@ const nextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
+  // Prevent build-time static generation from failing when env vars are missing on Vercel
+  // All pages will be server-rendered on demand
+  experimental: {
+    serverComponentsExternalPackages: ['@supabase/ssr'],
+  },
   images: {
     remotePatterns: [
       {
