@@ -120,7 +120,7 @@ export async function middleware(request: NextRequest) {
     const hasCheckoutSession =
       pathname === '/dashboard/subscription' &&
       (request.nextUrl.searchParams.has('session_id') ||
-        request.nextUrl.searchParams.get('status') === 'success');
+        request.nextUrl.searchParams.get('status')?.includes('success'));
 
     if (!isSubscribed && !hasCheckoutSession) {
       // Unsubscribed user is gated from subscriber dashboard

@@ -77,7 +77,15 @@ export async function POST(request: Request) {
       }
     }
 
-    const baseUrl = APP_CONFIG.url;
+    const requestOrigin = request.headers.get('origin') || request.headers.get('referer');
+    let baseUrl = APP_CONFIG.url;
+    if (requestOrigin) {
+      try {
+        baseUrl = new URL(requestOrigin).origin;
+      } catch {
+        baseUrl = APP_CONFIG.url;
+      }
+    }
 
     // Check if live Stripe keys are present or if running in mock mode
     if (process.env.STRIPE_SECRET_KEY && !process.env.STRIPE_SECRET_KEY.includes('mock')) {

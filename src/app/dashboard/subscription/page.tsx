@@ -76,7 +76,7 @@ function SubscriptionManager() {
     let isMounted = true;
 
     const syncAndLoad = async () => {
-      if (statusQuery === 'success' || sessionId) {
+      if (statusQuery?.includes('success') || sessionId) {
         try {
           await fetch('/api/subscriptions/confirm', {
             method: 'POST',
